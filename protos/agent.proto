@@ -1,0 +1,53 @@
+/*
+    Tramite l'Agente facciamo riferimento ad una qualsiasi entità abilitata ad effettuare interazioni di scrittura con il sistema. 
+    Per poter interagire con il sistema, l'Agente dev'essere iscritto in esso, cioè dev'esistere un indirizzo univoco, associato alla sua
+    chiave pubblica, contenente i suoi dati, nello state globale.
+    Le tipologie di agente che possono essere presenti nel sistema sono:
+    - System Admin: Amministratore di sistema.
+    - Business Admin: Amministratore di un'azienda.
+    - Certifier: Certificatore esterno.
+    - Operator: Un qualsiasi operatore umano/non-human abilitato a registrare dati per conto di un Business Admin su lotti o sull'azienda stessa.
+
+    Tutti gli agenti, qualsiasi sia la loro classe, devono essere registrati on-chain per interagire con il sistema.
+*/
+
+syntax = "proto3";
+
+message Agent {
+    
+    // Tipologia di agente
+    enum AgentType {
+        SYSTEM_ADMIN = 0;
+        BUSINESS_ADMIN = 1;
+        CERTIFIER = 2;
+        OPERATOR = 3;
+    }
+
+    // Nome
+    string name = 1;
+
+    // Identificativo univoco che riconosce l'agente al di fuori del sistema blockchain
+    string id = 2;
+
+    // Chiave pubblica dell'agente (permette di identificarlo univocamente on chain)
+    string public_key = 3;
+
+    // Tipologia Agente
+    AgentType type = 4;
+
+    // Chiave pubblica di chi ha abilitato l'agente nel sistema
+    string authorizer = 5;
+
+    // Azienda presso la quale è autorizzato (vuoto per Certifier)
+    string company = 6;
+    
+    // Flag che indica se l'agente è correntemente abilitato o meno nel sistema
+    bool enabled = 7;
+
+    // Timestamp approssimativo relativo alla registrazione
+    uint64 timestamp = 8;
+}
+
+message AgentContainer {
+    repeated Agent entries = 1;
+}

@@ -1,0 +1,105 @@
+/*
+    I dati storici relativi a un particolare batch tracciato sono memorizzati come Property, 
+    rappresentati come un elenco di valori accompagnato da un timestamp e un identificativo del reporter.
+
+    Solitamente sono registrati da sensori (Non-human Operators). 
+    L'intera cronologia degli aggiornamenti per un Batch viene archiviata nello stato corrente poiché ciò consente una 
+    maggiore flessibilità nella scrittura delle regole di transazione. 
+    Ad esempio, in un sistema di tracciabilità e commercio, potrebbe esserci una regola secondo cui non è 
+    possibile scambiare un prodotto con temperature superiori ai 16 gradi (es. latte). 
+    Ciò significa, tuttavia, che non sarebbe pratico memorizzare tutti i dati di un batch a un indirizzo, 
+    poiché aggiungere un singolo aggiornamento richiederebbe di leggere l'intera cronologia di ciascuna delle proprietà 
+    del batch dallo stato, aggiungendo l'aggiornamento, quindi scrivendo tutto indietro.
+
+    Per risolvere questo problema, le proprietà sono memorizzate nel proprio spazio dei nomi derivato dal batch associato e dal 
+    nome della properties. Poiché possiamo avere migliaia di aggiornamenti, quattro caratteri sono riservati alla fine di tale spazio 
+    dei nomi al fine di impaginare la cronologia di una proprietà. 
+    La proprietà stessa (insieme al nome, all'identificatore del batch, ai reporter autorizzati e alle informazioni di paging) 
+    viene archiviata nello spazio dei nomi che termina con 0000. Gli spazi dei nomi che terminano da 0001 a ffff memorizzeranno 
+    una PropertyPage contenente fino a 256 valori riportati (che includono timestamp e identità del loro reporter). Qualsiasi 
+    transazione che aggiorna il valore di una Proprietà prima legge l'oggetto PropertyContainer su 0000 e 
+    poi legge il PropertyPageContainer appropriato prima di aggiungere l'aggiornamento e scrivere nuovamente 
+    il nuovo PropertyPageContainer.
+
+    Il Transaction Processor tratta queste pagine come un ring buffer, in modo che quando la pagina ffff è piena, 
+    il prossimo aggiornamento cancellerà le voci alla pagina 0001 e verrà memorizzato lì, e il successivo riempimento 
+    della pagina continuerà a sovrascrivere la pagina successiva più vecchia. Ciò garantisce che nessuna proprietà esaurisca 
+    lo spazio per i nuovi aggiornamenti. Sotto questo schema, 16 ^ 2 * (16 ^ 4 - 1) = 16.777.216 voci possono essere memorizzate
+    prima che gli aggiornamenti precedenti vengano sovrascritti.
+
+    NB.
+    La pagina iniziale delle property viene creata all'atto di creazione del batch! Inizialmente, la PropertyPage
+    ha valori pari a None.
+*/
+syntax = "proto3";
+
+message Property {
+
+    enum PropertyType {
+        LOCATION = 0;
+        TEMPERATURE = 1;
+    }
+
+    // Batch id
+    string batch_id = 1;
+
+    // Tipo della property
+    PropertyType type = 2;
+
+    // La pagina presso la quale verranno aggiunti i nuovi update.
+    // Rappresenta gli ultimi 4 caratteri dell'indirizzo di una PropertyPage.
+    // Non può eccedere 16 ^ 4 = 65536
+    uint32 current_page = 3;
+
+    // Un flag che indica quando le prime 16^4 pagine sono state riempite.
+    // Serve per calcolare gli ultimi 4 caratteri dell'indirizzo della PropertyPage
+    // che contiene l'aggiornamento più vecchio. Quando è falso, l'indirizzo di tale pagina
+    // finisce in 0001 mentre quando è true l'indirizzo della pagina finisce in 
+    // current_page + 1 oppure 0001 se current_page è ffff.
+    bool wrapped = 4;
+}
+
+message PropertyContainer {
+    repeated Property entries = 1;
+}
+
+message PropertyPage {
+
+    message ReportedValue {
+        // Chiave Pubblica dell'Operatore che fa il report
+        string pub_key = 1;
+
+        // timestamp
+        uint64 timestamp = 2;
+        
+        // Se type = Location (else null)
+        Location position = 3;
+
+        // Se type = Temperature (else null)
+        float temperature = 4;
+        
+    }
+
+    message Location {
+        // Coordinates are expected to be in millionths of a degree
+        sint64 latitude = 1;
+        sint64 longitude = 2;
+
+    }
+
+    // Tipo della property
+    Property.PropertyType type = 1;
+
+    // Batch id
+    string batch_id = 2;
+
+    // Valori riportati per la proprietà di quel tipo 
+    repeated ReportedValue reported_values = 3;
+}
+
+message PropertyPageContainer {
+    repeated PropertyPage entries = 1;
+}
+
+
+

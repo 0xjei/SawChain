@@ -1,0 +1,21 @@
+35 bytes = 70 hex
+
+NAMESPACE = "AgriChain" = F4CB6D
+
+AGENT = NAMESPACE + AG + 62 hash pub_key 
+
+COMPANY = NAMESPACE + CO + 62 hash company_cf
+
+PRODUCT = NAMESPACE + PR + 36 hash name + 26 hash company_cf
+
+BATCH = NAMESPACE + BT + 62 hash batch_id
+
+EVENT_COMPANY = NAMESPACE + EC + 36 hash id event + 26 hash company_cf
+
+EVENT_BATCH = NAMESPACE + EB + 36 hash id event + 26 hash batch_id
+
+PROPOSAL = NAMESPACE + PP + 36 hash batch_id + 22 hash (receiving) company_cf + 4 hash timestamp
+
+PROPERTY = NAMESPACE + PT + 22 hash property_type + 26 hash batch_id + 0000
+
+PROPERTY_PAGE = NAMESPACE + PT + 22 hash property_type + 26 hash batch_id + curr_page
