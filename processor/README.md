@@ -14,5 +14,5 @@
 ### Addressing Scheme
 ###### To do
 
-### Transaction Payloads
+### Transaction Payloads
 ###### To do
