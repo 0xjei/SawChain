@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+message ACPayload {
+    string action = 1;
+}

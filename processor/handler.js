@@ -3,9 +3,16 @@
 const { TransactionHandler } = require('sawtooth-sdk/processor/handler')
 const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions')
 
-const FAMILY_NAME = 'agrichain'
+const protobuf = require('protobufjs')
+const protoJson = require('./utils/protoRoot.json')
+
+const FAMILY_NAME = 'AgriChain'
 const FAMILY_VERSION = '0.1'
-const NAMESPACE = 'bc3a20'
+const NAMESPACE = 'f4cb6d'
+
+// Payload message protobuf.
+const root = protobuf.Root.fromJSON(protoJson)
+const PayloadMessage = root.lookup('ACPayload')
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -28,10 +35,25 @@ class AgriChainHandler extends TransactionHandler {
    */
   async apply (txn, context) {
     let payload = null
-    // todo
+
     // Payload decoding.
+    try {
+      payload = PayloadMessage.decode(txn.payload)
+    } catch (error) {
+      throw new InvalidTransaction(`Failed to decode the payload ${error}`)
+    }
+
     // Get action.
+    const action = payload.action
+
     // Action handling.
+    switch (action) {
+      case 'FIRST_ACTION':
+        console.log('First Action')
+        break
+      default:
+        throw new InvalidTransaction(`Unknown action ${action}`)
+    }
   }
 }
 
