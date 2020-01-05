@@ -3,6 +3,7 @@
 const { createHash } = require('crypto')
 
 const NAMESPACE = 'f4cb6d'
+const FAMILY_NAME = 'AgriChain'
 const PREFIXES = {
   // Entities.
   USERS: '00',
@@ -23,8 +24,6 @@ const USER_PREFIXES = {
   CERTIFIER: '23'
 }
 
-/*** Utilities ***/
-
 /**
  * Return an object containing a concatenation of namespace and prefix for each ones.
  */
@@ -38,8 +37,6 @@ const sha512 = msg =>
   createHash('sha512')
     .update(msg)
     .digest('hex')
-
-/*** Addressing ***/
 
 /**
  * A function that takes a public key and returns the corresponding system admin
@@ -92,6 +89,7 @@ const isValidAddress = address => {
 
 module.exports = {
   NAMESPACE,
+  FAMILY_NAME,
   PREFIXES,
   USER_PREFIXES,
   getSystemAdminAddress,

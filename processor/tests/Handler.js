@@ -7,12 +7,7 @@ const AgriChainHandler = require('./services/handler_wrapper')
 const Txn = require('./services/mock_txn')
 const Context = require('./services/mock_context')
 
-const protobuf = require('protobufjs')
-const protoJson = require('../utils/protoRoot.json')
-
-// Payload message protobuf.
-const root = protobuf.Root.fromJSON(protoJson)
-const PayloadMessage = root.lookup('ACPayload')
+const { ACPayload } = require('../services/proto')
 
 describe('Core Handler Behavior', () => {
   let handler = null
@@ -27,7 +22,7 @@ describe('Core Handler Behavior', () => {
   })
 
   it('Should return a Promise', () => {
-    const txn = new Txn({})
+    const txn = new Txn({ action: 'NO_ACTION' })
     const applyResult = handler.apply(txn, context)
 
     expect(applyResult).to.be.an.instanceOf(Promise)
@@ -35,12 +30,12 @@ describe('Core Handler Behavior', () => {
   })
 
   it('Should reject poorly encoded payloads', async () => {
-    const txn = new Txn(PayloadMessage.create({ action: 'WRONG_ACTION' }))
+    const txn = new Txn(ACPayload.create({ action: 'NO_ACTION' }))
     const rejected = await handler.apply(txn, context).catch(error => {
       expect(error).to.be.instanceOf(InvalidTransaction)
       return true
     })
-    
+
     expect(rejected).to.be.true
   })
 })

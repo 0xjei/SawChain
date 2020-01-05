@@ -1,34 +1,40 @@
-'use strict';
+'use strict'
 
 // A mock state context object for testing
 class Context {
-  constructor() {
-    this._state = {};
+  constructor () {
+    this._state = {}
   }
 
-  getState(addresses) {
+  getState (addresses) {
     return new Promise(resolve => {
-      resolve(addresses.reduce((results, addr) => {
-        results[addr] = this._state[addr] || [];
-        return results;
-      }, {}));
-    });
+      resolve(
+        addresses.reduce((results, addr) => {
+          results[addr] = this._state[addr] || []
+          return results
+        }, {})
+      )
+    })
   }
 
-  setState(changes) {
+  setState (changes) {
     return new Promise(resolve => {
-      const addresses = Object.keys(changes);
-      addresses.forEach(addr => { this._state[addr] = changes[addr]; });
-      resolve(addresses);
-    });
+      const addresses = Object.keys(changes)
+      addresses.forEach(addr => {
+        this._state[addr] = changes[addr]
+      })
+      resolve(addresses)
+    })
   }
 
-  deleteState(addresses) {
+  deleteState (addresses) {
     return new Promise(resolve => {
-      addresses.forEach(address => { delete this._state[address]; });
-      resolve(addresses);
-    });
+      addresses.forEach(address => {
+        delete this._state[address]
+      })
+      resolve(addresses)
+    })
   }
 }
 
-module.exports = Context;
+module.exports = Context

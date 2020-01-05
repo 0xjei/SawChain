@@ -1,9 +1,7 @@
 'use strict'
-
 const fs = require('fs')
 const path = require('path')
 const protobuf = require('protobufjs')
-const jsonTarget = require('protobufjs/cli/targets/json')
 
 // Empty Protobuf root instance.
 let root = new protobuf.Root()
@@ -21,13 +19,9 @@ try {
   throw error
 }
 
-jsonTarget(root, {}, (error, output) => {
-  if (error) {
-    throw error
-  }
+const ACPayload = root.lookup('ACPayload')
 
-  // Write root into output standard.
-  if (output !== '') {
-    process.stdout.write(output, 'utf8')
-  }
-})
+module.exports = {
+  root,
+  ACPayload
+}

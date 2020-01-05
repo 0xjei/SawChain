@@ -3,16 +3,9 @@
 const { TransactionHandler } = require('sawtooth-sdk/processor/handler')
 const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions')
 
-const protobuf = require('protobufjs')
-const protoJson = require('./utils/protoRoot.json')
+const { ACPayload } = require('./services/proto')
 
-const FAMILY_NAME = 'AgriChain'
-const FAMILY_VERSION = '0.1'
-const NAMESPACE = 'f4cb6d'
-
-// Payload message protobuf.
-const root = protobuf.Root.fromJSON(protoJson)
-const PayloadMessage = root.lookup('ACPayload')
+const { FAMILY_NAME, NAMESPACE } = require('./services/addressing')
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -24,7 +17,7 @@ class AgriChainHandler extends TransactionHandler {
    * namespaces it expects to handle.
    */
   constructor () {
-    super(FAMILY_NAME, [FAMILY_VERSION], [NAMESPACE])
+    super(FAMILY_NAME, ['0.1'], [NAMESPACE])
   }
 
   /**
@@ -38,7 +31,7 @@ class AgriChainHandler extends TransactionHandler {
 
     // Payload decoding.
     try {
-      payload = PayloadMessage.decode(txn.payload)
+      payload = ACPayload.decode(txn.payload)
     } catch (error) {
       throw new InvalidTransaction(`Failed to decode the payload ${error}`)
     }
@@ -48,8 +41,8 @@ class AgriChainHandler extends TransactionHandler {
 
     // Action handling.
     switch (action) {
-      case 'FIRST_ACTION':
-        console.log('First Action')
+      case 'CREATE_SYSADMIN':
+        console.log('CREATE_SYSADMIN')
         break
       default:
         throw new InvalidTransaction(`Unknown action ${action}`)
