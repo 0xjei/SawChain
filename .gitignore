@@ -11,6 +11,7 @@ log.txt
 .vscode/
 npm-debug.log*
 .env
-
+build
 node_modules/
 .gitkeep
+.idea
