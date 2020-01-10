@@ -1,7 +1,0 @@
-// terrible.proto
-syntax = "proto3";
-package terriblepackage;
-
-message TerribleMessage {
-    string terrible_field = 1; // becomes terribleField
-}

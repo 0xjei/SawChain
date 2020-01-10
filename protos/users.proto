@@ -1,12 +1,8 @@
 syntax = "proto3";
 package agrichain;
 
-message ACPayload {
-    enum Action {
-        CREATE_SYSADMIN = 1;
-    }
-
-    Action action = 1;
+message SystemAdmin {
+    string publicKey = 1;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 2;
