@@ -2,11 +2,11 @@
 
 const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-const Txn = require('../services/mock_txn');
-const Context = require('../services/mock_context');
-const {ACPayload, SystemAdmin, UpdateSystemAdminAction} = require('../../services/proto');
-const AgriChainHandler = require('../services/handler_wrapper');
-const {getSystemAdminAddress} = require('../../services/addressing');
+const Txn = require('./services/mock_txn');
+const Context = require('./services/mock_context');
+const {ACPayload, SystemAdmin, UpdateSystemAdminAction} = require('../services/proto');
+const AgriChainHandler = require('./services/handler_wrapper');
+const {getSystemAdminAddress} = require('../services/addressing');
 const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
 const secp256k1Context = new secp256k1.Secp256k1Context();
 
