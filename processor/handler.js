@@ -7,7 +7,7 @@ const {ACPayload} = require('./services/proto');
 
 const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
 
-const createSystemAdmin = require('./actions/usersActions');
+const {createSystemAdmin, updateSystemAdmin} = require('./actions/usersActions');
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -40,12 +40,16 @@ class AgriChainHandler extends TransactionHandler {
 
         // Get action.
         const action = payload.action;
-        const publicKey = txn.header.signerPublicKey;
+        const signerPublicKey = txn.header.signerPublicKey;
 
         // Action handling.
         switch (action) {
             case ACPayload.Action.CREATE_SYSADMIN:
-                await createSystemAdmin(context, publicKey, payload.timestamp);
+                await createSystemAdmin(context, signerPublicKey, payload.timestamp);
+                break;
+            case ACPayload.Action.UPDATE_SYSADMIN:
+                const adminPublicKey = payload.updateSysAdmin ? payload.updateSysAdmin.publicKey : '';
+                await updateSystemAdmin(context, signerPublicKey, payload.timestamp, adminPublicKey);
                 break;
             default:
                 throw new InvalidTransaction(`Unknown action ${action}`)

@@ -21,9 +21,11 @@ try {
 
 const ACPayload = root.lookup('ACPayload');
 const SystemAdmin = root.lookup('SystemAdmin');
+const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 
 module.exports = {
     root,
     ACPayload,
-    SystemAdmin
+    SystemAdmin,
+    UpdateSystemAdminAction
 };
