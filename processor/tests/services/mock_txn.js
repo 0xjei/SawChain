@@ -12,6 +12,7 @@ const getRandomString = () => (Math.random() * 10 ** 18).toString(36);
 // A mock Transaction Process Request or "txn"
 class Txn {
     constructor(payload, privateKey = null) {
+        // Only for testing purposes.
         const privateWrapper =
             privateKey === null
                 ? context.newRandomPrivateKey()
