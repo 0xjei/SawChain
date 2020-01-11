@@ -7,7 +7,7 @@ const {ACPayload} = require('./services/proto');
 
 const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
 
-const {createSystemAdmin, updateSystemAdmin} = require('./actions/usersActions');
+const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
