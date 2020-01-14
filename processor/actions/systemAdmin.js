@@ -1,17 +1,12 @@
 'use strict';
 
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress
 } = require('../services/addressing');
 const {SystemAdmin} = require('../services/proto');
-
-// A quick convenience function to throw an error with a joined message
-const reject = (...msgs) => {
-    throw new InvalidTransaction(msgs.join(' '))
-};
+const {reject} = require('../services/utils');
 
 /**
  * Create a System Admin can bootstrap the system (add company administrators, types, etc.).
