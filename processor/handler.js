@@ -2,12 +2,10 @@
 
 const {TransactionHandler} = require('sawtooth-sdk/processor/handler');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-
 const {ACPayload} = require('./services/proto');
-
 const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
-
 const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
+const {createTaskType} = require('./actions/typeEntities');
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -50,6 +48,11 @@ class AgriChainHandler extends TransactionHandler {
             case ACPayload.Action.UPDATE_SYSADMIN:
                 const adminPublicKey = payload.updateSysAdmin ? payload.updateSysAdmin.publicKey : '';
                 await updateSystemAdmin(context, signerPublicKey, payload.timestamp, adminPublicKey);
+                break;
+            case ACPayload.Action.CREATE_TASK_TYPE:
+                const id = payload.createTaskType ? payload.createTaskType.id : '';
+                const role = payload.createTaskType ? payload.createTaskType.role : '';
+                await createTaskType(context, signerPublicKey, payload.timestamp, id, role);
                 break;
             default:
                 throw new InvalidTransaction(`Unknown action ${action}`)

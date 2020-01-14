@@ -1,0 +1,43 @@
+syntax = "proto3";
+package agrichain;
+
+message TaskType {
+    string id = 1; // unique 3 characters
+    string role = 2;
+}
+
+// todo verify correctness.
+message ProductType {
+    enum UnitOfMeasure {
+        KILOS = 0;
+        LITRE = 1;
+        METRE = 2;
+        UNIT = 3;
+    }
+
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    UnitOfMeasure measure = 4;
+    repeated string derivedProducts = 5;
+}
+
+message EventType {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    repeated ParameterType parameters = 4;
+}
+
+message ParameterType {
+    enum Type {
+        NUMBER = 0;
+        TEXT = 1;
+        FILE = 2;
+    }
+
+    string id = 1;
+    string name = 2;
+    string value = 3;
+    Type type = 4;
+}

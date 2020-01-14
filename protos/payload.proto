@@ -5,6 +5,7 @@ message ACPayload {
     enum Action {
         CREATE_SYSADMIN = 0;
         UPDATE_SYSADMIN = 1;
+        CREATE_TASK_TYPE = 2;
     }
 
     Action action = 1;
@@ -13,8 +14,14 @@ message ACPayload {
     uint64 timestamp = 2;
 
     UpdateSystemAdminAction updateSysAdmin = 3;
+    CreateTaskTypeAction createTaskType = 4;
 }
 
 message UpdateSystemAdminAction {
     string publicKey = 1;
+}
+
+message CreateTaskTypeAction {
+    string id = 1;
+    string role = 2;
 }

@@ -69,6 +69,13 @@ const getOperatorAddress = publicKey => {
 };
 
 /**
+ * A function that takes a id and returns the corresponding task type address.
+ */
+const getTaskTypeAddress = id => {
+    return FULL_PREFIXES.TASK_TYPE + sha512(id).slice(0, 62);
+};
+
+/**
  * A function that takes an address and returns true or false depending on
  * whether or not it is a valid address. It should reject an address if:
  *   - it is not a string
@@ -89,5 +96,6 @@ module.exports = {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
+    getTaskTypeAddress,
     isValidAddress
 };
