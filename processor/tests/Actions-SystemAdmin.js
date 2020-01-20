@@ -64,7 +64,7 @@ describe('Users Functionalities', () => {
         describe('Update System Admin', () => {
 
             it('Should reject if no action payload is given', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.UPDATE_SYSADMIN})
                 );
                 const submission = handler.apply(invalidTxn, context);
@@ -73,7 +73,7 @@ describe('Users Functionalities', () => {
             });
 
             it('Should reject if no timestamp is given', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         updateSysAdmin: UpdateSystemAdminAction.create({error: "error"})
@@ -85,7 +85,7 @@ describe('Users Functionalities', () => {
             });
 
             it('Should reject if no public key is given', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
@@ -98,7 +98,7 @@ describe('Users Functionalities', () => {
             });
 
             it('Should reject if public key is invalid', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
@@ -111,7 +111,7 @@ describe('Users Functionalities', () => {
             });
 
             it('Should reject if same current System Admin public key is given', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
@@ -125,7 +125,7 @@ describe('Users Functionalities', () => {
             });
 
             it('Should reject if current System Admin is not the transaction signer', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
