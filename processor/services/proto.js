@@ -30,6 +30,7 @@ const ProductType = root.lookup('ProductType');
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
+const AddDerivedProductType = root.lookup('AddDerivedProductType');
 
 module.exports = {
     root,
@@ -39,5 +40,6 @@ module.exports = {
     ProductType,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
-    CreateProductTypeAction
+    CreateProductTypeAction,
+    AddDerivedProductType
 };

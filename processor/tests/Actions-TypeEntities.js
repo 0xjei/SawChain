@@ -5,7 +5,14 @@ const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
 const AgriChainHandler = require('./services/handler_wrapper');
-const {ACPayload, CreateTaskTypeAction, CreateProductTypeAction, TaskType, ProductType} = require('../services/proto');
+const {
+    ACPayload,
+    CreateTaskTypeAction,
+    CreateProductTypeAction,
+    AddDerivedProductType,
+    TaskType,
+    ProductType
+} = require('../services/proto');
 const {getTaskTypeAddress, getProductTypeAddress} = require('../services/addressing');
 
 describe('Types Creation', () => {
@@ -279,6 +286,182 @@ describe('Types Creation', () => {
         });
     });
 
-});
+    describe('Add Derived Product Type', () => {
+        const productTypeId = "mock-product-id";
+        const derivedProductTypeId = "mock-product-id2";
 
-// console.log(await submission);
+        const productTypeAddress = getProductTypeAddress(productTypeId);
+        const derivedProductTypeAddress = getProductTypeAddress(derivedProductTypeId);
+
+        it('Should reject if no action payload is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE})
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no timestamp is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    addDerivedProductType: AddDerivedProductType.create({})
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no product type id is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({})
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no derived product type id is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId
+                    })
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if signer is not the System Admin', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId,
+                        derivedProductTypeId: derivedProductTypeId
+                    })
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given product type id does not match with an existing Product Type', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: "no-match",
+                        derivedProductTypeId: derivedProductTypeId
+                    })
+                }),
+                adminPrivateKey
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given derived product type id does not match with an existing Product Type', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId,
+                        derivedProductTypeId: "no-match"
+                    })
+                }),
+                adminPrivateKey
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given ids corresponding to the same existing Product Type', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId,
+                        derivedProductTypeId: productTypeId
+                    })
+                }),
+                adminPrivateKey
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        before(async () => {
+            // Record a Product Type.
+            const productTypeTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    createProductType: CreateProductTypeAction.create({
+                        id: derivedProductTypeId,
+                        name: "mock-product-name2",
+                        description: "mock-product-description",
+                        measure: ProductType.UnitOfMeasure.KILOS
+                    })
+                }),
+                adminPrivateKey
+            );
+            await handler.apply(productTypeTxn, context);
+        });
+
+        it('Should update the derived products type list', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId,
+                        derivedProductTypeId: derivedProductTypeId
+                    })
+                }),
+                adminPrivateKey
+            );
+            await handler.apply(invalidTxn, context);
+
+            expect(context._state[productTypeAddress]).to.not.be.null;
+            expect(ProductType.decode(context._state[productTypeAddress]).derivedProductsType).to.contains(derivedProductTypeId);
+        });
+
+        it('Should reject if given derived Product Type is already in the list', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.ADD_DERIVED_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    addDerivedProductType: AddDerivedProductType.create({
+                        productTypeId: productTypeId,
+                        derivedProductTypeId: derivedProductTypeId
+                    })
+                }),
+                adminPrivateKey
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+    });
+
+});

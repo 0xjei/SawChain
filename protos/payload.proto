@@ -8,6 +8,7 @@ message ACPayload {
         UPDATE_SYSADMIN = 1;
         CREATE_TASK_TYPE = 2;
         CREATE_PRODUCT_TYPE = 3;
+        ADD_DERIVED_PRODUCT_TYPE = 4;
     }
 
     Action action = 1;
@@ -18,6 +19,7 @@ message ACPayload {
     UpdateSystemAdminAction updateSysAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
+    AddDerivedProductType addDerivedProductType = 6;
 }
 
 message UpdateSystemAdminAction {
@@ -34,4 +36,9 @@ message CreateProductTypeAction {
     string name = 2;
     string description = 3;
     ProductType.UnitOfMeasure measure = 4;
+}
+
+message AddDerivedProductType {
+    string productTypeId = 1;
+    string derivedProductTypeId = 2;
 }
