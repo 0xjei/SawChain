@@ -4,7 +4,7 @@ const {getTaskTypeAddress, getSystemAdminAddress} = require('../services/address
 const {TaskType, SystemAdmin} = require('../services/proto');
 const {reject} = require('../services/utils');
 
-async function createTaskType(context, signerPublicKey, timestamp, id, role) {
+async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);

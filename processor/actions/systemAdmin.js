@@ -49,18 +49,22 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
  * @param timestamp
  * @param newAdminPublicKey
  */
-async function updateSystemAdmin(context, signerPublicKey, timestamp, newAdminPublicKey) {
+async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
 
-    // Validation: newAdminPublicKey is not a valid public key.
-    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(newAdminPublicKey) || !newAdminPublicKey)
+    // Validation: publicKey is not a valid public key.
+    if (!publicKey)
+        reject(`New System Admin public key is not set!`);
+
+    // Validation: publicKey is not a valid public key.
+    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
         reject(`New System Admin public key is invalid!`);
 
     const systemAdminAddress = getSystemAdminAddress();
-    const companyAdminAddress = getCompanyAdminAddress(newAdminPublicKey);
-    const operatorAddress = getOperatorAddress(newAdminPublicKey);
+    const companyAdminAddress = getCompanyAdminAddress(publicKey);
+    const operatorAddress = getOperatorAddress(publicKey);
 
     const state = await context.getState([
         systemAdminAddress,
@@ -79,7 +83,7 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, newAdminPu
         reject(`Transaction signer is different from current System Admin!`);
 
     // Validation: Given public key is the old one.
-    if (adminState.publicKey === newAdminPublicKey)
+    if (adminState.publicKey === publicKey)
         reject(`Signing public key is current System Admin key!`);
 
     // Validation: Given public key already associated to CA or OP.
@@ -93,7 +97,7 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, newAdminPu
     const updates = {};
 
     updates[systemAdminAddress] = SystemAdmin.encode({
-        publicKey: newAdminPublicKey,
+        publicKey: publicKey,
         timestamp: timestamp
     }).finish();
 

@@ -24,16 +24,20 @@ const ACPayload = root.lookup('ACPayload');
 // Entities
 const SystemAdmin = root.lookup('SystemAdmin');
 const TaskType = root.lookup('TaskType');
+const ProductType = root.lookup('ProductType');
 
 // Actions
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
+const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 
 module.exports = {
     root,
     ACPayload,
     SystemAdmin,
     TaskType,
+    ProductType,
     UpdateSystemAdminAction,
-    CreateTaskTypeAction
+    CreateTaskTypeAction,
+    CreateProductTypeAction
 };

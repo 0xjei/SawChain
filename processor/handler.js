@@ -6,6 +6,7 @@ const {ACPayload} = require('./services/proto');
 const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
 const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
 const {createTaskType} = require('./actions/typeEntities');
+const {reject} = require('./services/utils');
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -46,13 +47,14 @@ class AgriChainHandler extends TransactionHandler {
                 await createSystemAdmin(context, signerPublicKey, payload.timestamp);
                 break;
             case ACPayload.Action.UPDATE_SYSADMIN:
-                const adminPublicKey = payload.updateSysAdmin ? payload.updateSysAdmin.publicKey : '';
-                await updateSystemAdmin(context, signerPublicKey, payload.timestamp, adminPublicKey);
+                if (!payload.updateSysAdmin)
+                    reject(`Action payload is missing for update System Admin action!`);
+                await updateSystemAdmin(context, signerPublicKey, payload.timestamp, payload.updateSysAdmin);
                 break;
             case ACPayload.Action.CREATE_TASK_TYPE:
-                const id = payload.createTaskType ? payload.createTaskType.id : '';
-                const role = payload.createTaskType ? payload.createTaskType.role : '';
-                await createTaskType(context, signerPublicKey, payload.timestamp, id, role);
+                if (!payload.createTaskType)
+                    reject(`Action payload is missing for create Task Type action!`);
+                await createTaskType(context, signerPublicKey, payload.timestamp, payload.createTaskType);
                 break;
             default:
                 throw new InvalidTransaction(`Unknown action ${action}`)

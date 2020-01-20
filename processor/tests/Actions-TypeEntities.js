@@ -10,48 +10,45 @@ const {getTaskTypeAddress} = require('../services/addressing');
 
 describe('Types Creation', () => {
     describe('Task Type', () => {
-        let handler = null;
-        let context = null;
-        let publicKey = null;
-        let privateKey = null;
-        let taskTypeAddress = null;
-        let id = null;
-        let role = null;
+        const handler = new AgriChainHandler();
+        const context = new Context();
+
+        let adminPublicKey = null;
+        let adminPrivateKey = null;
+        let id = "mock-id";
+        let role = "mock-role";
+
+        let taskTypeAddress = getTaskTypeAddress(id);
 
         before(async function () {
-            handler = new AgriChainHandler();
-            context = new Context();
-
             // Create a System Admin.
-            systemAdminTxn = new Txn(
+            const systemAdminTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
             );
-            publicKey = systemAdminTxn._publicKey;
-            privateKey = systemAdminTxn._privateKey;
+            adminPublicKey = systemAdminTxn._publicKey;
+            adminPrivateKey = systemAdminTxn._privateKey;
             await handler.apply(systemAdminTxn, context);
-
-            // Txn for TaskType.
-            id = "FOP";
-            role = "Field Operator";
-            taskTypeTxn = new Txn(
-                ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
-                    timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
-                }),
-                privateKey
-            );
-
-            taskTypeAddress = getTaskTypeAddress(id)
         });
 
-        it('Should reject if no timestamp is given', async () => {
+        it('Should reject if no action payload is given', async () => {
             invalidTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_TASK_TYPE})
             );
             const submission = handler.apply(invalidTxn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no timestamp is given', async () => {
+            invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    createTaskType: CreateTaskTypeAction.create({})
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
         it('Should reject if no id is given', async () => {
@@ -72,7 +69,7 @@ describe('Types Creation', () => {
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: "FOP"})
+                    createTaskType: CreateTaskTypeAction.create({id: id})
                 })
             );
             const submission = handler.apply(invalidTxn, context);
@@ -94,9 +91,18 @@ describe('Types Creation', () => {
         });
 
         it('Should create the Task Type', async () => {
+            taskTypeTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    timestamp: Date.now(),
+                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
+                }),
+                adminPrivateKey
+            );
+
             await handler.apply(taskTypeTxn, context);
 
-            expect(context._state[taskTypeAddress]).to.exist;
+            expect(context._state[taskTypeAddress]).to.not.be.null;
             expect(TaskType.decode(context._state[taskTypeAddress]).id).to.equal(id);
             expect(TaskType.decode(context._state[taskTypeAddress]).role).to.equal(role);
         });
@@ -106,9 +112,9 @@ describe('Types Creation', () => {
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: "FOP", role: "Field Operator"})
+                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
                 }),
-                privateKey
+                adminPrivateKey
             );
             const submission = handler.apply(invalidTxn, context);
 

@@ -7,32 +7,23 @@ const Context = require('./services/mock_context');
 const {ACPayload, SystemAdmin, UpdateSystemAdminAction} = require('../services/proto');
 const AgriChainHandler = require('./services/handler_wrapper');
 const {getSystemAdminAddress} = require('../services/addressing');
-const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
-const secp256k1Context = new secp256k1.Secp256k1Context();
+const {getNewKeyPair} = require('../services/utils');
 
 describe('Users Functionalities', () => {
     describe('System Admin', () => {
-        let handler = null;
-        let context = null;
-        let txn = null;
-        let publicKey = null;
-        let privateKey = null;
-        let address = null;
+        const handler = new AgriChainHandler();
+        const context = new Context();
 
-        before(function () {
-            handler = new AgriChainHandler();
-            context = new Context();
-            txn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
-            );
-            publicKey = txn._publicKey;
-            privateKey = txn._privateKey;
-            address = getSystemAdminAddress(publicKey);
-        });
+        let adminPrivateKey = null;
+        let adminPublicKey = null;
+        let newAdminKeys = null;
+
+        const systemAdminAddress = getSystemAdminAddress();
+
         describe('Create System Admin', () => {
 
             it('Should reject if no timestamp is given', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN})
                 );
 
@@ -42,16 +33,22 @@ describe('Users Functionalities', () => {
             });
 
             it('Should create the System Admin', async () => {
+                const txn = new Txn(
+                    ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
+                );
+                adminPrivateKey = txn._privateKey;
+                adminPublicKey = txn._publicKey;
+
                 await handler.apply(txn, context);
 
-                expect(context._state[address]).to.exist;
-                expect(SystemAdmin.decode(context._state[address]).publicKey).to.equal(
-                    publicKey
+                expect(context._state[systemAdminAddress]).to.not.be.null;
+                expect(SystemAdmin.decode(context._state[systemAdminAddress]).publicKey).to.equal(
+                    adminPublicKey
                 )
             });
 
             it('Should reject if System Admin is already recorded', async () => {
-                invalidTxn = new Txn(
+                const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
                 );
 
@@ -61,23 +58,12 @@ describe('Users Functionalities', () => {
             });
         });
 
-        const newAdminPrivateKey = secp256k1Context.newRandomPrivateKey();
-        const newAdminPublicKey = secp256k1Context.getPublicKey(newAdminPrivateKey).asHex();
-        let updateTxn = null;
-
         before(function () {
-            updateTxn = new Txn(
-                ACPayload.create({
-                    action: ACPayload.Action.UPDATE_SYSADMIN,
-                    timestamp: Date.now(),
-                    updateSysAdmin: UpdateSystemAdminAction.create({publicKey: newAdminPublicKey})
-                }),
-                privateKey
-            );
+            newAdminKeys = getNewKeyPair();
         });
-
         describe('Update System Admin', () => {
-            it('Should reject if no timestamp is given', async () => {
+
+            it('Should reject if no action payload is given', async () => {
                 invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.UPDATE_SYSADMIN})
                 );
@@ -86,9 +72,25 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
+            it('Should reject if no timestamp is given', async () => {
+                invalidTxn = new Txn(
+                    ACPayload.create({
+                        action: ACPayload.Action.UPDATE_SYSADMIN,
+                        updateSysAdmin: UpdateSystemAdminAction.create({error: "error"})
+                    })
+                );
+                const submission = handler.apply(invalidTxn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
             it('Should reject if no public key is given', async () => {
                 invalidTxn = new Txn(
-                    ACPayload.create({action: ACPayload.Action.UPDATE_SYSADMIN, timestamp: Date.now()})
+                    ACPayload.create({
+                        action: ACPayload.Action.UPDATE_SYSADMIN,
+                        timestamp: Date.now(),
+                        updateSysAdmin: UpdateSystemAdminAction.create({error: "error"})
+                    })
                 );
                 const submission = handler.apply(invalidTxn, context);
 
@@ -100,7 +102,7 @@ describe('Users Functionalities', () => {
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: publicKey.slice(0, 65)})
+                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: newAdminKeys.publicKey.slice(0, 65)})
                     })
                 );
                 const submission = handler.apply(invalidTxn, context);
@@ -113,9 +115,9 @@ describe('Users Functionalities', () => {
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: publicKey})
+                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: adminPublicKey})
                     }),
-                    privateKey
+                    adminPrivateKey
                 );
                 const submission = handler.apply(invalidTxn, context);
 
@@ -127,9 +129,9 @@ describe('Users Functionalities', () => {
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: publicKey})
+                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: newAdminKeys.publicKey})
                     }),
-                    secp256k1Context.newRandomPrivateKey().asHex()
+                    newAdminKeys.privateKey
                 );
                 const submission = handler.apply(invalidTxn, context);
 
@@ -137,11 +139,20 @@ describe('Users Functionalities', () => {
             });
 
             it('Should update the System Admin', async () => {
+                const updateTxn = new Txn(
+                    ACPayload.create({
+                        action: ACPayload.Action.UPDATE_SYSADMIN,
+                        timestamp: Date.now(),
+                        updateSysAdmin: UpdateSystemAdminAction.create({publicKey: newAdminKeys.publicKey})
+                    }),
+                    adminPrivateKey
+                );
+
                 await handler.apply(updateTxn, context);
 
-                expect(context._state[address]).to.exist;
-                expect(SystemAdmin.decode(context._state[address]).publicKey).to.equal(
-                    newAdminPublicKey
+                expect(context._state[systemAdminAddress]).to.not.be.null;
+                expect(SystemAdmin.decode(context._state[systemAdminAddress]).publicKey).to.equal(
+                    newAdminKeys.publicKey
                 )
             });
 

@@ -69,10 +69,17 @@ const getOperatorAddress = publicKey => {
 };
 
 /**
- * A function that takes a id and returns the corresponding task type address.
+ * A function that takes an id and returns the corresponding task type address.
  */
 const getTaskTypeAddress = id => {
     return FULL_PREFIXES.TASK_TYPE + sha512(id).slice(0, 62);
+};
+
+/**
+ * A function that takes an id and returns the corresponding product type address.
+ */
+const getProductTypeAddress = id => {
+    return FULL_PREFIXES.PRODUCT_TYPE + sha512(id).slice(0, 62);
 };
 
 /**
@@ -97,5 +104,6 @@ module.exports = {
     getCompanyAdminAddress,
     getOperatorAddress,
     getTaskTypeAddress,
+    getProductTypeAddress,
     isValidAddress
 };
