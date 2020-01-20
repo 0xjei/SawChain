@@ -1,11 +1,13 @@
 syntax = "proto3";
 package agrichain;
+import "types.proto";
 
 message ACPayload {
     enum Action {
         CREATE_SYSADMIN = 0;
         UPDATE_SYSADMIN = 1;
         CREATE_TASK_TYPE = 2;
+        CREATE_PRODUCT_TYPE = 3;
     }
 
     Action action = 1;
@@ -15,6 +17,7 @@ message ACPayload {
 
     UpdateSystemAdminAction updateSysAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
+    CreateProductTypeAction createProductType = 5;
 }
 
 message UpdateSystemAdminAction {
@@ -24,4 +27,11 @@ message UpdateSystemAdminAction {
 message CreateTaskTypeAction {
     string id = 1;
     string role = 2;
+}
+
+message CreateProductTypeAction {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    ProductType.UnitOfMeasure measure = 4;
 }

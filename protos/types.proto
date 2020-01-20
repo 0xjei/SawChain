@@ -6,7 +6,6 @@ message TaskType {
     string role = 2;
 }
 
-// todo verify correctness.
 message ProductType {
     enum UnitOfMeasure {
         KILOS = 0;
@@ -19,9 +18,10 @@ message ProductType {
     string name = 2;
     string description = 3;
     UnitOfMeasure measure = 4;
-    repeated string derivedProducts = 5;
+    repeated string derivedProductsType = 5;
 }
 
+// todo verify correctness.
 message EventType {
     string id = 1;
     string name = 2;
