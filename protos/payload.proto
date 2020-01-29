@@ -38,6 +38,7 @@ message CreateProductTypeAction {
     string name = 2;
     string description = 3;
     ProductType.UnitOfMeasure measure = 4;
+    repeated string derivedProductsType = 5;
 }
 
 message AddDerivedProductType {
