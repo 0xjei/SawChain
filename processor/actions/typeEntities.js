@@ -56,7 +56,7 @@ async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
     await context.setState(updates)
 }
 
-async function createProductType(context, signerPublicKey, timestamp, {id, name, description, measure}) {
+async function createProductType(context, signerPublicKey, timestamp, {id, name, description, measure, derivedProductsType}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
@@ -95,6 +95,19 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
     if (state[productTypeAddress].length > 0)
         reject(`Given id is already used in a different product type!`);
 
+    // Validation: Derived products type are not recorded yet.
+    for (const derivedProductId of derivedProductsType) {
+        let derivedProductTypeAddress = getProductTypeAddress(derivedProductId);
+
+        let derivedProductState = await context.getState([
+            derivedProductTypeAddress
+        ]);
+
+        if (!derivedProductState[derivedProductTypeAddress].length) {
+            reject(`Given derived Product Type with ${id} id is not recorded yet!`);
+        }
+    }
+
     // State update.
     const updates = {};
 
@@ -103,6 +116,7 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
         name: name,
         description: description,
         measure: measure,
+        derivedProductsType: derivedProductsType
     }).finish();
 
     await context.setState(updates)

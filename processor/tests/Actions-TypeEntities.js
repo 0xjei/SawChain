@@ -142,8 +142,16 @@ describe('Types Creation', () => {
         const productName = "mock-product-name";
         const productDescription = "mock-product-description";
         const productUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
+        const derivedProductsType = ["mock-product-id"];
+
+        const productId2 = "mock-product-id2";
+        const productName2 = "mock-product-name2";
+        const productDescription2 = "mock-product-description2";
+        const productUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
+
 
         const productTypeAddress = getProductTypeAddress(productId);
+        const productTypeAddress2 = getProductTypeAddress(productId2);
 
         it('Should reject if no action payload is given', async () => {
             const invalidTxn = new Txn(
@@ -246,7 +254,28 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Product Type', async () => {
+        it('Should reject if the derived products types are not existing', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    createProductType: CreateProductTypeAction.create({
+                        id: productId,
+                        name: productName,
+                        description: productDescription,
+                        measure: productUnitOfMeasure,
+                        derivedProductsType: derivedProductsType
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Product Type with no derived products types', async () => {
             const productTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -269,6 +298,32 @@ describe('Types Creation', () => {
             expect(ProductType.decode(context._state[productTypeAddress]).description).to.equal(productDescription);
             expect(ProductType.decode(context._state[productTypeAddress]).measure).to.equal(productUnitOfMeasure);
             expect(ProductType.decode(context._state[productTypeAddress]).derivedProductsType).to.be.empty;
+        });
+
+        it('Should create the Product Type with a derived product type', async () => {
+            const productTypeTxn2 = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    createProductType: CreateProductTypeAction.create({
+                        id: productId2,
+                        name: productName2,
+                        description: productDescription2,
+                        measure: productUnitOfMeasure2,
+                        derivedProductsType: derivedProductsType
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            await handler.apply(productTypeTxn2, context);
+
+            expect(context._state[productTypeAddress2]).to.not.be.null;
+            expect(ProductType.decode(context._state[productTypeAddress2]).id).to.equal(productId2);
+            expect(ProductType.decode(context._state[productTypeAddress2]).name).to.equal(productName2);
+            expect(ProductType.decode(context._state[productTypeAddress2]).description).to.equal(productDescription2);
+            expect(ProductType.decode(context._state[productTypeAddress2]).measure).to.equal(productUnitOfMeasure2);
+            expect(ProductType.decode(context._state[productTypeAddress2]).derivedProductsType[0]).to.equal(derivedProductsType[0]);
         });
 
         it('Should reject if id is already used for another ProductType', async () => {
@@ -294,7 +349,7 @@ describe('Types Creation', () => {
 
     describe('Add Derived Product Type', () => {
         const productTypeId = "mock-product-id";
-        const derivedProductTypeId = "mock-product-id2";
+        const derivedProductTypeId = "mock-product-id3";
 
         const productTypeAddress = getProductTypeAddress(productTypeId);
 
