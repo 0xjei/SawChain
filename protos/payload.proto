@@ -9,6 +9,7 @@ message ACPayload {
         CREATE_TASK_TYPE = 2;
         CREATE_PRODUCT_TYPE = 3;
         ADD_DERIVED_PRODUCT_TYPE = 4;
+        CREATE_EVENT_PARAMETER_TYPE = 5;
     }
 
     Action action = 1;
@@ -20,6 +21,7 @@ message ACPayload {
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
     AddDerivedProductType addDerivedProductType = 6;
+    CreateEventParameterType createEventParameterType = 7;
 }
 
 message UpdateSystemAdminAction {
@@ -41,4 +43,10 @@ message CreateProductTypeAction {
 message AddDerivedProductType {
     string productTypeId = 1;
     string derivedProductTypeId = 2;
+}
+
+message CreateEventParameterType {
+    string id = 1;
+    string name = 2;
+    EventParameterType.Type type = 3;
 }

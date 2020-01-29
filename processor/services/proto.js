@@ -25,12 +25,14 @@ const ACPayload = root.lookup('ACPayload');
 const SystemAdmin = root.lookup('SystemAdmin');
 const TaskType = root.lookup('TaskType');
 const ProductType = root.lookup('ProductType');
+const EventParameterType = root.lookup('EventParameterType');
 
 // Actions
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 const AddDerivedProductType = root.lookup('AddDerivedProductType');
+const CreateEventParameterType = root.lookup('CreateEventParameterType');
 
 module.exports = {
     root,
@@ -38,8 +40,10 @@ module.exports = {
     SystemAdmin,
     TaskType,
     ProductType,
+    EventParameterType,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
-    AddDerivedProductType
+    AddDerivedProductType,
+    CreateEventParameterType
 };

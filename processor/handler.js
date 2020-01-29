@@ -5,7 +5,12 @@ const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const {ACPayload} = require('./services/proto');
 const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
 const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
-const {createTaskType, createProductType, addDerivedProductType} = require('./actions/typeEntities');
+const {
+    createTaskType,
+    createProductType,
+    addDerivedProductType,
+    createEventParameterType
+} = require('./actions/typeEntities');
 const {reject} = require('./services/utils');
 
 /**
@@ -66,8 +71,13 @@ class AgriChainHandler extends TransactionHandler {
                     reject(`Action payload is missing for add derived Product Type action!`);
                 await addDerivedProductType(context, signerPublicKey, payload.timestamp, payload.addDerivedProductType);
                 break;
+            case ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE:
+                if (!payload.createEventParameterType)
+                    reject(`Action payload is missing for create Event Parameter Type action!`);
+                await createEventParameterType(context, signerPublicKey, payload.timestamp, payload.createEventParameterType);
+                break;
             default:
-                throw new InvalidTransaction(`Unknown action ${action}`)
+                throw new InvalidTransaction(`Unknown action ${action}`);
         }
     }
 }

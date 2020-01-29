@@ -1,7 +1,17 @@
 'use strict';
 
-const {getTaskTypeAddress, getSystemAdminAddress, getProductTypeAddress} = require('../services/addressing');
-const {TaskType, SystemAdmin, ProductType} = require('../services/proto');
+const {
+    getTaskTypeAddress,
+    getSystemAdminAddress,
+    getProductTypeAddress,
+    getEventParameterTypeAddress
+} = require('../services/addressing');
+const {
+    SystemAdmin,
+    TaskType,
+    ProductType,
+    EventParameterType
+} = require('../services/proto');
 const {reject} = require('../services/utils');
 
 async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
@@ -154,4 +164,56 @@ async function addDerivedProductType(context, signerPublicKey, timestamp, {produ
     await context.setState(updates)
 }
 
-module.exports = {createTaskType, createProductType, addDerivedProductType};
+async function createEventParameterType(context, signerPublicKey, timestamp, {id, name, type}) {
+    // Validation: Timestamp not set.
+    if (!timestamp.low && !timestamp.high)
+        reject(`Timestamp is not set!`);
+
+    // Validation: Event Parameter Type id is not set.
+    if (!id)
+        reject(`Event Parameter Type id is not set!`);
+
+    // Validation: Event Parameter Type name is not set.
+    if (!name)
+        reject(`Event Parameter Type name is not set!`);
+
+    // Validation: Type is not equal to one of the enum values.
+    if (!Object.values(EventParameterType.Type).some((value) => value === type))
+        reject(`Type is different from one of the possible units values!`);
+
+    const systemAdminAddress = getSystemAdminAddress();
+    const eventParameterTypeAddress = getEventParameterTypeAddress(id);
+
+    const state = await context.getState([
+        systemAdminAddress,
+        eventParameterTypeAddress
+    ]);
+
+    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+
+    // Validation: Sender is not the System Admin.
+    if (adminState.publicKey !== signerPublicKey)
+        reject(`You must be the System Admin to create a type!`);
+
+    // Validation: Id is not unique for event parameter types.
+    if (state[eventParameterTypeAddress].length > 0)
+        reject(`Given id is already used in a different event parameter type!`);
+
+    // State update.
+    const updates = {};
+
+    updates[eventParameterTypeAddress] = EventParameterType.encode({
+        id: id,
+        name: name,
+        type: type
+    }).finish();
+
+    await context.setState(updates)
+}
+
+module.exports = {
+    createTaskType,
+    createProductType,
+    addDerivedProductType,
+    createEventParameterType
+};
