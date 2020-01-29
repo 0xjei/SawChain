@@ -31,7 +31,6 @@ const EventParameterType = root.lookup('EventParameterType');
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
-const AddDerivedProductType = root.lookup('AddDerivedProductType');
 const CreateEventParameterType = root.lookup('CreateEventParameterType');
 
 module.exports = {
@@ -44,6 +43,5 @@ module.exports = {
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
-    AddDerivedProductType,
     CreateEventParameterType
 };

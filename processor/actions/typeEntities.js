@@ -122,62 +122,6 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
     await context.setState(updates)
 }
 
-async function addDerivedProductType(context, signerPublicKey, timestamp, {productTypeId, derivedProductTypeId}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
-    // Validation: Product Type id is not set.
-    if (!productTypeId)
-        reject(`Product Type id is not set!`);
-
-    // Validation: Derived Product Type id is not set.
-    if (!derivedProductTypeId)
-        reject(`Derived Product Type id is not set!`);
-
-    const systemAdminAddress = getSystemAdminAddress();
-    const productTypeAddress = getProductTypeAddress(productTypeId);
-    const derivedProductTypeAddress = getProductTypeAddress(derivedProductTypeId);
-
-    const state = await context.getState([
-        systemAdminAddress,
-        productTypeAddress,
-        derivedProductTypeAddress
-    ]);
-
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
-    const productState = ProductType.decode(state[productTypeAddress]);
-
-    // Validation: Sender is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a type!`);
-
-    // Validation: Given product does not exist.
-    if (!state[productTypeAddress].length > 0)
-        reject(`Given Product Type does not exist!`);
-
-    // Validation: Given derived product does not exist.
-    if (!state[derivedProductTypeAddress].length > 0)
-        reject(`Given derived Product Type does not exist!`);
-
-    // Validation: Given product types cannot be the same.
-    if (productTypeId === derivedProductTypeId)
-        reject(`Given Product Type is equal to derived Product Type!`);
-
-    // Validation: Given derived product is already used for given product.
-    if (productState.derivedProductsType.some(id => id === derivedProductTypeId))
-        reject(`Given derived Product Type is already in the list!`);
-
-    // State update.
-    const updates = {};
-
-    productState.derivedProductsType.push(derivedProductTypeId);
-
-    updates[getProductTypeAddress(productTypeId)] = ProductType.encode(productState).finish();
-
-    await context.setState(updates)
-}
-
 async function createEventParameterType(context, signerPublicKey, timestamp, {id, name, type}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
@@ -228,6 +172,5 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
 module.exports = {
     createTaskType,
     createProductType,
-    addDerivedProductType,
     createEventParameterType
 };
