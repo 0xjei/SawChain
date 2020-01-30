@@ -1,17 +1,20 @@
 'use strict';
 
 const {TransactionHandler} = require('sawtooth-sdk/processor/handler');
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-const {ACPayload} = require('./services/proto');
-const {FAMILY_NAME, NAMESPACE} = require('./services/addressing');
-const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
+const {TpProcessRequest} = require('sawtooth-sdk/protobuf');
+const {ACPayload, ACPayloadActions, ACPayloadFields} = require('./services/proto');
+const {FAMILY_NAME, NAMESPACE, VERSION} = require('./services/addressing');
+const {
+    createSystemAdmin,
+    updateSystemAdmin
+} = require('./actions/systemAdmin');
 const {
     createTaskType,
     createProductType,
     createEventParameterType,
     createEventType
 } = require('./actions/typeEntities');
-const {reject} = require('./services/utils');
+const {reject, getPayloadActionField} = require('./services/utils');
 
 /**
  * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
@@ -23,24 +26,17 @@ class AgriChainHandler extends TransactionHandler {
      * namespaces it expects to handle.
      */
     constructor() {
-        super(FAMILY_NAME, ['0.1'], [NAMESPACE])
+        super(FAMILY_NAME, [VERSION], [NAMESPACE])
     }
 
     /**
      * Smart contract logic core. It'll be called once for every transaction.
      * Validate each action logic and update state according to it.
-     * @param {Transaction} txn Transaction process request.
+     * @param {TpProcessRequest} txn Transaction process request.
      * @param {Context} context Current state context.
      */
     async apply(txn, context) {
-        let payload = null;
-
-        // Payload decoding.
-        try {
-            payload = ACPayload.decode(txn.payload)
-        } catch (error) {
-            throw new InvalidTransaction(`Failed to decode the payload ${error}`)
-        }
+        const payload = ACPayload.decode(txn.payload);
 
         // Get action.
         const action = payload.action;
@@ -48,36 +44,51 @@ class AgriChainHandler extends TransactionHandler {
 
         // Action handling.
         switch (action) {
-            case ACPayload.Action.CREATE_SYSADMIN:
+            case ACPayloadActions.CREATE_SYSADMIN:
                 await createSystemAdmin(context, signerPublicKey, payload.timestamp);
                 break;
-            case ACPayload.Action.UPDATE_SYSADMIN:
-                if (!payload.updateSysAdmin)
-                    reject(`Action payload is missing for update System Admin action!`);
-                await updateSystemAdmin(context, signerPublicKey, payload.timestamp, payload.updateSysAdmin);
+            case ACPayloadActions.UPDATE_SYSADMIN:
+                await updateSystemAdmin(
+                    context,
+                    signerPublicKey,
+                    payload.timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.updateSysAdmin.name)
+                );
                 break;
-            case ACPayload.Action.CREATE_TASK_TYPE:
-                if (!payload.createTaskType)
-                    reject(`Action payload is missing for create Task Type action!`);
-                await createTaskType(context, signerPublicKey, payload.timestamp, payload.createTaskType);
+            case ACPayloadActions.CREATE_TASK_TYPE:
+                await createTaskType(
+                    context,
+                    signerPublicKey,
+                    payload.timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.createTaskType.name)
+                );
                 break;
-            case ACPayload.Action.CREATE_PRODUCT_TYPE:
-                if (!payload.createProductType)
-                    reject(`Action payload is missing for create Product Type action!`);
-                await createProductType(context, signerPublicKey, payload.timestamp, payload.createProductType);
+            case ACPayloadActions.CREATE_PRODUCT_TYPE:
+                await createProductType(
+                    context,
+                    signerPublicKey,
+                    payload.timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.createProductType.name)
+                );
                 break;
-            case ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE:
-                if (!payload.createEventParameterType)
-                    reject(`Action payload is missing for create Event Parameter Type action!`);
-                await createEventParameterType(context, signerPublicKey, payload.timestamp, payload.createEventParameterType);
+            case ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE:
+                await createEventParameterType(
+                    context,
+                    signerPublicKey,
+                    payload.timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.createEventParameterType.name)
+                );
                 break;
-            case ACPayload.Action.CREATE_EVENT_TYPE:
-                if (!payload.createEventType)
-                    reject(`Action payload is missing for create Event Type action!`);
-                await createEventType(context, signerPublicKey, payload.timestamp, payload.createEventType);
+            case ACPayloadActions.CREATE_EVENT_TYPE:
+                await createEventType(
+                    context,
+                    signerPublicKey,
+                    payload.timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.createEventType.name)
+                );
                 break;
             default:
-                throw new InvalidTransaction(`Unknown action ${action}`);
+                reject(`Unknown action ${action}`);
         }
     }
 }

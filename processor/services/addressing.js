@@ -4,6 +4,7 @@ const {createHash} = require('crypto');
 
 const NAMESPACE = 'f4cb6d';
 const FAMILY_NAME = 'AgriChain';
+const VERSION = '0.1';
 const PREFIXES = {
     // Entities.
     USERS: '00',
@@ -111,6 +112,7 @@ const isValidAddress = address => {
 module.exports = {
     NAMESPACE,
     FAMILY_NAME,
+    VERSION,
     PREFIXES,
     FULL_PREFIXES,
     USER_PREFIXES,

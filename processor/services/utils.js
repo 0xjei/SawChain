@@ -16,4 +16,15 @@ const getNewKeyPair = () => {
     return {privateKey, publicKey}
 };
 
-module.exports = {reject, getNewKeyPair};
+const getPayloadActionField = (payload, actionFieldName) => {
+    if (!payload[actionFieldName])
+        reject(`Action payload is missing for ${actionFieldName} action!`);
+
+    return payload[actionFieldName]
+};
+
+module.exports = {
+    reject,
+    getNewKeyPair,
+    getPayloadActionField
+};

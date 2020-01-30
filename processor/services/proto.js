@@ -20,6 +20,8 @@ try {
 }
 
 const ACPayload = root.lookup('ACPayload');
+const ACPayloadActions = ACPayload.Action;
+const ACPayloadFields = ACPayload.fields;
 
 // Entities
 const SystemAdmin = root.lookup('SystemAdmin');
@@ -38,6 +40,8 @@ const CreateEventType = root.lookup('CreateEventType');
 module.exports = {
     root,
     ACPayload,
+    ACPayloadActions,
+    ACPayloadFields,
     SystemAdmin,
     TaskType,
     ProductType,
