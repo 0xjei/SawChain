@@ -9,6 +9,7 @@ message ACPayload {
         CREATE_TASK_TYPE = 2;
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
+        CREATE_EVENT_TYPE = 5;
     }
 
     Action action = 1;
@@ -20,6 +21,7 @@ message ACPayload {
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterType createEventParameterType = 6;
+    CreateEventType createEventType = 7;
 }
 
 message UpdateSystemAdminAction {
@@ -43,4 +45,12 @@ message CreateEventParameterType {
     string id = 1;
     string name = 2;
     EventParameterType.Type type = 3;
+}
+
+message CreateEventType {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+
+    repeated EventType.EventParameter parameters = 4;
 }

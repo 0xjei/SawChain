@@ -10,14 +10,17 @@ const {
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterType,
+    CreateEventType,
     TaskType,
     ProductType,
-    EventParameterType
+    EventParameterType,
+    EventType
 } = require('../services/proto');
 const {
     getTaskTypeAddress,
     getProductTypeAddress,
-    getEventParameterTypeAddress
+    getEventParameterTypeAddress,
+    getEventTypeAddress
 } = require('../services/addressing');
 
 describe('Types Creation', () => {
@@ -477,6 +480,209 @@ describe('Types Creation', () => {
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
-    })
+    });
+
+    describe('Create Event Type', () => {
+        const eventTypeId = "mock-event-id";
+        const eventTypeName = "mock-event-name";
+        const eventTypeDescription = "mock-event-description";
+
+        const eventTypeId2 = "mock-event-id2";
+        const eventTypeName2 = "mock-event-name2";
+        const eventTypeDescription2 = "mock-event-description2";
+
+        const eventTypeParameters =
+            [
+                EventType.EventParameter.create({
+                    parameterTypeId: "mock-eventParameter-id",
+                    required: true,
+                    maxLength: 100
+                })
+            ];
+
+        const eventTypeAddress = getEventTypeAddress(eventTypeId);
+        const eventTypeAddress2 = getEventTypeAddress(eventTypeId2);
+
+        it('Should reject if no action payload is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({action: ACPayload.Action.CREATE_EVENT_TYPE})
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no timestamp is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    createEventType: CreateEventParameterType.create({})
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no id is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({})
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no name is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId
+                    })
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no description is given', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName
+                    })
+                })
+            );
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if signer is not the System Admin', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription
+                    })
+                })
+            );
+
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the parameters type are not existing', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters:
+                            [
+                                EventType.EventParameter.create({
+                                    parameterTypeId: "no-type",
+                                    required: true
+                                }),
+                                EventType.EventParameter.create({
+                                    parameterTypeId: "no-type2",
+                                    required: false
+                                })
+                            ]
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Event Type with no parameters', async () => {
+            const eventTypeTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            await handler.apply(eventTypeTxn, context);
+
+            expect(context._state[eventTypeAddress]).to.not.be.null;
+            expect(EventType.decode(context._state[eventTypeAddress]).id).to.equal(eventTypeId);
+            expect(EventType.decode(context._state[eventTypeAddress]).name).to.equal(eventTypeName);
+            expect(EventType.decode(context._state[eventTypeAddress]).description).to.equal(eventTypeDescription);
+            expect(EventType.decode(context._state[eventTypeAddress]).parameters).to.be.empty;
+        });
+
+        it('Should create the Event Type with parameters', async () => {
+            const eventTypeTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId2,
+                        name: eventTypeName2,
+                        description: eventTypeDescription2,
+                        parameters: eventTypeParameters
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            await handler.apply(eventTypeTxn, context);
+
+            expect(context._state[eventTypeAddress2]).to.not.be.null;
+            expect(EventType.decode(context._state[eventTypeAddress2]).id).to.equal(eventTypeId2);
+            expect(EventType.decode(context._state[eventTypeAddress2]).name).to.equal(eventTypeName2);
+            expect(EventType.decode(context._state[eventTypeAddress2]).description).to.equal(eventTypeDescription2);
+            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].parameterTypeId).to.equal(eventTypeParameters[0].parameterTypeId);
+            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].required).to.equal(eventTypeParameters[0].required);
+            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].maxLength).to.equal(eventTypeParameters[0].maxLength);
+        });
+
+        it('Should reject if id is already used for another EventType', async () => {
+            const invalidTxn = new Txn(
+                ACPayload.create({
+                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription
+                    })
+                }),
+                adminPrivateKey
+            );
+
+            const submission = handler.apply(invalidTxn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+    });
 
 });

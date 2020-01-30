@@ -35,26 +35,15 @@ message EventParameterType {
 }
 
 message EventType {
-    message EventParameterValue {
-        // The type-specific value of the update. Only one of these
-        // fields should be used, and it should match the type
-        // specified for Parameter.Type.
-        bytes bytes_value = 11;
-        sint64 number_value = 13;
-        string string_value = 14;
-        uint32 enum_value = 15;
-    }
-    
     message EventParameter {
-        EventParameterType parameters = 1;
-        EventParameterValue value = 2;
+        string parameterTypeId = 1;
 
         // Parameter Properties.
-        bool required = 3;
-        uint64 minValue = 4;
-        uint64 maxValue = 5;
-        uint64 minLength = 6;
-        uint64 maxLength = 7;
+        bool required = 2;
+        int32 minValue = 3;
+        int32 maxValue = 4;
+        int32 minLength = 5;
+        int32 maxLength = 6;
     }
 
     string id = 1;

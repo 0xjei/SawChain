@@ -90,6 +90,13 @@ const getEventParameterTypeAddress = id => {
 };
 
 /**
+ * A function that takes an id and returns the corresponding event type address.
+ */
+const getEventTypeAddress = id => {
+    return FULL_PREFIXES.EVENT_TYPE + sha512(id).slice(0, 62);
+};
+
+/**
  * A function that takes an address and returns true or false depending on
  * whether or not it is a valid address. It should reject an address if:
  *   - it is not a string
@@ -113,5 +120,6 @@ module.exports = {
     getTaskTypeAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,
+    getEventTypeAddress,
     isValidAddress
 };

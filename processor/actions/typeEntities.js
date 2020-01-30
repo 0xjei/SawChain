@@ -4,13 +4,15 @@ const {
     getTaskTypeAddress,
     getSystemAdminAddress,
     getProductTypeAddress,
-    getEventParameterTypeAddress
+    getEventParameterTypeAddress,
+    getEventTypeAddress
 } = require('../services/addressing');
 const {
     SystemAdmin,
     TaskType,
     ProductType,
-    EventParameterType
+    EventParameterType,
+    EventType
 } = require('../services/proto');
 const {reject} = require('../services/utils');
 
@@ -169,8 +171,70 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     await context.setState(updates)
 }
 
+async function createEventType(context, signerPublicKey, timestamp, {id, name, description, parameters}) {
+    // Validation: Timestamp not set.
+    if (!timestamp.low && !timestamp.high)
+        reject(`Timestamp is not set!`);
+
+    // Validation: Id is not set.
+    if (!id)
+        reject(`Id is not set!`);
+
+    // Validation: Name is not set.
+    if (!name)
+        reject(`Name is not set!`);
+
+    // Validation: Description is not set.
+    if (!description)
+        reject(`Description is not set!`);
+
+    const systemAdminAddress = getSystemAdminAddress();
+    const eventTypeAddress = getEventTypeAddress(id);
+
+    const state = await context.getState([
+        systemAdminAddress,
+        eventTypeAddress
+    ]);
+
+    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+
+    // Validation: Sender is not the System Admin.
+    if (adminState.publicKey !== signerPublicKey)
+        reject(`You must be the System Admin to create a type!`);
+
+    // Validation: Id is not unique for event parameter types.
+    if (state[eventTypeAddress].length > 0)
+        reject(`Given id is already used in a different event type!`);
+
+    // Validation: Given parameter is not recorded yet.
+    for (const parameter of parameters) {
+        let parameterTypeAddress = getEventParameterTypeAddress(parameter.parameterTypeId);
+
+        let parameterTypeState = await context.getState([
+            parameterTypeAddress
+        ]);
+
+        if (!parameterTypeState[parameterTypeAddress].length) {
+            reject(`Given parameter Type with ${parameter.parameterTypeId} id is not recorded yet!`);
+        }
+    }
+
+    // State update.
+    const updates = {};
+
+    updates[eventTypeAddress] = EventType.encode({
+        id: id,
+        name: name,
+        description: description,
+        parameters: parameters
+    }).finish();
+
+    await context.setState(updates)
+}
+
 module.exports = {
     createTaskType,
     createProductType,
-    createEventParameterType
+    createEventParameterType,
+    createEventType
 };

@@ -26,12 +26,14 @@ const SystemAdmin = root.lookup('SystemAdmin');
 const TaskType = root.lookup('TaskType');
 const ProductType = root.lookup('ProductType');
 const EventParameterType = root.lookup('EventParameterType');
+const EventType = root.lookup('EventType');
 
 // Actions
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 const CreateEventParameterType = root.lookup('CreateEventParameterType');
+const CreateEventType = root.lookup('CreateEventType');
 
 module.exports = {
     root,
@@ -40,8 +42,10 @@ module.exports = {
     TaskType,
     ProductType,
     EventParameterType,
+    EventType,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
-    CreateEventParameterType
+    CreateEventParameterType,
+    CreateEventType
 };

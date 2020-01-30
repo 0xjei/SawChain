@@ -8,7 +8,8 @@ const {createSystemAdmin, updateSystemAdmin} = require('./actions/systemAdmin');
 const {
     createTaskType,
     createProductType,
-    createEventParameterType
+    createEventParameterType,
+    createEventType
 } = require('./actions/typeEntities');
 const {reject} = require('./services/utils');
 
@@ -69,6 +70,11 @@ class AgriChainHandler extends TransactionHandler {
                 if (!payload.createEventParameterType)
                     reject(`Action payload is missing for create Event Parameter Type action!`);
                 await createEventParameterType(context, signerPublicKey, payload.timestamp, payload.createEventParameterType);
+                break;
+            case ACPayload.Action.CREATE_EVENT_TYPE:
+                if (!payload.createEventType)
+                    reject(`Action payload is missing for create Event Type action!`);
+                await createEventType(context, signerPublicKey, payload.timestamp, payload.createEventType);
                 break;
             default:
                 throw new InvalidTransaction(`Unknown action ${action}`);
