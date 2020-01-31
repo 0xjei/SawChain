@@ -2,13 +2,22 @@
 
 const {expect} = require('chai');
 const {randomBytes} = require('crypto');
-const {getSHA512} = require('../services/utils');
-const addressing = require('../services/addressing');
+const {getSliceOfStrHash} = require('../services/utils');
+const {
+    NAMESPACE,
+    PREFIXES,
+    USER_PREFIXES,
+    TYPE_PREFIXES,
+    getSystemAdminAddress,
+    getCompanyAdminAddress,
+    getOperatorAddress,
+    getTaskTypeAddress,
+    getProductTypeAddress,
+    getEventParameterTypeAddress,
+    getEventTypeAddress,
+    isValidAddress
+} = require('../services/addressing');
 
-/*** Utilities ***/
-
-
-/*** Tests ***/
 describe('Addressing Service', function () {
     let address = null;
     let data = null;
@@ -17,18 +26,19 @@ describe('Addressing Service', function () {
     describe('System Admin Address', function () {
 
         before(function () {
-            address = addressing.getSystemAdminAddress();
+            address = getSystemAdminAddress();
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
         it('Should return a valid System Admin address', function () {
             expect(address).to.equal(
-                addressing.NAMESPACE +
-                addressing.PREFIXES.USERS +
-                addressing.USER_PREFIXES.SYSTEM_ADMIN +
+                NAMESPACE +
+                PREFIXES.USERS +
+                USER_PREFIXES.SYSTEM_ADMIN +
                 '0'.repeat(60)
             )
         })
@@ -37,19 +47,20 @@ describe('Addressing Service', function () {
     describe('Company Admin Address', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
-            address = addressing.getCompanyAdminAddress(data);
-            dataHash = getSHA512(data).slice(0, 60);
+            address = getCompanyAdminAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
         it('Should return a valid Company Admin address', function () {
             expect(address).to.equal(
-                addressing.NAMESPACE +
-                addressing.PREFIXES.USERS +
-                addressing.USER_PREFIXES.COMPANY_ADMIN +
+                NAMESPACE +
+                PREFIXES.USERS +
+                USER_PREFIXES.COMPANY_ADMIN +
                 dataHash
             )
         })
@@ -58,19 +69,20 @@ describe('Addressing Service', function () {
     describe('Operator Address', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
-            address = addressing.getOperatorAddress(data);
-            dataHash = getSHA512(data).slice(0, 60);
+            address = getOperatorAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
         it('Should return a valid Operator address', function () {
             expect(address).to.equal(
-                addressing.NAMESPACE +
-                addressing.PREFIXES.USERS +
-                addressing.USER_PREFIXES.OPERATOR +
+                NAMESPACE +
+                PREFIXES.USERS +
+                USER_PREFIXES.OPERATOR +
                 dataHash
             )
         })
@@ -79,17 +91,20 @@ describe('Addressing Service', function () {
     describe('Task Type Address', function () {
         before(function () {
             data = "mock-taskType-id";
-            address = addressing.getTaskTypeAddress(data);
-            dataHash = getSHA512(data).slice(0, 62);
+            address = getTaskTypeAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
         it('Should return a valid Task Type address', function () {
             expect(address).to.equal(
-                addressing.FULL_PREFIXES.TASK_TYPE +
+                NAMESPACE +
+                PREFIXES.TYPES +
+                TYPE_PREFIXES.TASK_TYPE +
                 dataHash
             )
         })
@@ -98,17 +113,20 @@ describe('Addressing Service', function () {
     describe('Product Type Address', function () {
         before(function () {
             data = "mock-productType-id";
-            address = addressing.getProductTypeAddress(data);
-            dataHash = getSHA512(data).slice(0, 62);
+            address = getProductTypeAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
-        it('Should return a valid Task Type address', function () {
+        it('Should return a valid Product Type address', function () {
             expect(address).to.equal(
-                addressing.FULL_PREFIXES.PRODUCT_TYPE +
+                NAMESPACE +
+                PREFIXES.TYPES +
+                TYPE_PREFIXES.PRODUCT_TYPE +
                 dataHash
             )
         })
@@ -117,17 +135,20 @@ describe('Addressing Service', function () {
     describe('Event Parameter Type Address', function () {
         before(function () {
             data = "mock-eventParameterType-id";
-            address = addressing.getEventParameterTypeAddress(data);
-            dataHash = getSHA512(data).slice(0, 62);
+            address = getEventParameterTypeAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
-        it('Should return a valid Task Type address', function () {
+        it('Should return a valid Event Parameter Type address', function () {
             expect(address).to.equal(
-                addressing.FULL_PREFIXES.EVENT_PARAMETER_TYPE +
+                NAMESPACE +
+                PREFIXES.TYPES +
+                TYPE_PREFIXES.EVENT_PARAMETER_TYPE +
                 dataHash
             )
         })
@@ -136,17 +157,20 @@ describe('Addressing Service', function () {
     describe('Event Type Address', function () {
         before(function () {
             data = "mock-eventType-id";
-            address = addressing.getEventTypeAddress(data);
-            dataHash = getSHA512(data).slice(0, 62);
+            address = getEventTypeAddress(data);
+            dataHash = getSliceOfStrHash(data, 0, 60);
         });
 
         it('Should return a hexadecimal string', function () {
-            expect(address).to.be.a.hexString
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
         });
 
-        it('Should return a valid Task Type address', function () {
+        it('Should return a valid Event Type address', function () {
             expect(address).to.equal(
-                addressing.FULL_PREFIXES.EVENT_TYPE +
+                NAMESPACE +
+                PREFIXES.TYPES +
+                TYPE_PREFIXES.EVENT_TYPE +
                 dataHash
             )
         })

@@ -1,6 +1,6 @@
 'use strict';
 
-// A mock state context object for testing
+// A mock state context object for testing.
 class Context {
     constructor() {
         this._state = {};
@@ -25,14 +25,6 @@ class Context {
         });
     }
 
-    deleteState(addresses) {
-        return new Promise(resolve => {
-            addresses.forEach(address => {
-                delete this._state[address];
-            });
-            resolve(addresses);
-        });
-    }
 }
 
 module.exports = Context;

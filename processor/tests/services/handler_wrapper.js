@@ -2,14 +2,13 @@
 
 const AgriChainHandler = require('../../handler');
 
-// A wrapper class to make testing AgriChain's easier
+// A wrapper class to make testing AgriChain's easier.
 class AgriChainHandlerWrapper {
     constructor() {
         this.handler = new AgriChainHandler()
     }
 
-    // This method may throw an error, or return a rejected Promise
-    // It will be easier to test if we can guarantee it always returns a Promise
+    // This method may throw an error or return a rejected Promise.
     apply(txn, context) {
         try {
             return this.handler.apply(txn, context)

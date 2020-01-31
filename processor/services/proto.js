@@ -13,24 +13,27 @@ let files = fs
     .filter(f => f.endsWith('.proto'));
 
 try {
-    // Synchronously load multiple protobuf files.
+    // Load synchronously multiple protobuf files.
     root = root.loadSync(files)
 } catch (error) {
     throw error
 }
 
+// Payload lookup.
 const ACPayload = root.lookup('ACPayload');
 const ACPayloadActions = ACPayload.Action;
 const ACPayloadFields = ACPayload.fields;
 
-// Entities
+// Entities lookup.
 const SystemAdmin = root.lookup('SystemAdmin');
+
+// Types lookup.
 const TaskType = root.lookup('TaskType');
 const ProductType = root.lookup('ProductType');
 const EventParameterType = root.lookup('EventParameterType');
 const EventType = root.lookup('EventType');
 
-// Actions
+// Actions lookup.
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');

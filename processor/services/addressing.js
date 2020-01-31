@@ -1,6 +1,6 @@
 'use strict';
 
-const {createHash} = require('crypto');
+const {getSHA512} = require('./utils');
 
 const NAMESPACE = 'f4cb6d';
 const FAMILY_NAME = 'AgriChain';
@@ -8,21 +8,23 @@ const VERSION = '0.1';
 const PREFIXES = {
     // Entities.
     USERS: '00',
-    COMPANY: '01',
-    FIELD: '02',
-    BATCH: '03',
-    EVENT: '04',
-    // Types.
-    TASK_TYPE: '10',
-    PRODUCT_TYPE: '11',
-    EVENT_TYPE: '12',
-    EVENT_PARAMETER_TYPE: '13'
+    TYPES: '01',
+    COMPANY: '02',
+    FIELD: '03',
+    BATCH: '04',
+    EVENT: '05'
 };
 const USER_PREFIXES = {
-    SYSTEM_ADMIN: '20',
-    COMPANY_ADMIN: '21',
-    OPERATOR: '22',
-    CERTIFIER: '23'
+    SYSTEM_ADMIN: '10',
+    COMPANY_ADMIN: '11',
+    OPERATOR: '12',
+    CERTIFIER: '13'
+};
+const TYPE_PREFIXES = {
+    TASK_TYPE: '20',
+    PRODUCT_TYPE: '21',
+    EVENT_TYPE: '22',
+    EVENT_PARAMETER_TYPE: '23'
 };
 
 /**
@@ -33,17 +35,17 @@ const FULL_PREFIXES = Object.keys(PREFIXES).reduce((prefixes, key) => {
     return prefixes
 }, {});
 
-// Return a Buffer SHA-512 hash of a string or Buffer.
-const sha512 = msg =>
-    createHash('sha512')
-        .update(msg)
-        .digest('hex');
-
 // Return a full user address for a specific public key and prefix. 
 const makeUsersAddress = (publicKey, userPrefix) =>
     FULL_PREFIXES.USERS +
     userPrefix +
-    sha512(publicKey).slice(0, 60);
+    getSHA512(publicKey).slice(0, 60);
+
+// Return a full type address for a specific public key and prefix.
+const makeTypeAddress = (id, typePrefix) =>
+    FULL_PREFIXES.TYPES +
+    typePrefix +
+    getSHA512(id).slice(0, 60);
 
 /**
  * A function that takes a public key and returns the corresponding system admin
@@ -73,28 +75,28 @@ const getOperatorAddress = publicKey => {
  * A function that takes an id and returns the corresponding task type address.
  */
 const getTaskTypeAddress = id => {
-    return FULL_PREFIXES.TASK_TYPE + sha512(id).slice(0, 62);
+    return makeTypeAddress(id, TYPE_PREFIXES.TASK_TYPE)
 };
 
 /**
  * A function that takes an id and returns the corresponding product type address.
  */
 const getProductTypeAddress = id => {
-    return FULL_PREFIXES.PRODUCT_TYPE + sha512(id).slice(0, 62);
+    return makeTypeAddress(id, TYPE_PREFIXES.PRODUCT_TYPE)
 };
 
 /**
  * A function that takes an id and returns the corresponding parameter type address.
  */
 const getEventParameterTypeAddress = id => {
-    return FULL_PREFIXES.EVENT_PARAMETER_TYPE + sha512(id).slice(0, 62);
+    return makeTypeAddress(id, TYPE_PREFIXES.EVENT_PARAMETER_TYPE)
 };
 
 /**
  * A function that takes an id and returns the corresponding event type address.
  */
 const getEventTypeAddress = id => {
-    return FULL_PREFIXES.EVENT_TYPE + sha512(id).slice(0, 62);
+    return makeTypeAddress(id, TYPE_PREFIXES.EVENT_TYPE)
 };
 
 /**
@@ -116,6 +118,7 @@ module.exports = {
     PREFIXES,
     FULL_PREFIXES,
     USER_PREFIXES,
+    TYPE_PREFIXES,
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,

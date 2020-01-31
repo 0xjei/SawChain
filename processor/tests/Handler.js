@@ -1,12 +1,11 @@
 'use strict';
 
 const {expect} = require('chai');
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const AgriChainHandler = require('./services/handler_wrapper');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
+const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const {ACPayload} = require('../services/proto');
-
 
 describe('Core Handler Behavior', function () {
     let handler = null;

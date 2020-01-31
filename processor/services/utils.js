@@ -4,7 +4,7 @@ const {createHash} = require('crypto');
 const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
 const secp256k1Context = new secp256k1.Secp256k1Context();
 
-// A quick convenience function to throw an error with a joined message
+// A quick convenience function to throw an error with a joined message.
 const reject = (...msgs) => {
     throw new InvalidTransaction(msgs.join(' '))
 };
@@ -34,9 +34,14 @@ const getSHA512 = (str, length) => {
         .slice(0, length)
 };
 
+const getSliceOfStrHash = (str, inf, sup) => {
+    return getSHA512(str).slice(inf, sup)
+};
+
 module.exports = {
     reject,
     getNewKeyPair,
     getPayloadActionField,
-    getSHA512
+    getSHA512,
+    getSliceOfStrHash
 };
