@@ -1,4 +1,6 @@
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
+const {createHash} = require('crypto');
+
 const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
 const secp256k1Context = new secp256k1.Secp256k1Context();
 
@@ -16,6 +18,7 @@ const getNewKeyPair = () => {
     return {privateKey, publicKey}
 };
 
+// Returns the action payload field.
 const getPayloadActionField = (payload, actionFieldName) => {
     if (!payload[actionFieldName])
         reject(`Action payload is missing for ${actionFieldName} action!`);
@@ -23,8 +26,17 @@ const getPayloadActionField = (payload, actionFieldName) => {
     return payload[actionFieldName]
 };
 
+// Returns a hex-string SHA-512 hash sliced to a particular length
+const getSHA512 = (str, length) => {
+    return createHash('sha512')
+        .update(str)
+        .digest('hex')
+        .slice(0, length)
+};
+
 module.exports = {
     reject,
     getNewKeyPair,
-    getPayloadActionField
+    getPayloadActionField,
+    getSHA512
 };

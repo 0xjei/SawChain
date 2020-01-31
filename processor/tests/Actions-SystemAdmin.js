@@ -9,8 +9,8 @@ const AgriChainHandler = require('./services/handler_wrapper');
 const {getSystemAdminAddress} = require('../services/addressing');
 const {getNewKeyPair} = require('../services/utils');
 
-describe('Users Functionalities', () => {
-    describe('System Admin', () => {
+describe('Users Functionalities', function () {
+    describe('System Admin', function () {
         const handler = new AgriChainHandler();
         const context = new Context();
 
@@ -20,9 +20,9 @@ describe('Users Functionalities', () => {
 
         const systemAdminAddress = getSystemAdminAddress();
 
-        describe('Create System Admin', () => {
+        describe('Create System Admin', function () {
 
-            it('Should reject if no timestamp is given', async () => {
+            it('Should reject if no timestamp is given', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN})
                 );
@@ -32,7 +32,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should create the System Admin', async () => {
+            it('Should create the System Admin', async function () {
                 const txn = new Txn(
                     ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
                 );
@@ -47,7 +47,7 @@ describe('Users Functionalities', () => {
                 )
             });
 
-            it('Should reject if System Admin is already recorded', async () => {
+            it('Should reject if System Admin is already recorded', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
                 );
@@ -61,9 +61,9 @@ describe('Users Functionalities', () => {
         before(function () {
             newAdminKeys = getNewKeyPair();
         });
-        describe('Update System Admin', () => {
+        describe('Update System Admin', function () {
 
-            it('Should reject if no action payload is given', async () => {
+            it('Should reject if no action payload is given', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({action: ACPayload.Action.UPDATE_SYSADMIN})
                 );
@@ -72,7 +72,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if no timestamp is given', async () => {
+            it('Should reject if no timestamp is given', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
@@ -84,7 +84,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if no public key is given', async () => {
+            it('Should reject if no public key is given', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
@@ -97,7 +97,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if public key is invalid', async () => {
+            it('Should reject if public key is invalid', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
@@ -110,7 +110,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if same current System Admin public key is given', async () => {
+            it('Should reject if same current System Admin public key is given', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
@@ -124,7 +124,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if current System Admin is not the transaction signer', async () => {
+            it('Should reject if current System Admin is not the transaction signer', async function () {
                 const invalidTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,
@@ -138,7 +138,7 @@ describe('Users Functionalities', () => {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should update the System Admin', async () => {
+            it('Should update the System Admin', async function () {
                 const updateTxn = new Txn(
                     ACPayload.create({
                         action: ACPayload.Action.UPDATE_SYSADMIN,

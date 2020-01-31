@@ -2,41 +2,35 @@
 
 const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-
 const AgriChainHandler = require('./services/handler_wrapper');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
-
 const {ACPayload} = require('../services/proto');
 
-describe('Core Handler Behavior', () => {
+
+describe('Core Handler Behavior', function () {
     let handler = null;
     let context = null;
 
-    before(() => {
+    before(function () {
         handler = new AgriChainHandler()
     });
 
-    beforeEach(() => {
+    beforeEach(function () {
         context = new Context()
     });
 
-    it('Should return a Promise', () => {
+    it('Should return a Promise', function () {
         const txn = new Txn({action: 'NO_ACTION'});
-        const applyResult = handler.apply(txn, context);
+        const apply = handler.apply(txn, context);
 
-        expect(applyResult).to.be.an.instanceOf(Promise);
-        applyResult.catch(() => {
-        })
+        return expect(apply).to.be.rejectedWith(InvalidTransaction);
     });
 
-    it('Should reject poorly encoded payloads', async () => {
+    it('Should reject poorly encoded payloads', async function () {
         const txn = new Txn(ACPayload.create({action: 'NO_ACTION'}));
-        const rejected = await handler.apply(txn, context).catch(error => {
-            expect(error).to.be.instanceOf(InvalidTransaction);
-            return true
-        });
+        const rejected = handler.apply(txn, context);
 
-        expect(rejected).to.be.true
+        return expect(rejected).to.be.rejectedWith(InvalidTransaction);
     })
 });

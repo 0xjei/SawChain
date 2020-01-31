@@ -23,14 +23,14 @@ const {
     getEventTypeAddress
 } = require('../services/addressing');
 
-describe('Types Creation', () => {
+describe('Types Creation', function () {
     const handler = new AgriChainHandler();
     const context = new Context();
 
     let adminPublicKey = null;
     let adminPrivateKey = null;
 
-    describe('Task Type', () => {
+    describe('Task Type', function () {
         let id = "mock-id";
         let role = "mock-role";
 
@@ -47,7 +47,7 @@ describe('Types Creation', () => {
             await handler.apply(systemAdminTxn, context);
         });
 
-        it('Should reject if no action payload is given', async () => {
+        it('Should reject if no action payload is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_TASK_TYPE})
             );
@@ -56,7 +56,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no timestamp is given', async () => {
+        it('Should reject if no timestamp is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -68,7 +68,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async () => {
+        it('Should reject if no id is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -81,7 +81,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no role is given', async () => {
+        it('Should reject if no role is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -94,7 +94,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async () => {
+        it('Should reject if signer is not the System Admin', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -107,7 +107,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Task Type', async () => {
+        it('Should create the Task Type', async function () {
             const taskTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -124,7 +124,7 @@ describe('Types Creation', () => {
             expect(TaskType.decode(context._state[taskTypeAddress]).role).to.equal(role);
         });
 
-        it('Should reject if id is already used for another TaskType', async () => {
+        it('Should reject if id is already used for another TaskType', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_TASK_TYPE,
@@ -139,7 +139,7 @@ describe('Types Creation', () => {
         });
     });
 
-    describe('Product Type', () => {
+    describe('Product Type', function () {
         const productId = "mock-product-id";
         const productName = "mock-product-name";
         const productDescription = "mock-product-description";
@@ -155,7 +155,7 @@ describe('Types Creation', () => {
         const productTypeAddress = getProductTypeAddress(productId);
         const productTypeAddress2 = getProductTypeAddress(productId2);
 
-        it('Should reject if no action payload is given', async () => {
+        it('Should reject if no action payload is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_PRODUCT_TYPE})
             );
@@ -164,7 +164,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no timestamp is given', async () => {
+        it('Should reject if no timestamp is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -176,7 +176,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async () => {
+        it('Should reject if no id is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -189,7 +189,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no name is given', async () => {
+        it('Should reject if no name is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -204,7 +204,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no description is given', async () => {
+        it('Should reject if no description is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -220,7 +220,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if unit of measure is not present into enumeration of possible values.', async () => {
+        it('Should reject if unit of measure is not present into enumeration of possible values.', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -238,7 +238,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async () => {
+        it('Should reject if signer is not the System Admin', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -256,7 +256,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if the derived products types are not existing', async () => {
+        it('Should reject if the derived products types are not existing', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -277,7 +277,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Product Type with no derived products types', async () => {
+        it('Should create the Product Type with no derived products types', async function () {
             const productTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -302,7 +302,7 @@ describe('Types Creation', () => {
             expect(ProductType.decode(context._state[productTypeAddress]).derivedProductsType).to.be.empty;
         });
 
-        it('Should create the Product Type with a derived product type', async () => {
+        it('Should create the Product Type with a derived product type', async function () {
             const productTypeTxn2 = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -328,7 +328,7 @@ describe('Types Creation', () => {
             expect(ProductType.decode(context._state[productTypeAddress2]).derivedProductsType[0]).to.equal(derivedProductsType[0]);
         });
 
-        it('Should reject if id is already used for another ProductType', async () => {
+        it('Should reject if id is already used for another ProductType', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_PRODUCT_TYPE,
@@ -349,14 +349,14 @@ describe('Types Creation', () => {
         });
     });
 
-    describe('Create Event Parameter Type', () => {
+    describe('Create Event Parameter Type', function () {
         const eventParameterTypeId = "mock-eventParameter-id";
         const eventParameterTypeName = "mock-eventParameter-name";
         const eventParameterType = EventParameterType.Type.STRING;
 
         const eventParameterTypeAddress = getEventParameterTypeAddress(eventParameterTypeId);
 
-        it('Should reject if no action payload is given', async () => {
+        it('Should reject if no action payload is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE})
             );
@@ -365,7 +365,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no timestamp is given', async () => {
+        it('Should reject if no timestamp is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -377,7 +377,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async () => {
+        it('Should reject if no id is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -390,7 +390,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no name is given', async () => {
+        it('Should reject if no name is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -405,7 +405,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no type is given', async () => {
+        it('Should reject if no type is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -422,7 +422,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async () => {
+        it('Should reject if signer is not the System Admin', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -440,7 +440,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Event Parameter Type', async () => {
+        it('Should create the Event Parameter Type', async function () {
             const eventParameterTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -462,7 +462,7 @@ describe('Types Creation', () => {
             expect(EventParameterType.decode(context._state[eventParameterTypeAddress]).type).to.equal(eventParameterType);
         });
 
-        it('Should reject if id is already used for another Event Parameter Type', async () => {
+        it('Should reject if id is already used for another Event Parameter Type', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
@@ -482,7 +482,7 @@ describe('Types Creation', () => {
         });
     });
 
-    describe('Create Event Type', () => {
+    describe('Create Event Type', function () {
         const eventTypeId = "mock-event-id";
         const eventTypeName = "mock-event-name";
         const eventTypeDescription = "mock-event-description";
@@ -503,7 +503,7 @@ describe('Types Creation', () => {
         const eventTypeAddress = getEventTypeAddress(eventTypeId);
         const eventTypeAddress2 = getEventTypeAddress(eventTypeId2);
 
-        it('Should reject if no action payload is given', async () => {
+        it('Should reject if no action payload is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({action: ACPayload.Action.CREATE_EVENT_TYPE})
             );
@@ -512,7 +512,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no timestamp is given', async () => {
+        it('Should reject if no timestamp is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -524,7 +524,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async () => {
+        it('Should reject if no id is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -537,7 +537,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no name is given', async () => {
+        it('Should reject if no name is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -552,7 +552,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no description is given', async () => {
+        it('Should reject if no description is given', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -568,7 +568,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async () => {
+        it('Should reject if signer is not the System Admin', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -586,7 +586,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if the parameters type are not existing', async () => {
+        it('Should reject if the parameters type are not existing', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -616,7 +616,7 @@ describe('Types Creation', () => {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Event Type with no parameters', async () => {
+        it('Should create the Event Type with no parameters', async function () {
             const eventTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -639,7 +639,7 @@ describe('Types Creation', () => {
             expect(EventType.decode(context._state[eventTypeAddress]).parameters).to.be.empty;
         });
 
-        it('Should create the Event Type with parameters', async () => {
+        it('Should create the Event Type with parameters', async function () {
             const eventTypeTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
@@ -665,7 +665,7 @@ describe('Types Creation', () => {
             expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].maxLength).to.equal(eventTypeParameters[0].maxLength);
         });
 
-        it('Should reject if id is already used for another EventType', async () => {
+        it('Should reject if id is already used for another EventType', async function () {
             const invalidTxn = new Txn(
                 ACPayload.create({
                     action: ACPayload.Action.CREATE_EVENT_TYPE,
