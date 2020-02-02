@@ -7,14 +7,15 @@ const Context = require('./services/mock_context');
 const AgriChainHandler = require('./services/handler_wrapper');
 const {
     ACPayload,
+    ACPayloadActions,
+    TaskType,
+    ProductType,
+    EventParameterType,
+    EventType,
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterType,
     CreateEventType,
-    TaskType,
-    ProductType,
-    EventParameterType,
-    EventType
 } = require('../services/proto');
 const {
     getTaskTypeAddress,
@@ -24,391 +25,438 @@ const {
 } = require('../services/addressing');
 
 describe('Types Creation', function () {
-    const handler = new AgriChainHandler();
-    const context = new Context();
+    let handler = null;
+    let context = null;
+    let txn = null;
+    let state = null;
 
-    let adminPublicKey = null;
-    let adminPrivateKey = null;
+    let pubKeySA = null;
+    let prvKeySA = null;
 
-    describe('Task Type', function () {
-        let id = "mock-id";
-        let role = "mock-role";
+    before(async function () {
+        handler = new AgriChainHandler();
+        context = new Context();
 
-        const taskTypeAddress = getTaskTypeAddress(id);
+        // System Admin creation.
+        txn = new Txn(
+            ACPayload.create({
+                action: ACPayloadActions.CREATE_SYSADMIN,
+                timestamp: Date.now()
+            })
+        );
+        // Get SA key pair.
+        pubKeySA = txn._publicKey;
+        prvKeySA = txn._privateKey;
 
-        before(async function () {
-            // Create a System Admin.
-            const systemAdminTxn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_SYSADMIN, timestamp: Date.now()})
-            );
-            adminPublicKey = systemAdminTxn._publicKey;
-            adminPrivateKey = systemAdminTxn._privateKey;
+        await handler.apply(txn, context);
+    });
 
-            await handler.apply(systemAdminTxn, context);
-        });
+    describe('Create Task Type', function () {
+        let taskTypeId = "mock-taskType-id";
+        let taskTypeRole = "mock-taskType-role";
 
-        it('Should reject if no action payload is given', async function () {
-            const invalidTxn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_TASK_TYPE})
-            );
-            const submission = handler.apply(invalidTxn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        const taskTypeAddress = getTaskTypeAddress(taskTypeId);
 
         it('Should reject if no timestamp is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     createTaskType: CreateTaskTypeAction.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no role is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: id})
+                    createTaskType: CreateTaskTypeAction.create({
+                        id: taskTypeId
+                    })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if current System Admin is not the transaction signer', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
+                    createTaskType: CreateTaskTypeAction.create({
+                        id: taskTypeId,
+                        role: taskTypeRole
+                    })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should create the Task Type', async function () {
-            const taskTypeTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
+                    createTaskType: CreateTaskTypeAction.create({
+                        id: taskTypeId,
+                        role: taskTypeRole
+                    })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(taskTypeTxn, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[taskTypeAddress]).to.not.be.null;
-            expect(TaskType.decode(context._state[taskTypeAddress]).id).to.equal(id);
-            expect(TaskType.decode(context._state[taskTypeAddress]).role).to.equal(role);
+            state = context._state[taskTypeAddress];
+
+            expect(state).to.not.be.null;
+            expect(TaskType.decode(state).id).to.equal(taskTypeId);
+            expect(TaskType.decode(state).role).to.equal(taskTypeRole);
         });
 
-        it('Should reject if id is already used for another TaskType', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if given id is already associated to a Task Type', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_TASK_TYPE,
+                    action: ACPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
-                    createTaskType: CreateTaskTypeAction.create({id: id, role: role})
+                    createTaskType: CreateTaskTypeAction.create({
+                        id: taskTypeId,
+                        role: taskTypeRole
+                    })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
     });
 
-    describe('Product Type', function () {
-        const productId = "mock-product-id";
-        const productName = "mock-product-name";
-        const productDescription = "mock-product-description";
-        const productUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
-        const derivedProductsType = ["mock-product-id"];
+    describe('Create Product Type', function () {
+        const productTypeId = "mock-productType-id";
+        const productTypeName = "mock-productType-name";
+        const productTypeDescription = "mock-productType-description";
+        const productTypeUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
 
-        const productId2 = "mock-product-id2";
-        const productName2 = "mock-product-name2";
-        const productDescription2 = "mock-product-description2";
-        const productUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
+        const productTypeId2 = "mock-product-id2";
+        const productTypeName2 = "mock-product-name2";
+        const productTypeDescription2 = "mock-product-description2";
+        const productTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
+        const derivedProductsType = ["mock-productType-id"];
 
-
-        const productTypeAddress = getProductTypeAddress(productId);
-        const productTypeAddress2 = getProductTypeAddress(productId2);
-
-        it('Should reject if no action payload is given', async function () {
-            const invalidTxn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_PRODUCT_TYPE})
-            );
-            const submission = handler.apply(invalidTxn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        const productTypeAddress = getProductTypeAddress(productTypeId);
+        const productTypeAddress2 = getProductTypeAddress(productTypeId2);
 
         it('Should reject if no timestamp is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     createProductType: CreateProductTypeAction.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no name is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId
+                        id: productTypeId
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no description is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName
+                        id: productTypeId,
+                        name: productTypeName
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if unit of measure is not present into enumeration of possible values.', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no valid unit of measure is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName,
-                        description: productDescription,
-                        measure: 100
+                        id: productTypeId,
+                        name: productTypeName,
+                        description: productTypeDescription,
+                        measure: -1
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if current System Admin is not the transaction signer', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName,
-                        description: productDescription,
-                        measure: productUnitOfMeasure
+                        id: productTypeId,
+                        name: productTypeName,
+                        description: productTypeDescription,
+                        measure: productTypeUnitOfMeasure
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if the derived products types are not existing', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if at least one of given derived products types is not recorded yet', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName,
-                        description: productDescription,
-                        measure: productUnitOfMeasure,
+                        id: productTypeId,
+                        name: productTypeName,
+                        description: productTypeDescription,
+                        measure: productTypeUnitOfMeasure,
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Product Type with no derived products types', async function () {
-            const productTypeTxn = new Txn(
+        it('Should create the Product Type with no derived products associated', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName,
-                        description: productDescription,
-                        measure: productUnitOfMeasure
+                        id: productTypeId,
+                        name: productTypeName,
+                        description: productTypeDescription,
+                        measure: productTypeUnitOfMeasure
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(productTypeTxn, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[productTypeAddress]).to.not.be.null;
-            expect(ProductType.decode(context._state[productTypeAddress]).id).to.equal(productId);
-            expect(ProductType.decode(context._state[productTypeAddress]).name).to.equal(productName);
-            expect(ProductType.decode(context._state[productTypeAddress]).description).to.equal(productDescription);
-            expect(ProductType.decode(context._state[productTypeAddress]).measure).to.equal(productUnitOfMeasure);
-            expect(ProductType.decode(context._state[productTypeAddress]).derivedProductsType).to.be.empty;
+            state = context._state[productTypeAddress];
+
+            expect(state).to.not.be.null;
+            expect(ProductType.decode(state).id).to.equal(productTypeId);
+            expect(ProductType.decode(state).name).to.equal(productTypeName);
+            expect(ProductType.decode(state).description).to.equal(productTypeDescription);
+            expect(ProductType.decode(state).measure).to.equal(productTypeUnitOfMeasure);
+            expect(ProductType.decode(state).derivedProductsType).to.be.empty;
         });
 
-        it('Should create the Product Type with a derived product type', async function () {
-            const productTypeTxn2 = new Txn(
+        it('Should create the Product Type with derived products associated', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId2,
-                        name: productName2,
-                        description: productDescription2,
-                        measure: productUnitOfMeasure2,
+                        id: productTypeId2,
+                        name: productTypeName2,
+                        description: productTypeDescription2,
+                        measure: productTypeUnitOfMeasure2,
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(productTypeTxn2, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[productTypeAddress2]).to.not.be.null;
-            expect(ProductType.decode(context._state[productTypeAddress2]).id).to.equal(productId2);
-            expect(ProductType.decode(context._state[productTypeAddress2]).name).to.equal(productName2);
-            expect(ProductType.decode(context._state[productTypeAddress2]).description).to.equal(productDescription2);
-            expect(ProductType.decode(context._state[productTypeAddress2]).measure).to.equal(productUnitOfMeasure2);
-            expect(ProductType.decode(context._state[productTypeAddress2]).derivedProductsType[0]).to.equal(derivedProductsType[0]);
+            state = context._state[productTypeAddress2];
+
+            expect(state).to.not.be.null;
+            expect(ProductType.decode(state).id).to.equal(productTypeId2);
+            expect(ProductType.decode(state).name).to.equal(productTypeName2);
+            expect(ProductType.decode(state).description).to.equal(productTypeDescription2);
+            expect(ProductType.decode(state).measure).to.equal(productTypeUnitOfMeasure2);
+            expect(ProductType.decode(state).derivedProductsType[0]).to.equal(derivedProductsType[0]);
         });
 
-        it('Should reject if id is already used for another ProductType', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if given id is already associated to a Product Type', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_PRODUCT_TYPE,
+                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productId,
-                        name: productName,
-                        description: productDescription,
-                        measure: productUnitOfMeasure
+                        id: productTypeId,
+                        name: productTypeName,
+                        description: productTypeDescription,
+                        measure: productTypeUnitOfMeasure
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
     });
 
     describe('Create Event Parameter Type', function () {
-        const eventParameterTypeId = "mock-eventParameter-id";
-        const eventParameterTypeName = "mock-eventParameter-name";
+        const eventParameterTypeId = "mock-eventParameterType-id";
+        const eventParameterTypeName = "mock-eventParameterType-name";
         const eventParameterType = EventParameterType.Type.STRING;
 
         const eventParameterTypeAddress = getEventParameterTypeAddress(eventParameterTypeId);
 
-        it('Should reject if no action payload is given', async function () {
-            const invalidTxn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE})
-            );
-            const submission = handler.apply(invalidTxn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
         it('Should reject if no timestamp is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     createEventParameterType: CreateEventParameterType.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no name is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({
                         id: eventParameterTypeId
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no type is given', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no valid type is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({
                         id: eventParameterTypeId,
@@ -417,15 +465,16 @@ describe('Types Creation', function () {
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if current System Admin is not the transaction signer', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({
                         id: eventParameterTypeId,
@@ -435,15 +484,15 @@ describe('Types Creation', function () {
                 })
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should create the Event Parameter Type', async function () {
-            const eventParameterTypeTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({
                         id: eventParameterTypeId,
@@ -451,21 +500,23 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(eventParameterTypeTxn, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[eventParameterTypeAddress]).to.not.be.null;
-            expect(EventParameterType.decode(context._state[eventParameterTypeAddress]).id).to.equal(eventParameterTypeId);
-            expect(EventParameterType.decode(context._state[eventParameterTypeAddress]).name).to.equal(eventParameterTypeName);
-            expect(EventParameterType.decode(context._state[eventParameterTypeAddress]).type).to.equal(eventParameterType);
+            state = context._state[eventParameterTypeAddress];
+
+            expect(state).to.not.be.null;
+            expect(EventParameterType.decode(state).id).to.equal(eventParameterTypeId);
+            expect(EventParameterType.decode(state).name).to.equal(eventParameterTypeName);
+            expect(EventParameterType.decode(state).type).to.equal(eventParameterType);
         });
 
-        it('Should reject if id is already used for another Event Parameter Type', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if given id is already associated to an Event Parameter Type', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_PARAMETER_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterType.create({
                         id: eventParameterTypeId,
@@ -473,28 +524,27 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
     });
 
     describe('Create Event Type', function () {
-        const eventTypeId = "mock-event-id";
-        const eventTypeName = "mock-event-name";
-        const eventTypeDescription = "mock-event-description";
+        const eventTypeId = "mock-eventType-id";
+        const eventTypeName = "mock-eventType-name";
+        const eventTypeDescription = "mock-eventType-description";
 
-        const eventTypeId2 = "mock-event-id2";
-        const eventTypeName2 = "mock-event-name2";
-        const eventTypeDescription2 = "mock-event-description2";
+        const eventTypeId2 = "mock-eventType-id2";
+        const eventTypeName2 = "mock-eventType-name2";
+        const eventTypeDescription2 = "mock-eventType-description2";
 
-        const eventTypeParameters =
-            [
-                EventType.EventParameter.create({
-                    parameterTypeId: "mock-eventParameter-id",
+        const eventTypeParameters = [
+            EventType.EventParameter.create({
+                    parameterTypeId: "mock-eventParameterType-id",
                     required: true,
                     maxLength: 100
                 })
@@ -503,59 +553,65 @@ describe('Types Creation', function () {
         const eventTypeAddress = getEventTypeAddress(eventTypeId);
         const eventTypeAddress2 = getEventTypeAddress(eventTypeId2);
 
-        it('Should reject if no action payload is given', async function () {
-            const invalidTxn = new Txn(
-                ACPayload.create({action: ACPayload.Action.CREATE_EVENT_TYPE})
-            );
-            const submission = handler.apply(invalidTxn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
         it('Should reject if no timestamp is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     createEventType: CreateEventParameterType.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction);
         });
 
-        it('Should reject if no id is given', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({})
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no name is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should reject if no description is given', async function () {
-            const invalidTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
@@ -563,15 +619,16 @@ describe('Types Creation', function () {
                     })
                 })
             );
-            const submission = handler.apply(invalidTxn, context);
+
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if signer is not the System Admin', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if current System Admin is not the transaction signer', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
@@ -581,15 +638,15 @@ describe('Types Creation', function () {
                 })
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if the parameters type are not existing', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if given parameters type are not recorded yet', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
@@ -608,18 +665,18 @@ describe('Types Creation', function () {
                             ]
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should create the Event Type with no parameters', async function () {
-            const eventTypeTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
@@ -627,22 +684,24 @@ describe('Types Creation', function () {
                         description: eventTypeDescription
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(eventTypeTxn, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[eventTypeAddress]).to.not.be.null;
-            expect(EventType.decode(context._state[eventTypeAddress]).id).to.equal(eventTypeId);
-            expect(EventType.decode(context._state[eventTypeAddress]).name).to.equal(eventTypeName);
-            expect(EventType.decode(context._state[eventTypeAddress]).description).to.equal(eventTypeDescription);
-            expect(EventType.decode(context._state[eventTypeAddress]).parameters).to.be.empty;
+            state = context._state[eventTypeAddress]
+
+            expect(state).to.not.be.null;
+            expect(EventType.decode(state).id).to.equal(eventTypeId);
+            expect(EventType.decode(state).name).to.equal(eventTypeName);
+            expect(EventType.decode(state).description).to.equal(eventTypeDescription);
+            expect(EventType.decode(state).parameters).to.be.empty;
         });
 
         it('Should create the Event Type with parameters', async function () {
-            const eventTypeTxn = new Txn(
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId2,
@@ -651,24 +710,26 @@ describe('Types Creation', function () {
                         parameters: eventTypeParameters
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            await handler.apply(eventTypeTxn, context);
+            await handler.apply(txn, context);
 
-            expect(context._state[eventTypeAddress2]).to.not.be.null;
-            expect(EventType.decode(context._state[eventTypeAddress2]).id).to.equal(eventTypeId2);
-            expect(EventType.decode(context._state[eventTypeAddress2]).name).to.equal(eventTypeName2);
-            expect(EventType.decode(context._state[eventTypeAddress2]).description).to.equal(eventTypeDescription2);
-            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].parameterTypeId).to.equal(eventTypeParameters[0].parameterTypeId);
-            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].required).to.equal(eventTypeParameters[0].required);
-            expect(EventType.decode(context._state[eventTypeAddress2]).parameters[0].maxLength).to.equal(eventTypeParameters[0].maxLength);
+            state = context._state[eventTypeAddress2]
+
+            expect(state).to.not.be.null;
+            expect(EventType.decode(state).id).to.equal(eventTypeId2);
+            expect(EventType.decode(state).name).to.equal(eventTypeName2);
+            expect(EventType.decode(state).description).to.equal(eventTypeDescription2);
+            expect(EventType.decode(state).parameters[0].parameterTypeId).to.equal(eventTypeParameters[0].parameterTypeId);
+            expect(EventType.decode(state).parameters[0].required).to.equal(eventTypeParameters[0].required);
+            expect(EventType.decode(state).parameters[0].maxLength).to.equal(eventTypeParameters[0].maxLength);
         });
 
-        it('Should reject if id is already used for another EventType', async function () {
-            const invalidTxn = new Txn(
+        it('Should reject if given id is already associated to an Event Type', async function () {
+            txn = new Txn(
                 ACPayload.create({
-                    action: ACPayload.Action.CREATE_EVENT_TYPE,
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
@@ -676,10 +737,10 @@ describe('Types Creation', function () {
                         description: eventTypeDescription
                     })
                 }),
-                adminPrivateKey
+                prvKeySA
             );
 
-            const submission = handler.apply(invalidTxn, context);
+            const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });

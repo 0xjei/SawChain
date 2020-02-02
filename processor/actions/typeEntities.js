@@ -39,13 +39,13 @@ async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the System Admin.
+    // Validation: Sender is not the SA.
     if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a type!`);
+        reject(`You must be the System Admin to create a Task Type!`);
 
-    // Validation: Id is not unique for task types.
+    // Validation: Given id is already associated to a task type.
     if (state[taskTypeAddress].length > 0)
-        reject(`Given id is already used in a different task type!`);
+        reject(`Given id is already associated to a Task Type!`);
 
     // State update.
     const updates = {};
@@ -77,7 +77,7 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
 
     // Validation: Unit of measure is not equal to one of the enum values.
     if (!Object.values(ProductType.UnitOfMeasure).some((value) => value === measure))
-        reject(`Unit of measure is different from one of the possible units values!`);
+        reject(`Unit of measure is different from one of the possible values!`);
 
     const systemAdminAddress = getSystemAdminAddress();
     const productTypeAddress = getProductTypeAddress(id);
@@ -89,7 +89,7 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the System Admin.
+    // Validation: Sender is not the SA.
     if (adminState.publicKey !== signerPublicKey)
         reject(`You must be the System Admin to create a type!`);
 
@@ -129,13 +129,13 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
 
-    // Validation: Event Parameter Type id is not set.
+    // Validation: Id is not set.
     if (!id)
-        reject(`Event Parameter Type id is not set!`);
+        reject(`Id is not set!`);
 
-    // Validation: Event Parameter Type name is not set.
+    // Validation: Name is not set.
     if (!name)
-        reject(`Event Parameter Type name is not set!`);
+        reject(`Name is not set!`);
 
     // Validation: Type is not equal to one of the enum values.
     if (!Object.values(EventParameterType.Type).some((value) => value === type))
@@ -206,7 +206,7 @@ async function createEventType(context, signerPublicKey, timestamp, {id, name, d
     if (state[eventTypeAddress].length > 0)
         reject(`Given id is already used in a different event type!`);
 
-    // Validation: Given parameter is not recorded yet.
+    // Validation: At least one parameter is not recorded yet.
     for (const parameter of parameters) {
         let parameterTypeAddress = getEventParameterTypeAddress(parameter.parameterTypeId);
 

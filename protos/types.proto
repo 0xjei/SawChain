@@ -2,7 +2,7 @@ syntax = "proto3";
 package agrichain;
 
 message TaskType {
-    string id = 1; // unique 3 characters
+    string id = 1;
     string role = 2;
 }
 
