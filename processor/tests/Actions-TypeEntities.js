@@ -5,6 +5,7 @@ const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
 const AgriChainHandler = require('./services/handler_wrapper');
+const {createSystemAdmin} = require('./services/mock_entities');
 const {
     ACPayload,
     ACPayloadActions,
@@ -30,25 +31,13 @@ describe('Types Creation', function () {
     let txn = null;
     let state = null;
 
-    let pubKeySA = null;
-    let prvKeySA = null;
+    let keyPairSA = null;
 
     before(async function () {
         handler = new AgriChainHandler();
         context = new Context();
 
-        // System Admin creation.
-        txn = new Txn(
-            ACPayload.create({
-                action: ACPayloadActions.CREATE_SYSADMIN,
-                timestamp: Date.now()
-            })
-        );
-        // Get SA key pair.
-        pubKeySA = txn._publicKey;
-        prvKeySA = txn._privateKey;
-
-        await handler.apply(txn, context);
+        keyPairSA = await createSystemAdmin(context, handler);
     });
 
     describe('Create Task Type', function () {
@@ -138,7 +127,7 @@ describe('Types Creation', function () {
                         role: taskTypeRole
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
@@ -160,7 +149,7 @@ describe('Types Creation', function () {
                         role: taskTypeRole
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -307,7 +296,7 @@ describe('Types Creation', function () {
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -327,7 +316,7 @@ describe('Types Creation', function () {
                         measure: productTypeUnitOfMeasure
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
@@ -355,7 +344,7 @@ describe('Types Creation', function () {
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
@@ -382,7 +371,7 @@ describe('Types Creation', function () {
                         measure: productTypeUnitOfMeasure
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -500,7 +489,7 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
@@ -524,7 +513,7 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -665,7 +654,7 @@ describe('Types Creation', function () {
                             ]
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -684,12 +673,12 @@ describe('Types Creation', function () {
                         description: eventTypeDescription
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[eventTypeAddress]
+            state = context._state[eventTypeAddress];
 
             expect(state).to.not.be.null;
             expect(EventType.decode(state).id).to.equal(eventTypeId);
@@ -710,12 +699,12 @@ describe('Types Creation', function () {
                         parameters: eventTypeParameters
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[eventTypeAddress2]
+            state = context._state[eventTypeAddress2];
 
             expect(state).to.not.be.null;
             expect(EventType.decode(state).id).to.equal(eventTypeId2);
@@ -737,7 +726,7 @@ describe('Types Creation', function () {
                         description: eventTypeDescription
                     })
                 }),
-                prvKeySA
+                keyPairSA.privateKey
             );
 
             const submission = handler.apply(txn, context);
