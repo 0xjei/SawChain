@@ -9,7 +9,7 @@ const {SystemAdmin} = require('../services/proto');
 const {reject} = require('../services/utils');
 
 /**
- * Create a System Admin can bootstrap the system (add company administrators, types, etc.).
+ * Create a System Admin who can create types entities for on-chain application configuration.
  * @param {Context} context - the context the handler can use to access state.
  * @param signerPublicKey
  * @param timestamp
@@ -19,7 +19,6 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
 
-    // Validation: SA already recorded.
     const systemAdminAddress = getSystemAdminAddress();
 
     const state = await context.getState([
@@ -28,6 +27,7 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
 
     const decodedState = SystemAdmin.decode(state[systemAdminAddress]);
 
+    // Validation: SA already recorded.
     if (decodedState.publicKey !== '')
         reject(`System Admin is already recorded!`);
 
@@ -51,14 +51,14 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
  */
 async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey}) {
     // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
+    if (!timestamp || (!timestamp.low && !timestamp.high))
         reject(`Timestamp is not set!`);
 
-    // Validation: publicKey is not a valid public key.
+    // Validation: Public key field is not set.
     if (!publicKey)
         reject(`New System Admin public key is not set!`);
 
-    // Validation: publicKey is not a valid public key.
+    // Validation: Public key field doesn't contain a valid public key.
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
         reject(`New System Admin public key is invalid!`);
 
@@ -72,26 +72,27 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
         operatorAddress
     ]);
 
-    // Validation: No SA recorded.
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
+    // Validation: No SA recorded.
     if (adminState.publicKey === '')
         reject(`No System Admin recorded!`);
+
+    // Validation: The public key belongs to current SA.
+    if (adminState.publicKey === publicKey)
+        reject(`Signing public key is current System Admin key!`);
+
+    // Validation: Given public key is already associated to a CA.
+    if (state[companyAdminAddress].length > 0)
+        reject(`New System admin public key is already associated to a Company Admin!`);
+
+    // Validation: Given public key is already associated to an OP.
+    if (state[operatorAddress].length > 0)
+        reject(`New System admin public key is already associated to an Operator!`);
 
     // Validation: Signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
         reject(`Transaction signer is different from current System Admin!`);
-
-    // Validation: Given public key is the old one.
-    if (adminState.publicKey === publicKey)
-        reject(`Signing public key is current System Admin key!`);
-
-    // Validation: Given public key already associated to CA or OP.
-    if (state[companyAdminAddress].length > 0)
-        reject(`New System admin public key is already associated to a Company Admin!`);
-
-    if (state[operatorAddress].length > 0)
-        reject(`New System admin public key is already associated to an Operator!`);
 
     // State update.
     const updates = {};
@@ -104,4 +105,7 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
     await context.setState(updates)
 }
 
-module.exports = {createSystemAdmin, updateSystemAdmin};
+module.exports = {
+    createSystemAdmin,
+    updateSystemAdmin
+};

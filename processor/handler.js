@@ -41,17 +41,18 @@ class AgriChainHandler extends TransactionHandler {
         // Get action.
         const action = payload.action;
         const signerPublicKey = txn.header.signerPublicKey;
+        const timestamp = payload.timestamp;
 
         // Action handling.
         switch (action) {
             case ACPayloadActions.CREATE_SYSADMIN:
-                await createSystemAdmin(context, signerPublicKey, payload.timestamp);
+                await createSystemAdmin(context, signerPublicKey, timestamp);
                 break;
             case ACPayloadActions.UPDATE_SYSADMIN:
                 await updateSystemAdmin(
                     context,
                     signerPublicKey,
-                    payload.timestamp,
+                    timestamp,
                     getPayloadActionField(payload, ACPayloadFields.updateSysAdmin.name)
                 );
                 break;
@@ -59,7 +60,7 @@ class AgriChainHandler extends TransactionHandler {
                 await createTaskType(
                     context,
                     signerPublicKey,
-                    payload.timestamp,
+                    timestamp,
                     getPayloadActionField(payload, ACPayloadFields.createTaskType.name)
                 );
                 break;
@@ -67,7 +68,7 @@ class AgriChainHandler extends TransactionHandler {
                 await createProductType(
                     context,
                     signerPublicKey,
-                    payload.timestamp,
+                    timestamp,
                     getPayloadActionField(payload, ACPayloadFields.createProductType.name)
                 );
                 break;
@@ -75,7 +76,7 @@ class AgriChainHandler extends TransactionHandler {
                 await createEventParameterType(
                     context,
                     signerPublicKey,
-                    payload.timestamp,
+                    timestamp,
                     getPayloadActionField(payload, ACPayloadFields.createEventParameterType.name)
                 );
                 break;
@@ -83,7 +84,7 @@ class AgriChainHandler extends TransactionHandler {
                 await createEventType(
                     context,
                     signerPublicKey,
-                    payload.timestamp,
+                    timestamp,
                     getPayloadActionField(payload, ACPayloadFields.createEventType.name)
                 );
                 break;
