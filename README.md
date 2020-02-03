@@ -1,69 +1,38 @@
+# AgriChain
+This is a distributed application for trace products and activities over a food supply chain ecosystem. Can be customized for a specific food 
+supply chain use case, such as fresh food. There are many challenges associated with supply chain management, such as the need of trust between stakeholders often 
+linked to their reputation, the lack of transparency and traceability increasingly requested by the final user, the difficulty of managing risks, 
+delays or disruptions often due to incomplete or missing information. To tackle these challenges, this application runs on top of Hyperledger Sawtooth blockchain. 
+The participants can relying on a common shared source of information, ensuring transparency and integrity of data records according to smart contracts.
+You can simply define and trace your entities which are produced, processed and retailed through the supply chain between mutual untrusted parties.
 
-# AgriChain - A food traceability system based on Hyperledger Sawtooth 
+This is a concept demo application according to my previous [study](https://bit.ly/36OYrvn). As reported, the Transaction
+Processor and Google Protobufs are developed and tested in this repository. Also, you can use the Transaction Processor
+in production taking advantage from Docker-ready configuration of the application. You only need your custom client application for
+interaction and interfacing purposes with your custom entities.
 
-### Introduction 
-###### To do
-This repo contains a partially and old version of supply-chain traceability contracts for Hyperledger Sawtooth.
-The solution isn't final and shouldn't be used in a production environment. I'll update this repo with a working demo for last Sawtooth version asap.
-
-## Contents
-###### To do
-
-## Components
-###### To do
+The application is developed with [JavaScript SDK](https://github.com/hyperledger/sawtooth-sdk-javascript) from Sawtooth,
+[Mocha](https://github.com/mochajs/mocha) and [Chai](https://github.com/chaijs/chai) libraries for testing purposes and 
+Google Protocol Buffers using [ProtobufJs](https://github.com/protobufjs/protobuf.js) library for entity-state definition.
 
 ## Usage
-###### To do
+To run a Sawtooth node using Docker, you have to run the `docker-compose.yaml` file in the root directory using the `up`
+command without providing any other parameter.
+```
+docker-compose up
+```
+This builds everything defined in the compose file. Each component core and custom will be turned on. Once all the components 
+are running, you can interact with the Sawtooth node using your client through the REST API endpoint (http://localhost:8008).
+If you're familiar with Docker, you can see and modify each custom component. You can stop each component using this command.
+```
+docker-compose down -v
+```
 
-## Development
-###### To do
+To run the Transaction Processor tests, you have to navigate through processor folder and run the npm command.
+```
+cd /processor
+npm run test
+```
 
-### Rules
-
-##### Commits
-
-* Use this commit message format (angular style):  
-
-    `[<type>] <subject>`
-   
-
-    where `type` must be one of the following:
-
-    - feat: A new feature
-    - fix: A bug fix
-    - docs: Documentation only changes
-    - style: Changes that do not affect the meaning of the code
-    - refactor: A code change that neither fixes a bug nor adds a feature
-    - test: Adding missing or correcting existing tests
-    - chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
-    - update: Update of the library version or of the dependencies
-
-and `body` must be should include the motivation for the change and contrast this with previous behavior (do not add body if the commit is trivial). 
-
-* Use the imperative, present tense: "change" not "changed" nor "changes".
-* Don't capitalize first letter.
-* No dot (.) at the end.
-
-##### Branches
-
-* There is a master branch, used only for release.
-* There is a dev branch, used to merge all sub dev branch.
-* Avoid long descriptive names for long-lived branches.
-* No CamelCase.
-* Use grouping tokens (words) at the beginning of your branch names (in a similar way to the `type` of commit).
-* Define and use short lead tokens to differentiate branches in a way that is meaningful to your workflow.
-* Use slashes to separate parts of your branch names.
-* Remove branch after merge if it is not important.
-
-Examples:
-    
-    git branch -b docs/README
-    git branch -b test/one-function
-    git branch -b feat/side-bar
-    git branch -b style/header
-    
 ## License
-###### To do
-
-####  Contacts
-###### To do
+The application is licensed under the [MIT software license](https://github.com/Jeeiii/AgriChain-Sawtooth-Demo/blob/master/LICENSE).
