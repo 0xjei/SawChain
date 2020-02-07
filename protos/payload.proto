@@ -51,6 +51,7 @@ message CreateEventType {
     string id = 1;
     string name = 2;
     string description = 3;
-
     repeated EventType.EventParameter parameters = 4;
+    repeated string enabledTaskTypes = 5;
+    repeated string enabledProductTypes = 6;
 }

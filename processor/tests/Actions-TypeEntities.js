@@ -539,6 +539,9 @@ describe('Types Creation', function () {
                 })
             ];
 
+        const enabledTaskTypes = ["mock-taskType-id"];
+        const enabledProductTypes = ["mock-productType-id"];
+
         const eventTypeAddress = getEventTypeAddress(eventTypeId);
         const eventTypeAddress2 = getEventTypeAddress(eventTypeId2);
 
@@ -662,6 +665,52 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
+        it('Should reject if given enabled task types are not recorded yet', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledTaskTypes: [
+                            "mock-taskType-id100"
+                        ]
+                    })
+                }),
+                keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given enabled product types are not recorded yet', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventType.create({
+                        id: eventTypeId,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledProductTypes: [
+                            "mock-productType-id100"
+                        ]
+                    })
+                }),
+                keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
         it('Should create the Event Type with no parameters', async function () {
             txn = new Txn(
                 ACPayload.create({
@@ -670,7 +719,9 @@ describe('Types Creation', function () {
                     createEventType: CreateEventType.create({
                         id: eventTypeId,
                         name: eventTypeName,
-                        description: eventTypeDescription
+                        description: eventTypeDescription,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 keyPairSA.privateKey
@@ -685,6 +736,8 @@ describe('Types Creation', function () {
             expect(EventType.decode(state).name).to.equal(eventTypeName);
             expect(EventType.decode(state).description).to.equal(eventTypeDescription);
             expect(EventType.decode(state).parameters).to.be.empty;
+            expect(EventType.decode(state).enabledTaskTypes[0]).to.be.equal(enabledTaskTypes[0]);
+            expect(EventType.decode(state).enabledProductTypes[0]).to.be.equal(enabledProductTypes[0]);
         });
 
         it('Should create the Event Type with parameters', async function () {
@@ -696,7 +749,9 @@ describe('Types Creation', function () {
                         id: eventTypeId2,
                         name: eventTypeName2,
                         description: eventTypeDescription2,
-                        parameters: eventTypeParameters
+                        parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 keyPairSA.privateKey
@@ -710,9 +765,9 @@ describe('Types Creation', function () {
             expect(EventType.decode(state).id).to.equal(eventTypeId2);
             expect(EventType.decode(state).name).to.equal(eventTypeName2);
             expect(EventType.decode(state).description).to.equal(eventTypeDescription2);
-            expect(EventType.decode(state).parameters[0].parameterTypeId).to.equal(eventTypeParameters[0].parameterTypeId);
-            expect(EventType.decode(state).parameters[0].required).to.equal(eventTypeParameters[0].required);
-            expect(EventType.decode(state).parameters[0].maxLength).to.equal(eventTypeParameters[0].maxLength);
+            expect(EventType.decode(state).parameters[0].parameterTypeId).to.be.equal(eventTypeParameters[0].parameterTypeId);
+            expect(EventType.decode(state).enabledTaskTypes[0]).to.be.equal(enabledTaskTypes[0]);
+            expect(EventType.decode(state).enabledProductTypes[0]).to.be.equal(enabledProductTypes[0]);
         });
 
         it('Should reject if given id is already associated to an Event Type', async function () {

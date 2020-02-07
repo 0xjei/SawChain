@@ -2,11 +2,14 @@ syntax = "proto3";
 package agrichain;
 
 message TaskType {
+    // Unique identifier.
     string id = 1;
+    // Task name.
     string role = 2;
 }
 
 message ProductType {
+    // Possible different values for unit of measure.
     enum UnitOfMeasure {
         KILOS = 0;
         LITRE = 1;
@@ -14,14 +17,20 @@ message ProductType {
         UNIT = 3;
     }
 
+    // Unique identifier.
     string id = 1;
+    // Product name.
     string name = 2;
+    // Product description.
     string description = 3;
+    // Product unit of measure.
     UnitOfMeasure measure = 4;
+    // Unique identifiers of different derived products types.
     repeated string derivedProductsType = 5;
 }
 
 message EventParameterType {
+    // Event Parameter information type.
     enum Type {
         NUMBER = 0;
         STRING = 1;
@@ -29,13 +38,18 @@ message EventParameterType {
         ENUM = 3;
     }
 
+    // Unique identifier.
     string id = 1;
+    // Event Parameter name.
     string name = 2;
+    // Event Parameter type.
     Type type = 3;
 }
 
 message EventType {
+    // Custom parameter structure used for Event Type.
     message EventParameter {
+        // Parameter Type identifier.
         string parameterTypeId = 1;
 
         // Parameter Properties.
@@ -46,9 +60,16 @@ message EventType {
         int32 maxLength = 6;
     }
 
+    // Unique identifier.
     string id = 1;
+    // Event Type name.
     string name = 2;
+    // Evnet Type description.
     string description = 3;
-
+    // List of event parameters.
     repeated EventParameter parameters = 4;
+    // List of Task Type identifiers.
+    repeated string enabledTaskTypes = 5;
+    // List of Product Type identifiers.
+    repeated string enabledProductTypes = 6;
 }

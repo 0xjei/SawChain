@@ -171,7 +171,8 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     await context.setState(updates)
 }
 
-async function createEventType(context, signerPublicKey, timestamp, {id, name, description, parameters}) {
+async function createEventType(context, signerPublicKey, timestamp,
+                               {id, name, description, parameters, enabledTaskTypes, enabledProductTypes}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
@@ -219,6 +220,32 @@ async function createEventType(context, signerPublicKey, timestamp, {id, name, d
         }
     }
 
+    // Validation: At least one enabled task type is not recorded yet.
+    for (const taskTypeId of enabledTaskTypes) {
+        let taskTypeAddress = getTaskTypeAddress(taskTypeId);
+
+        let taskTypeState = await context.getState([
+            taskTypeAddress
+        ]);
+
+        if (!taskTypeState[taskTypeAddress].length) {
+            reject(`Given Task Type with ${taskTypeId} id is not recorded yet!`);
+        }
+    }
+
+    // Validation: At least one enabled product type is not recorded yet.
+    for (const productTypeId of enabledProductTypes) {
+        let productTypeAddress = getProductTypeAddress(productTypeId);
+
+        let productTypeState = await context.getState([
+            productTypeAddress
+        ]);
+
+        if (!productTypeState[productTypeAddress].length) {
+            reject(`Given Product Type with ${productTypeId} id is not recorded yet!`);
+        }
+    }
+
     // State update.
     const updates = {};
 
@@ -226,7 +253,9 @@ async function createEventType(context, signerPublicKey, timestamp, {id, name, d
         id: id,
         name: name,
         description: description,
-        parameters: parameters
+        parameters: parameters,
+        enabledTaskTypes: enabledTaskTypes,
+        enabledProductTypes: enabledProductTypes
     }).finish();
 
     await context.setState(updates)
