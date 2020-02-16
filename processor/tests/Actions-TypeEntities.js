@@ -5,7 +5,7 @@ const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
 const AgriChainHandler = require('./services/handler_wrapper');
-const {createSystemAdmin} = require('./services/mock_entities');
+const {mockCreateSystemAdmin} = require('./services/mock_entities');
 const {
     ACPayload,
     ACPayloadActions,
@@ -15,8 +15,8 @@ const {
     EventType,
     CreateTaskTypeAction,
     CreateProductTypeAction,
-    CreateEventParameterType,
-    CreateEventType,
+    CreateEventParameterTypeAction,
+    CreateEventTypeAction,
 } = require('../services/proto');
 const {
     getTaskTypeAddress,
@@ -37,7 +37,8 @@ describe('Types Creation', function () {
         handler = new AgriChainHandler();
         context = new Context();
 
-        keyPairSA = await createSystemAdmin(context, handler);
+        // Bootstrap System Admin.
+        keyPairSA = await mockCreateSystemAdmin(context, handler);
     });
 
     describe('Create Task Type', function () {
@@ -391,7 +392,7 @@ describe('Types Creation', function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
-                    createEventParameterType: CreateEventParameterType.create({})
+                    createEventParameterType: CreateEventParameterTypeAction.create({})
                 })
             );
 
@@ -417,7 +418,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({})
+                    createEventParameterType: CreateEventParameterTypeAction.create({})
                 })
             );
 
@@ -431,7 +432,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({
+                    createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId
                     })
                 })
@@ -447,7 +448,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({
+                    createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
                         name: eventParameterTypeName,
                         type: 10
@@ -465,7 +466,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({
+                    createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
                         name: eventParameterTypeName,
                         type: eventParameterType
@@ -483,7 +484,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({
+                    createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
                         name: eventParameterTypeName,
                         type: eventParameterType
@@ -507,7 +508,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
-                    createEventParameterType: CreateEventParameterType.create({
+                    createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
                         name: eventParameterTypeName,
                         type: eventParameterType
@@ -533,11 +534,11 @@ describe('Types Creation', function () {
 
         const eventTypeParameters = [
             EventType.EventParameter.create({
-                    parameterTypeId: "mock-eventParameterType-id",
-                    required: true,
-                    maxLength: 100
-                })
-            ];
+                parameterTypeId: "mock-eventParameterType-id",
+                required: true,
+                maxLength: 100
+            })
+        ];
 
         const enabledTaskTypes = ["mock-taskType-id"];
         const enabledProductTypes = ["mock-productType-id"];
@@ -549,7 +550,7 @@ describe('Types Creation', function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
-                    createEventType: CreateEventParameterType.create({})
+                    createEventType: CreateEventParameterTypeAction.create({})
                 })
             );
 
@@ -575,7 +576,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({})
+                    createEventType: CreateEventTypeAction.create({})
                 })
             );
 
@@ -589,7 +590,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId
                     })
                 })
@@ -605,7 +606,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName
                     })
@@ -622,7 +623,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription
@@ -640,7 +641,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription,
@@ -670,7 +671,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription,
@@ -693,7 +694,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription,
@@ -716,7 +717,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription,
@@ -745,7 +746,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId2,
                         name: eventTypeName2,
                         description: eventTypeDescription2,
@@ -775,7 +776,7 @@ describe('Types Creation', function () {
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
-                    createEventType: CreateEventType.create({
+                    createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
                         name: eventTypeName,
                         description: eventTypeDescription

@@ -36,6 +36,7 @@ message EventParameterType {
         STRING = 1;
         BYTES = 2;
         ENUM = 3;
+        BOOL = 4;
     }
 
     // Unique identifier.
@@ -58,13 +59,20 @@ message EventType {
         int32 maxValue = 4;
         int32 minLength = 5;
         int32 maxLength = 6;
+
+        // Values.
+        float floatValue = 7;
+        string stringValue = 8;
+        bytes bytesValue = 9;
+        int32 enumValue = 10;
+        bool boolValue = 11;
     }
 
     // Unique identifier.
     string id = 1;
     // Event Type name.
     string name = 2;
-    // Evnet Type description.
+    // Event Type description.
     string description = 3;
     // List of event parameters.
     repeated EventParameter parameters = 4;

@@ -10,6 +10,9 @@ message ACPayload {
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
+        CREATE_COMPANY = 6;
+        CREATE_FIELD = 7;
+        CREATE_OPERATOR = 8;
     }
 
     Action action = 1;
@@ -20,8 +23,9 @@ message ACPayload {
     UpdateSystemAdminAction updateSysAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
-    CreateEventParameterType createEventParameterType = 6;
-    CreateEventType createEventType = 7;
+    CreateEventParameterTypeAction createEventParameterType = 6;
+    CreateEventTypeAction createEventType = 7;
+    CreateCompanyAction createCompany = 8;
 }
 
 message UpdateSystemAdminAction {
@@ -41,17 +45,25 @@ message CreateProductTypeAction {
     repeated string derivedProductsType = 5;
 }
 
-message CreateEventParameterType {
+message CreateEventParameterTypeAction {
     string id = 1;
     string name = 2;
     EventParameterType.Type type = 3;
 }
 
-message CreateEventType {
+message CreateEventTypeAction {
     string id = 1;
     string name = 2;
     string description = 3;
     repeated EventType.EventParameter parameters = 4;
     repeated string enabledTaskTypes = 5;
     repeated string enabledProductTypes = 6;
+}
+
+message CreateCompanyAction {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string website = 4;
+    string admin = 5;
 }
