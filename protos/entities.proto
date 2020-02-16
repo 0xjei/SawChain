@@ -1,0 +1,61 @@
+syntax = "proto3";
+package agrichain;
+
+message Company {
+    // Company Unique Identifier.
+    string id = 1;
+
+    // Company info.
+    string name = 2;
+    string description = 3;
+    string website = 4;
+    uint64 timestamp = 5;
+
+    // Company Admin.
+    string adminPublicKey = 6;
+
+    // List of Company Fields. (optional)
+    repeated Field fields = 7;
+    // List of Company Operators.
+    repeated string operators = 8;
+    // List of batches.
+    repeated string batches = 9;
+}
+
+/// todo refactor (?)
+message Field {
+    // Field name.
+    string name = 1;
+    // Field description.
+    string description = 2;
+    // Initial quantity.
+    float quantity = 3;
+    // Cultivable product.
+    string product = 4;
+    // Field location.
+    Location location = 5;
+    // List of field events.
+    repeated Event events = 6;
+}
+
+message Batch {
+    string product = 1;
+    float quantity = 2;
+    uint64 timestamp = 3;
+    string parentField = 4; // (optional)
+    repeated string parentBatches = 5;
+    repeated Event events = 6;
+    bool finalized = 7;
+}
+
+message Event {
+    string typeId = 1;
+    string reporter = 2;
+    uint64 timestamp = 3;
+}
+
+message Location {
+    // Coordinates are expected to be in millionths of a degree
+    sint64 latitude = 1;
+    sint64 longitude = 2;
+}

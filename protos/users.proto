@@ -7,3 +7,13 @@ message SystemAdmin {
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 2;
 }
+
+message CompanyAdmin {
+    string publicKey = 1;
+
+    // Company identifier.
+    string company = 2;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 3;
+}

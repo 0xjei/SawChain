@@ -24,8 +24,12 @@ const ACPayload = root.lookup('ACPayload');
 const ACPayloadActions = ACPayload.Action;
 const ACPayloadFields = ACPayload.fields;
 
-// Entities lookup.
+// Users lookup.
 const SystemAdmin = root.lookup('SystemAdmin');
+const CompanyAdmin = root.lookup('CompanyAdmin');
+
+// Entities lookup.
+const Company = root.lookup('Company');
 
 // Types lookup.
 const TaskType = root.lookup('TaskType');
@@ -37,8 +41,9 @@ const EventType = root.lookup('EventType');
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
 const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
-const CreateEventParameterType = root.lookup('CreateEventParameterType');
-const CreateEventType = root.lookup('CreateEventType');
+const CreateEventParameterTypeAction = root.lookup('CreateEventParameterTypeAction');
+const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
+const CreateCompanyAction = root.lookup('CreateCompanyAction');
 
 module.exports = {
     root,
@@ -46,13 +51,16 @@ module.exports = {
     ACPayloadActions,
     ACPayloadFields,
     SystemAdmin,
+    CompanyAdmin,
     TaskType,
     ProductType,
     EventParameterType,
     EventType,
+    Company,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
-    CreateEventParameterType,
-    CreateEventType
+    CreateEventParameterTypeAction,
+    CreateEventTypeAction,
+    CreateCompanyAction
 };

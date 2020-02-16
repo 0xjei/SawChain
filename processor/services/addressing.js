@@ -100,6 +100,13 @@ const getEventTypeAddress = id => {
 };
 
 /**
+ * A function that takes an id and returns the corresponding company address.
+ */
+const getCompanyAddress = id => {
+    return makeTypeAddress(id, PREFIXES.COMPANY)
+};
+
+/**
  * A function that takes an address and returns true or false depending on
  * whether or not it is a valid address. It should reject an address if:
  *   - it is not a string
@@ -126,5 +133,6 @@ module.exports = {
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
+    getCompanyAddress,
     isValidAddress
 };
