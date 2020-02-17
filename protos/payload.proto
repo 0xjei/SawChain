@@ -1,6 +1,7 @@
 syntax = "proto3";
 package agrichain;
 import "types.proto";
+import "entities.proto";
 
 message ACPayload {
     enum Action {
@@ -26,6 +27,7 @@ message ACPayload {
     CreateEventParameterTypeAction createEventParameterType = 6;
     CreateEventTypeAction createEventType = 7;
     CreateCompanyAction createCompany = 8;
+    CreateFieldAction createField = 9;
 }
 
 message UpdateSystemAdminAction {
@@ -66,4 +68,13 @@ message CreateCompanyAction {
     string description = 3;
     string website = 4;
     string admin = 5;
+}
+
+message CreateFieldAction {
+    string id = 1;
+    string description = 2;
+    string product = 3;
+    float quantity = 4;
+    Location location = 5;
+    repeated Event events = 6;
 }

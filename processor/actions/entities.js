@@ -4,12 +4,15 @@ const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
-    getCompanyAddress
+    getProductTypeAddress,
+    getCompanyAddress,
+    getFieldAddress
 } = require('../services/addressing');
 const {
     SystemAdmin,
     CompanyAdmin,
-    Company
+    Company,
+    Field
 } = require('../services/proto');
 const {
     reject,
@@ -105,6 +108,81 @@ async function createCompany(context, signerPublicKey, timestamp, {id, name, des
     await context.setState(updates)
 }
 
+async function createField(context, signerPublicKey, timestamp, {id, description, product, quantity, location}) {
+    // Validation: Timestamp not set.
+    if (!timestamp.low && !timestamp.high)
+        reject(`Timestamp is not set!`);
+
+    // Validation: Id is not set.
+    if (!id)
+        reject(`Id is not set!`);
+
+    // Validation: Description is not set.
+    if (!description)
+        reject(`Description is not set!`);
+
+    // Validation: Product is not set.
+    if (!product)
+        reject(`Product is not set!`);
+
+    // Validation: Location is not set.
+    if (!location)
+        reject(`Location is not set!`);
+
+    const companyId = getSHA512(signerPublicKey, 10);
+    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
+    const companyAddress = getCompanyAddress(companyId);
+    const productAddress = getProductTypeAddress(product);
+    const fieldAddress = getFieldAddress(id, companyId);
+
+    const state = await context.getState([
+        companyAdminAddress,
+        companyAddress,
+        productAddress,
+        fieldAddress
+    ]);
+
+    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
+    const companyState = Company.decode(state[companyAddress]);
+
+    // Validation: Sender is not a CA or doesn't have a Company associated.
+    if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
+        reject(`You must be a Company Admin for a Company to create a Field!`);
+
+    // Validation: Given id is already used inside the given Company.
+    if (state[fieldAddress].length > 0)
+        reject(`Given id is already used for a different Field inside given Company!`);
+
+    // Validation: Given product is not recorded yet.
+    if (!state[productAddress].length)
+        reject(`Given Product Type with ${product} id is not recorded yet!`);
+
+    // Validation: Given quantity is lower than or equal to zero.
+    if (quantity <= 0)
+        reject(`Given quantity is lower than or equal to zero!`);
+
+    // State update.
+    const updates = {};
+
+    // Record field.
+    updates[fieldAddress] = Field.encode({
+        id: id,
+        description: description,
+        company: companyId,
+        product: product,
+        quantity: quantity,
+        location: location,
+        events: []
+    }).finish();
+
+    // Update company.
+    companyState.fields.push(id);
+    updates[companyAddress] = Company.encode(companyState).finish();
+
+    await context.setState(updates);
+}
+
 module.exports = {
-    createCompany
+    createCompany,
+    createField
 };

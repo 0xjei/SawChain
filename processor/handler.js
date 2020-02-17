@@ -15,7 +15,8 @@ const {
     createEventType
 } = require('./actions/typeEntities');
 const {
-    createCompany
+    createCompany,
+    createField
 } = require('./actions/entities');
 const {reject, getPayloadActionField} = require('./services/utils');
 
@@ -97,6 +98,14 @@ class AgriChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getPayloadActionField(payload, ACPayloadFields.createCompany.name)
+                );
+                break;
+            case ACPayloadActions.CREATE_FIELD:
+                await createField(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getPayloadActionField(payload, ACPayloadFields.createField.name)
                 );
                 break;
             default:

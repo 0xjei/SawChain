@@ -103,7 +103,11 @@ const getEventTypeAddress = id => {
  * A function that takes an id and returns the corresponding company address.
  */
 const getCompanyAddress = id => {
-    return makeTypeAddress(id, PREFIXES.COMPANY)
+    return FULL_PREFIXES.COMPANY + getSHA512(id).slice(0, 62)
+};
+
+const getFieldAddress = (fieldId, companyId) => {
+    return FULL_PREFIXES.FIELD + getSHA512(fieldId).slice(0, 42) + getSHA512(companyId).slice(0, 20)
 };
 
 /**
@@ -134,5 +138,6 @@ module.exports = {
     getEventParameterTypeAddress,
     getEventTypeAddress,
     getCompanyAddress,
+    getFieldAddress,
     isValidAddress
 };

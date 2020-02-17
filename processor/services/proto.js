@@ -30,6 +30,7 @@ const CompanyAdmin = root.lookup('CompanyAdmin');
 
 // Entities lookup.
 const Company = root.lookup('Company');
+const Field = root.lookup('Field');
 
 // Types lookup.
 const TaskType = root.lookup('TaskType');
@@ -44,6 +45,10 @@ const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 const CreateEventParameterTypeAction = root.lookup('CreateEventParameterTypeAction');
 const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
 const CreateCompanyAction = root.lookup('CreateCompanyAction');
+const CreateFieldAction = root.lookup('CreateFieldAction');
+
+// Other messages lookup.
+const Location = root.lookup('Location');
 
 module.exports = {
     root,
@@ -57,10 +62,13 @@ module.exports = {
     EventParameterType,
     EventType,
     Company,
+    Field,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
-    CreateCompanyAction
+    CreateCompanyAction,
+    CreateFieldAction,
+    Location
 };

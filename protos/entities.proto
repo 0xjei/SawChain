@@ -15,29 +15,31 @@ message Company {
     string adminPublicKey = 6;
 
     // List of Company Fields. (optional)
-    repeated Field fields = 7;
+    repeated string fields = 7;
     // List of Company Operators.
     repeated string operators = 8;
     // List of batches.
     repeated string batches = 9;
 }
 
-/// todo refactor (?)
 message Field {
-    // Field name.
-    string name = 1;
+    // Field id.
+    string id = 1;
     // Field description.
     string description = 2;
-    // Initial quantity.
-    float quantity = 3;
+    // Company.
+    string company = 3;
     // Cultivable product.
     string product = 4;
+    // Initial quantity.
+    float quantity = 5;
     // Field location.
-    Location location = 5;
+    Location location = 6;
     // List of field events.
-    repeated Event events = 6;
+    repeated Event events = 7;
 }
 
+/// todo refactor (?)
 message Batch {
     string product = 1;
     float quantity = 2;
