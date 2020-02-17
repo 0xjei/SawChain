@@ -133,7 +133,7 @@ async function createField(context, signerPublicKey, timestamp, {id, description
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(companyId);
     const productAddress = getProductTypeAddress(product);
-    const fieldAddress = getFieldAddress(id, companyId);
+    const fieldAddress = getFieldAddress(id);
 
     const state = await context.getState([
         companyAdminAddress,

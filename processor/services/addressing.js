@@ -106,8 +106,8 @@ const getCompanyAddress = id => {
     return FULL_PREFIXES.COMPANY + getSHA512(id).slice(0, 62)
 };
 
-const getFieldAddress = (fieldId, companyId) => {
-    return FULL_PREFIXES.FIELD + getSHA512(fieldId).slice(0, 42) + getSHA512(companyId).slice(0, 20)
+const getFieldAddress = id => {
+    return FULL_PREFIXES.FIELD + getSHA512(id).slice(0, 62)
 };
 
 /**

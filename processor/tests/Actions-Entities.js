@@ -339,7 +339,7 @@ describe('Entities Actions', function () {
 
         before(async function () {
             company = getSHA512(keyPairCA.publicKey, 10);
-            fieldAddress = getFieldAddress(id, company);
+            fieldAddress = getFieldAddress(id);
             companyAddress = getCompanyAddress(company)
         });
 
