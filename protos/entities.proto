@@ -39,6 +39,12 @@ message Field {
     repeated Event events = 7;
 }
 
+message Event {
+    string typeId = 1;
+    string reporter = 2;
+    uint64 timestamp = 3;
+}
+
 /// todo refactor (?)
 message Batch {
     string product = 1;
@@ -48,12 +54,6 @@ message Batch {
     repeated string parentBatches = 5;
     repeated Event events = 6;
     bool finalized = 7;
-}
-
-message Event {
-    string typeId = 1;
-    string reporter = 2;
-    uint64 timestamp = 3;
 }
 
 message Location {

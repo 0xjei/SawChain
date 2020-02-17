@@ -77,18 +77,22 @@ const mockCreateEventParameterType = async (context, handler, prvKeySA, id, name
     await handler.apply(txn, context);
 };
 
-const mockCreateEventType = async (context, handler, prvKeySA, id, name, desc, params, taskTypes, prodTypes) => {
+const mockCreateEventType = async (
+    context, handler, prvKeySA, id, typology, name, desc, params, taskTypes, enableProdTypes, derivedProdTypes
+) => {
     const txn = new Txn(
         ACPayload.create({
             action: ACPayloadActions.CREATE_EVENT_TYPE,
             timestamp: Date.now(),
             createEventType: CreateEventTypeAction.create({
                 id: id,
+                typology: typology,
                 name: name,
                 description: desc,
                 parameters: params,
                 enabledTaskTypes: taskTypes,
-                enabledProductTypes: prodTypes
+                enabledProductTypes: enableProdTypes,
+                derivedProductTypes: derivedProdTypes
             })
         }),
         prvKeySA
@@ -109,6 +113,7 @@ const bootstrapSystem = async (context, handler, prvKeySA) => {
     await mockCreateProductType(context, handler, prvKeySA, "prd3", "name3", "desc3", 1, ["prd1"]);
     await mockCreateProductType(context, handler, prvKeySA, "prd4", "name4", "desc4", 0, ["prd2"]);
     await mockCreateProductType(context, handler, prvKeySA, "prd5", "name5", "desc5", 0, ["prd3"]);
+    await mockCreateProductType(context, handler, prvKeySA, "prd6", "name6", "desc6", 0, ["prd4"]);
 
     // Event Parameter Types.
     await mockCreateEventParameterType(context, handler, prvKeySA, "param1", "name1", 0);
@@ -134,9 +139,12 @@ const bootstrapSystem = async (context, handler, prvKeySA) => {
         required: false
     });
 
-    await mockCreateEventType(context, handler, prvKeySA, "event1", "name1", "desc1", [param1, param2], ["task1"], ["prd2", "prd3"]);
-    await mockCreateEventType(context, handler, prvKeySA, "event2", "name2", "desc2", [param3], ["task2"], ["prd4", "prd5"]);
-    await mockCreateEventType(context, handler, prvKeySA, "event3", "name3", "desc3", [param1, param3], ["task3"], ["prd1"]);
+    await mockCreateEventType(context, handler, prvKeySA, "event1", EventType.EventTypology.TRANSFORMATION, "name1", "desc1", [param1, param2], ["task1"], ["prd2", "prd3"], ["prd1"]);
+    await mockCreateEventType(context, handler, prvKeySA, "event2", EventType.EventTypology.DESCRIPTION, "name2", "desc2", [param3], ["task2"], ["prd4", "prd5"]);
+    await mockCreateEventType(context, handler, prvKeySA, "event3", EventType.EventTypology.DESCRIPTION, "name3", "desc3", [param1, param3], ["task3"], ["prd1"]);
+    await mockCreateEventType(context, handler, prvKeySA, "event4", EventType.EventTypology.TRANSFORMATION, "name4", "desc4", [param1, param2], ["task1"], ["prd4"], ["prd2"]);
+    await mockCreateEventType(context, handler, prvKeySA, "event5", EventType.EventTypology.TRANSFORMATION, "name5", "desc5", [param1, param2], ["task1"], ["prd6"], ["prd4"]);
+
 };
 
 module.exports = {

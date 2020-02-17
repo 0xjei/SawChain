@@ -171,8 +171,13 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     await context.setState(updates)
 }
 
-async function createEventType(context, signerPublicKey, timestamp,
-                               {id, name, description, parameters, enabledTaskTypes, enabledProductTypes}) {
+async function createEventType(
+    context,
+    signerPublicKey,
+    timestamp,
+    {id, typology, name, description, parameters, enabledTaskTypes, enabledProductTypes, derivedProductTypes}
+) {
+
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
@@ -180,6 +185,10 @@ async function createEventType(context, signerPublicKey, timestamp,
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
+
+    // Validation: Typology is not equal to one of the enum values.
+    if (!Object.values(EventType.EventTypology).some((value) => value === typology))
+        reject(`Typology is different from one of the possible values!`);
 
     // Validation: Name is not set.
     if (!name)
@@ -242,7 +251,28 @@ async function createEventType(context, signerPublicKey, timestamp,
         ]);
 
         if (!productTypeState[productTypeAddress].length) {
-            reject(`Given Product Type with ${productTypeId} id is not recorded yet!`);
+            reject(`Given enabled Product Type with ${productTypeId} id is not recorded yet!`);
+        }
+    }
+
+    // Validation: No derived products for transformation event.
+    if (typology === EventType.EventTypology.TRANSFORMATION && !derivedProductTypes.length)
+        reject(`No derived Product Type given for transformation event!`);
+
+    // Validation: Given derived products for not transformation event.
+    if (typology !== EventType.EventTypology.TRANSFORMATION && derivedProductTypes.length > 0)
+        reject(`Derived Product Type must be empty for non transformation event!`);
+
+    // Validation: At least one derived product type is not recorded yet.
+    for (const productTypeId of derivedProductTypes) {
+        let productTypeAddress = getProductTypeAddress(productTypeId);
+
+        let productTypeState = await context.getState([
+            productTypeAddress
+        ]);
+
+        if (!productTypeState[productTypeAddress].length) {
+            reject(`Given derived Product Type with ${productTypeId} id is not recorded yet!`);
         }
     }
 
@@ -251,11 +281,13 @@ async function createEventType(context, signerPublicKey, timestamp,
 
     updates[eventTypeAddress] = EventType.encode({
         id: id,
+        typology: typology,
         name: name,
         description: description,
         parameters: parameters,
         enabledTaskTypes: enabledTaskTypes,
-        enabledProductTypes: enabledProductTypes
+        enabledProductTypes: enabledProductTypes,
+        derivedProductTypes: derivedProductTypes
     }).finish();
 
     await context.setState(updates)

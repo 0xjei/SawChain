@@ -48,6 +48,11 @@ message EventParameterType {
 }
 
 message EventType {
+    enum EventTypology {
+        DESCRIPTION = 0;
+        TRANSFORMATION = 1;
+    }
+
     // Custom parameter structure used for Event Type.
     message EventParameter {
         // Parameter Type identifier.
@@ -70,14 +75,18 @@ message EventType {
 
     // Unique identifier.
     string id = 1;
+    // Event typology.
+    EventTypology typology = 2;
     // Event Type name.
-    string name = 2;
+    string name = 3;
     // Event Type description.
-    string description = 3;
+    string description = 4;
     // List of event parameters.
-    repeated EventParameter parameters = 4;
+    repeated EventParameter parameters = 5;
     // List of Task Type identifiers.
-    repeated string enabledTaskTypes = 5;
+    repeated string enabledTaskTypes = 6;
     // List of Product Type identifiers.
-    repeated string enabledProductTypes = 6;
+    repeated string enabledProductTypes = 7;
+    // List of Derived Product Type identifiers (only for TRANSFORMATION typology).
+    repeated string derivedProductTypes = 8;
 }

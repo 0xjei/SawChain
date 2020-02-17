@@ -56,11 +56,13 @@ message CreateEventParameterTypeAction {
 
 message CreateEventTypeAction {
     string id = 1;
-    string name = 2;
-    string description = 3;
-    repeated EventType.EventParameter parameters = 4;
-    repeated string enabledTaskTypes = 5;
-    repeated string enabledProductTypes = 6;
+    EventType.EventTypology typology = 2;
+    string name = 3;
+    string description = 4;
+    repeated EventType.EventParameter parameters = 5;
+    repeated string enabledTaskTypes = 6;
+    repeated string enabledProductTypes = 7;
+    repeated string derivedProductTypes = 8;
 }
 
 message CreateCompanyAction {

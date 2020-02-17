@@ -165,9 +165,9 @@ describe('Types Creation', function () {
         const productTypeDescription = "mock-productType-description";
         const productTypeUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
 
-        const productTypeId2 = "mock-product-id2";
-        const productTypeName2 = "mock-product-name2";
-        const productTypeDescription2 = "mock-product-description2";
+        const productTypeId2 = "mock-productType-id2";
+        const productTypeName2 = "mock-productType-name2";
+        const productTypeDescription2 = "mock-productType-description2";
         const productTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
         const derivedProductsType = ["mock-productType-id"];
 
@@ -525,10 +525,12 @@ describe('Types Creation', function () {
 
     describe('Create Event Type', function () {
         const eventTypeId = "mock-eventType-id";
+        const eventTypology = EventType.EventTypology.DESCRIPTION;
         const eventTypeName = "mock-eventType-name";
         const eventTypeDescription = "mock-eventType-description";
 
         const eventTypeId2 = "mock-eventType-id2";
+        const eventTypology2 = EventType.EventTypology.DESCRIPTION;
         const eventTypeName2 = "mock-eventType-name2";
         const eventTypeDescription2 = "mock-eventType-description2";
 
@@ -585,13 +587,30 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no name is given', async function () {
+        it('Should reject if typology is not equal to one of the enum values', async function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no name is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: eventTypeId,
+                        typology: eventTypology
                     })
                 })
             );
@@ -608,6 +627,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName
                     })
                 })
@@ -625,6 +645,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription
                     })
@@ -643,6 +664,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription,
                         parameters:
@@ -673,6 +695,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription,
                         parameters: eventTypeParameters,
@@ -696,10 +719,84 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledProductTypes: [
+                            "mock-productType-id100"
+                        ]
+                    })
+                }),
+                keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no derived product types are given for typology transformation event', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: eventTypeId,
+                        typology: EventType.EventTypology.TRANSFORMATION,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledProductTypes: enabledProductTypes,
+                        derivedProductTypes: []
+                    })
+                }),
+                keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if derived product types are given for typology not transformation event', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: eventTypeId,
+                        typology: eventTypology,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledProductTypes: enabledProductTypes,
+                        derivedProductTypes: [
+                            "mock-productType-id"
+                        ]
+                    })
+                }),
+                keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given derived product types are not recorded yet', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: eventTypeId,
+                        typology: eventTypology,
+                        name: eventTypeName,
+                        description: eventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledProductTypes: enabledProductTypes,
+                        derivedProductTypes: [
                             "mock-productType-id100"
                         ]
                     })
@@ -719,6 +816,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription,
                         enabledTaskTypes: enabledTaskTypes,
@@ -748,6 +846,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId2,
+                        typology: eventTypology2,
                         name: eventTypeName2,
                         description: eventTypeDescription2,
                         parameters: eventTypeParameters,
@@ -778,6 +877,7 @@ describe('Types Creation', function () {
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
                         id: eventTypeId,
+                        typology: eventTypology,
                         name: eventTypeName,
                         description: eventTypeDescription
                     })
