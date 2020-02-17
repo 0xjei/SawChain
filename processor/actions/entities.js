@@ -4,6 +4,7 @@ const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
+    getTaskTypeAddress,
     getProductTypeAddress,
     getCompanyAddress,
     getFieldAddress
@@ -11,6 +12,7 @@ const {
 const {
     SystemAdmin,
     CompanyAdmin,
+    Operator,
     Company,
     Field
 } = require('../services/proto');
@@ -182,7 +184,77 @@ async function createField(context, signerPublicKey, timestamp, {id, description
     await context.setState(updates);
 }
 
+async function createOperator(context, signerPublicKey, timestamp, {publicKey, task}) {
+    // Validation: Timestamp not set.
+    if (!timestamp.low && !timestamp.high)
+        reject(`Timestamp is not set!`);
+
+    // Validation: Operator public key field is not set.
+    if (!publicKey)
+        reject(`Operator public key is not set!`);
+
+    // Validation: Task is not set.
+    if (!task)
+        reject(`Task is not set!`);
+
+    // Validation: Operator public key field doesn't contain a valid public key.
+    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
+        reject(`Operator public key is invalid!`);
+
+    const companyId = getSHA512(signerPublicKey, 10);
+    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
+    const companyAddress = getCompanyAddress(companyId);
+    const operatorAddress = getOperatorAddress(publicKey);
+    const companyAdminOperatorAddress = getCompanyAdminAddress(publicKey);
+    const taskTypeAddress = getTaskTypeAddress(task);
+
+    const state = await context.getState([
+        companyAdminAddress,
+        companyAddress,
+        operatorAddress,
+        companyAdminOperatorAddress,
+        taskTypeAddress
+    ]);
+
+    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
+    const companyState = Company.decode(state[companyAddress]);
+
+    // Validation: Sender is not a CA or doesn't have a Company associated.
+    if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
+        reject(`You must be a Company Admin for a Company to create an Operator!`);
+
+    // Validation: Given public key is already associated to a CA.
+    if (state[companyAdminOperatorAddress].length > 0)
+        reject(`Operator public key is already associated to a Company Admin!`);
+
+    // Validation: Given public key is already associated to an OP.
+    if (state[operatorAddress].length > 0)
+        reject(`Operator public key is already associated to an Operator!`);
+
+    // Validation: Given task is not recorded yet.
+    if (!state[taskTypeAddress].length)
+        reject(`Given Task Type with ${task} id is not recorded yet!`);
+
+    // State update.
+    const updates = {};
+
+    // Record field.
+    updates[operatorAddress] = Operator.encode({
+        publicKey: publicKey,
+        company: companyId,
+        task: task
+    }).finish();
+
+    // Update company.
+    companyState.operators.push(publicKey);
+    updates[companyAddress] = Company.encode(companyState).finish();
+
+    await context.setState(updates);
+}
+
+
 module.exports = {
     createCompany,
-    createField
+    createField,
+    createOperator
 };

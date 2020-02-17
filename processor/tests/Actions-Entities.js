@@ -13,14 +13,17 @@ const {
     ACPayload,
     ACPayloadActions,
     CompanyAdmin,
+    Operator,
     Company,
     Field,
     Location,
     CreateCompanyAction,
-    CreateFieldAction
+    CreateFieldAction,
+    CreateOperatorAction
 } = require('../services/proto');
 const {
     getCompanyAdminAddress,
+    getOperatorAddress,
     getCompanyAddress,
     getFieldAddress
 } = require('../services/addressing');
@@ -37,6 +40,10 @@ describe('Entities Actions', function () {
 
     let keyPairSA = null;
     let keyPairCA = null;
+    let keyPairOP1 = null;
+
+    let company = null;
+    let companyAddress = null;
 
     before(async function () {
         handler = new AgriChainHandler();
@@ -48,21 +55,23 @@ describe('Entities Actions', function () {
 
         // Company Admin key pair.
         keyPairCA = getNewKeyPair();
+        company = getSHA512(keyPairCA.publicKey, 10);
+        companyAddress = getCompanyAddress(getSHA512(keyPairCA.publicKey, 10));
+        // Operator key pair.
+        keyPairOP1 = getNewKeyPair();
     });
 
-    describe('Create Company Action', async function () {
+    describe('Create Company', async function () {
         let id = null;
         let name = "mock-companyName";
         let description = "mock-companyDescription";
         let website = "mock-companyWebsite";
 
-        let companyAddress = null;
         let companyAdminAddress = null;
 
         before(async function () {
             id = getSHA512(keyPairCA.publicKey, 10);
 
-            companyAddress = getCompanyAddress(id);
             companyAdminAddress = getCompanyAdminAddress(keyPairCA.publicKey)
         });
 
@@ -324,7 +333,7 @@ describe('Entities Actions', function () {
 
     });
 
-    describe('Create Field Action', async function () {
+    describe('Create Field', async function () {
         const id = "field1";
         const description = "desc1";
         const product = "prd1";
@@ -333,12 +342,10 @@ describe('Entities Actions', function () {
             latitude: 39.23054,
             longitude: 9.11917
         });
-        let company = null;
+
         let fieldAddress = null;
-        let companyAddress = null;
 
         before(async function () {
-            company = getSHA512(keyPairCA.publicKey, 10);
             fieldAddress = getFieldAddress(id);
             companyAddress = getCompanyAddress(company)
         });
@@ -360,20 +367,6 @@ describe('Entities Actions', function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_FIELD
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if no id is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
-                    timestamp: Date.now(),
-                    createField: CreateFieldAction.create({})
                 })
             );
 
@@ -559,6 +552,193 @@ describe('Entities Actions', function () {
                         product: product,
                         quantity: productQuantity,
                         location: location
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+    });
+
+    describe('Create Operator', async function () {
+        const task = "task1";
+
+        let publicKey = null;
+        let operatorAddress = null;
+
+        before(async function () {
+            publicKey = keyPairOP1.publicKey;
+
+            operatorAddress = getOperatorAddress(publicKey);
+        });
+
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    createOperator: CreateOperatorAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no task is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no operator public key is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if operator public key is not valid', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey.slice(0, 30)
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if a Company Admin is not the transaction signer', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey,
+                        task: task
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given operator public key is already associated to a company admin', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: keyPairCA.publicKey,
+                        task: task
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given task is not recorded', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey,
+                        task: "error"
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Operator', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey,
+                        task: task
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[operatorAddress];
+
+            expect(state).to.not.be.null;
+            expect(Operator.decode(state).publicKey).to.equal(publicKey);
+            expect(Operator.decode(state).company).to.equal(company);
+            expect(Operator.decode(state).task).to.equal(task);
+
+            // Company.
+            state = context._state[companyAddress];
+
+            expect(state).to.not.be.null;
+            expect(Company.decode(state).operators.length).to.equal(1);
+        });
+
+        it('Should reject if given operator public key is already associated to a operator', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: publicKey,
+                        task: task
                     })
                 }),
                 keyPairCA.privateKey

@@ -28,6 +28,7 @@ message ACPayload {
     CreateEventTypeAction createEventType = 7;
     CreateCompanyAction createCompany = 8;
     CreateFieldAction createField = 9;
+    CreateOperatorAction createOperator = 10;
 }
 
 message UpdateSystemAdminAction {
@@ -77,4 +78,9 @@ message CreateFieldAction {
     float quantity = 4;
     Location location = 5;
     repeated Event events = 6;
+}
+
+message CreateOperatorAction {
+    string publicKey = 1;
+    string task = 2;
 }

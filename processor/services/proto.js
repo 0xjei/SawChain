@@ -27,6 +27,7 @@ const ACPayloadFields = ACPayload.fields;
 // Users lookup.
 const SystemAdmin = root.lookup('SystemAdmin');
 const CompanyAdmin = root.lookup('CompanyAdmin');
+const Operator = root.lookup('Operator');
 
 // Entities lookup.
 const Company = root.lookup('Company');
@@ -46,6 +47,7 @@ const CreateEventParameterTypeAction = root.lookup('CreateEventParameterTypeActi
 const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
 const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
+const CreateOperatorAction = root.lookup('CreateOperatorAction');
 
 // Other messages lookup.
 const Location = root.lookup('Location');
@@ -57,6 +59,7 @@ module.exports = {
     ACPayloadFields,
     SystemAdmin,
     CompanyAdmin,
+    Operator,
     TaskType,
     ProductType,
     EventParameterType,
@@ -70,5 +73,6 @@ module.exports = {
     CreateEventTypeAction,
     CreateCompanyAction,
     CreateFieldAction,
+    CreateOperatorAction,
     Location
 };

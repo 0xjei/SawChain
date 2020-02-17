@@ -17,3 +17,13 @@ message CompanyAdmin {
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 3;
 }
+
+message Operator {
+    string publicKey = 1;
+
+    // Company identifier.
+    string company = 2;
+
+    // Role inside the company.
+    string task = 3;
+}
