@@ -14,12 +14,15 @@ const {
     ACPayloadActions,
     CompanyAdmin,
     Company,
-    CreateCompanyAction
+    Field,
+    Location,
+    CreateCompanyAction,
+    CreateFieldAction
 } = require('../services/proto');
 const {
-    getSystemAdminAddress,
     getCompanyAdminAddress,
-    getCompanyAddress
+    getCompanyAddress,
+    getFieldAddress
 } = require('../services/addressing');
 const {
     getSHA512,
@@ -312,6 +315,253 @@ describe('Entities Actions', function () {
                     })
                 }),
                 keyPairSA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+    });
+
+    describe('Create Field Action', async function () {
+        const id = "field1";
+        const description = "desc1";
+        const product = "prd1";
+        const productQuantity = 150000;
+        const location = Location.create({
+            latitude: 39.23054,
+            longitude: 9.11917
+        });
+        let company = null;
+        let fieldAddress = null;
+        let companyAddress = null;
+
+        before(async function () {
+            company = getSHA512(keyPairCA.publicKey, 10);
+            fieldAddress = getFieldAddress(id, company);
+            companyAddress = getCompanyAddress(company)
+        });
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    createField: CreateFieldAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no description is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no product is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no location is given', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: product,
+                        quantity: productQuantity
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if a Company Admin is not the transaction signer', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: product,
+                        quantity: productQuantity,
+                        location: location
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given product type is not recorded yet', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: "error",
+                        quantity: productQuantity,
+                        location: location
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given quantity is lower than or equal to zero', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: product,
+                        quantity: 0,
+                        location: location
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Field', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: product,
+                        quantity: productQuantity,
+                        location: location
+                    })
+                }),
+                keyPairCA.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[fieldAddress];
+
+            expect(state).to.not.be.null;
+            expect(Field.decode(state).id).to.equal(id);
+            expect(Field.decode(state).description).to.equal(description);
+            expect(Field.decode(state).company).to.equal(company);
+            expect(Field.decode(state).product).to.equal(product);
+            expect(Field.decode(state).quantity).to.equal(productQuantity);
+            expect(parseInt(Field.decode(state).location.latitude)).to.equal(parseInt(location.latitude.toString()));
+            expect(parseInt(Field.decode(state).location.longitude)).to.equal(parseInt(location.longitude.toString()));
+            expect(Field.decode(state).events).to.be.empty;
+
+            // Company.
+            state = context._state[companyAddress];
+
+            expect(state).to.not.be.null;
+            expect(Company.decode(state).fields.length).to.equal(1);
+        });
+
+        it('Should reject if given id is already associated to a field inside given company', async function () {
+            txn = new Txn(
+                ACPayload.create({
+                    action: ACPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: product,
+                        quantity: productQuantity,
+                        location: location
+                    })
+                }),
+                keyPairCA.privateKey
             );
 
             const submission = handler.apply(txn, context);
