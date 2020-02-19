@@ -657,10 +657,11 @@ describe('Entities Actions', function () {
         });
 
         it('Should create the Operator', async function () {
+            const timestamp = Date.now();
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
+                    timestamp: timestamp,
                     createOperator: CreateOperatorAction.create({
                         publicKey: publicKey,
                         task: task
@@ -678,6 +679,7 @@ describe('Entities Actions', function () {
             expect(Operator.decode(state).publicKey).to.equal(publicKey);
             expect(Operator.decode(state).company).to.equal(company);
             expect(Operator.decode(state).task).to.equal(task);
+            expect(parseInt(Operator.decode(state).timestamp)).to.equal(timestamp);
 
             // Company.
             state = context._state[companyAddress];

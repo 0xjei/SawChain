@@ -78,7 +78,6 @@ message CreateFieldAction {
     string product = 3;
     float quantity = 4;
     Location location = 5;
-    repeated Event events = 6;
 }
 
 message CreateOperatorAction {

@@ -26,4 +26,7 @@ message Operator {
 
     // Role inside the company.
     string task = 3;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 4;
 }

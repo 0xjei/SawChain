@@ -235,7 +235,8 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
     updates[operatorAddress] = Operator.encode({
         publicKey: publicKey,
         company: companyId,
-        task: task
+        task: task,
+        timestamp: timestamp
     }).finish();
 
     // Update company.
@@ -244,7 +245,6 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
 
     await context.setState(updates);
 }
-
 
 module.exports = {
     createCompany,
