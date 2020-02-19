@@ -21,14 +21,10 @@ const {
     getSHA512
 } = require('../services/utils');
 
-async function createCompany(context, signerPublicKey, timestamp, {id, name, description, website, admin}) {
+async function createCompany(context, signerPublicKey, timestamp, {name, description, website, admin}) {
     // Validation: Timestamp not set.
     if (!timestamp.low && !timestamp.high)
         reject(`Timestamp is not set!`);
-
-    // Validation: Id is not set.
-    if (!id)
-        reject(`Id is not set!`);
 
     // Validation: Name is not set.
     if (!name)
@@ -50,6 +46,7 @@ async function createCompany(context, signerPublicKey, timestamp, {id, name, des
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(admin))
         reject(`Company Admin public key is invalid!`);
 
+    const id = getSHA512(admin, 10);
     const systemAdminAddress = getSystemAdminAddress();
     const companyAdminAddress = getCompanyAdminAddress(admin);
     const operatorAddress = getOperatorAddress(admin);
@@ -67,10 +64,6 @@ async function createCompany(context, signerPublicKey, timestamp, {id, name, des
     // Validation: Sender is not the SA.
     if (adminState.publicKey !== signerPublicKey)
         reject(`You must be the System Admin to create a Company!`);
-
-    // Validation: Company id is not valid.
-    if (id !== getSHA512(admin, 10))
-        reject(`Given id is not valid!`);
 
     // Validation: Given public key is associated to current SA.
     if (signerPublicKey === admin)

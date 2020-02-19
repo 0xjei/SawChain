@@ -100,28 +100,12 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no id is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
-                    timestamp: Date.now(),
-                    createCompany: CreateCompanyAction.create({})
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
         it('Should reject if no name is given', async function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
-                    createCompany: CreateCompanyAction.create({
-                        id: id
-                    })
+                    createCompany: CreateCompanyAction.create({})
                 })
             );
 
@@ -137,7 +121,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name
                     })
                 })
@@ -154,7 +137,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description
                     })
@@ -172,7 +154,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description,
                         website: website
@@ -191,7 +172,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description,
                         website: website,
@@ -211,7 +191,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description,
                         website: website,
@@ -225,34 +204,12 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given id is not valid', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
-                    timestamp: Date.now(),
-                    createCompany: CreateCompanyAction.create({
-                        id: getSHA512("INVALID", 10),
-                        name: name,
-                        description: description,
-                        website: website,
-                        admin: keyPairCA.publicKey
-                    })
-                }),
-                keyPairSA.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
         it('Should reject if given company admin public key is equal to system admin public key', async function () {
             txn = new Txn(
                 ACPayload.create({
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: getSHA512(keyPairSA.publicKey, 10),
                         name: name,
                         description: description,
                         website: website,
@@ -275,7 +232,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: timestamp,
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description,
                         website: website,
@@ -316,7 +272,6 @@ describe('Entities Actions', function () {
                     action: ACPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
-                        id: id,
                         name: name,
                         description: description,
                         website: website,

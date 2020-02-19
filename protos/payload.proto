@@ -66,11 +66,10 @@ message CreateEventTypeAction {
 }
 
 message CreateCompanyAction {
-    string id = 1;
-    string name = 2;
-    string description = 3;
-    string website = 4;
-    string admin = 5;
+    string name = 1;
+    string description = 2;
+    string website = 3;
+    string admin = 4;
 }
 
 message CreateFieldAction {
