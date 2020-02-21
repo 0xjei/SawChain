@@ -1,4 +1,6 @@
 # AgriChain Transaction Family Specification.
+Qua immagine workflow, semplificatissima con pochi colori stile questa  per processor https://github.com/kamalkishorm/Blockchain_SupplyChain
+
 ## Overview
 The AgriChain transaction family allows supply chain parties to trace products, activities and ownerships as they move through the real world supply chain.
 This transaction family implements the full application logic for the food supply chain ecosystem. Due to the nature of the solution and according to the permissioned blockchain platform,
