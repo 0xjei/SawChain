@@ -91,9 +91,11 @@ npm run test
 # Contributions
 Keep in mind that this is a Proof of Concept (PoC) application developed according of a previous study which aim was to strengthened 
 food supply-chains with blockchain technology ([paper](https://bit.ly/36OYrvn)). This project is not production ready by any means.
+If you are interested in using it, you need to create a customized client based on your use-case. 
+To communicate with the blockchain use the provided REST API or build your custom APIs.
 However, you are invited to play around with the project and use it as-is.
 
 # License
 SawChain is under the MIT software license. 
 
-See [LICENSE](https://github.com/Jeeiii/AgriChain-Sawtooth-Demo/blob/master/LICENSE) file for more information.
+See [LICENSE](https://github.com/Jeeiii/SawChain/blob/master/LICENSE) file for more information.

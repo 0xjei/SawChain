@@ -1,32 +1,59 @@
-# AgriChain Transaction Family Specification.
-Qua immagine workflow, semplificatissima con pochi colori stile questa  per processor https://github.com/kamalkishorm/Blockchain_SupplyChain
-
+# SawChain Transaction Family Specification.
 ## Overview
-The AgriChain transaction family allows supply chain parties to trace products, activities and ownerships as they move through the real world supply chain.
-This transaction family implements the full application logic for the food supply chain ecosystem. Due to the nature of the solution and according to the permissioned blockchain platform,
-there are different customizable set of types which can be defined to represent your use case.
-This application is designed for a *consortium-like* environment, so different decision needs to be made by the different authorized parties. 
-To define set of types, issuing credentials to external certification authorities and company administrator, the parties have to decide who will be the system administrator.
-To guarantee consistency and filtering over state entity data recording each company will have lists of different types that can be used to create an entity. 
-Both authorized and external parties can read information about state recordings, from entities and activities to quantity and ownership movements, 
-relying on a unique source of information and application logic.
+The SawChain Transaction Family allows each member of a consortium to rely on a predefined set of immutable transaction actions 
+for updating a single shared ledger. The external agreements as well as users, products and events are managed through a user-specifiable set of types adaptable to every use-case.
+Any individual is able to read information from ledger state to reconstruct the history of events of production batches, ownership exchange and quantity shifts.
 
+*nb.* The project is under development. This specification file must **NOT** be considered as definitive.
+
+## Contents
+- [State](#state)
+    * [Users](#users)
+        * [System Admin](#system-admin)
+        * [Company Admin](#company-admin)
+        * [Operator](#operator)
+    * [Types](#types)
+        * [Task Type](#task-type)
+        * [Product Type](#product-type)
+        * [Event Parameter Type](#event-parameter-type)
+        * [Event Type](#event-type)
+    * [Entities](#entities)
+        * [Company](#company)
+        * [Field](#field)
+- [Addressing](#addressing)
+- [Transactions](#transactions)
+    * [Transaction Payload](#transaction-payload)
+    * [Create System Admin](#create-system-admin)
+    * [Update System Admin](#update-system-admin)
+    * [Create Task Type](#create-task-type)
+    * [Create Product Type](#create-product-type)
+    * [Create Event Parameter Type](#create-event-parameter-type)
+    * [Create Event Type](#create-event-type)
+    * [Create Company](#create-company)
+    * [Create Field](#create-field)
+    * [Create Operator](#create-operator)
+    
 ## State
-Each object is structured and serialized using Google Protocol Buffers before being stored in state. 
-We have sets of objects that are grouped in different categories:
-users (*System Admin*, *Company Admin*, *Operator* and *Certification Authority*), 
-types (*TaskType*, *ProductType*, *EventParameterType*, *EventType*), 
-companies (*Company*) and optional fields (*Field*), a recorded quantity of product (*Batch*) and activities (*Event*).
-As described in the Addressing section below, these objects are stored in separate sub-namespaces under the *AgriChain* namespace.
+Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
+Protocol Buffers are language-neutral, platform-neutral, extensible mechanism for serializing structured data.
+To improve the understanding of the relationships between objects they have been categorized as follows:
+- **Users**: *System Admin*, *Company Admin*, *Operator*.
+- **Types**: *Task Type*, *Product Type*, *Event Parameter Type*, *Event Type*.
+- **Entities**: *Company*, *Field*, *Batch*, *Event*.
 
-## Users
-There are different possible type of user which can be recorded inside the blockchain, guaranteeing an high degree of 
-personalization and responsibility between a cross-organizational environment as the supply chain. 
-Each user is identified inside and outside the system uniquely by his/her public key.
+As described in the [Addressing](#addressing) section below, these objects are stored in separate sub-namespaces under the SawChain namespace.
 
-### System Admin
-The only user enabled to record the different types configuration on-chain and company registration is the System Admin. He is responsible of the issuing of
-company administrators and certification authorities credentials. For each AgriChain application there will be only System Admin at a time.
+### Users
+Every user is an authorized "*agent*" who can send transactions. This could include not only humans, but also autonomous sensors sending transactions that update
+properties like temperature and location for production batches. All users must be created (registered on-chain) in order to send transactions.
+Each agent is uniquely identified by his/her own public key.
+
+#### System Admin
+The System Admin is a special kind of external user from supply-chain participants identified as trustworthy from the consortium.
+He is responsible for system start up by recording companies and their administrators, and the entire set of types, according to supply-chain rules and agreements. 
+Referencing an external agent is possible to avoid tampering or internal advantages by the participants themselves.
+There can be only one system administrator for each release.
+
 ```protobuf
 message SystemAdmin {
     // The System Admin's public key.
@@ -37,84 +64,145 @@ message SystemAdmin {
 }
 ```
 
-### Company Administrator
-##### To do
+### Company Admin
+Each company is managed by a Company Administrator who is enabled to issue credentials and
+assign tasks to Operators. If the company covers the primary production phase, the company administrator can also record the company production fields.
+
+```protobuf
+message CompanyAdmin {
+    string publicKey = 1;
+
+    // Company identifier.
+    string company = 2;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 3;
+}
+```
+
 ### Operator
-##### To do
-### Certification Authority
-##### To do
+An Operator is an authorized user enabled to record data about production batches and events within the company who works for.
+The assigned task allows dynamic filtering during registration of data which decreases error occurrences.
+
+```protobuf
+message Operator {
+    string publicKey = 1;
+
+    // Company identifier.
+    string company = 2;
+
+    // Assigned task into the company.
+    string task = 3;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 4;
+}
+```
 
 ## Types
-The different types allows the definition of template-like information to design correctly and customize the entity state recording. 
-Each entity is going to be associated with a particular type by a unique-class type string identifier. This mechanism allows an high
-degree of customization and a better fault tolerance.
+Each Type is a template structure which users can defined to match their design.
+In order to validate incoming data, each entity (like events, batches, etc.) is assigned to a particular Type at creation. 
+Types are recorded into the state to avoid subsequent changes or misunderstandings between parties.  
+As the supply chain needs to evolve, different Types can be recorded into the state.
  
 #### Task Type
-Task type is used to define a particular task/role done by operators inside a company. 
-The same task type can be associated to multiple operators during their creation. 
+Operators are binded to a specified role inside a company which describes their responsibilities. 
+This information can be used to filter different types of products and events that the operator can interact. 
+Task type is used to define a particular task/role for operators. 
+
 ```protobuf
 message TaskType {
     // Unique identifier.
     string id = 1;
+
     // Task name.
     string role = 2;
 }
 ```
 
 ### Product Type
-Product type is used to define a particular type of product that can be produced, processed and sell along the supply chain.
-From a product type can derive multiple products types. Each product type can be associated to multiple batches with
-a particular quantity of this product.
+A food supply-chain moves tons of production batches from production to retailing steps. The production companies are well-known and
+every product needs to be monitored as well as each possible derived product from it.
+Every product that can be produced, processed and sell along the supply chain is recorded as Product Type.
+This is so important to notice that SawChain tracks units of amount of products (i.e. production batch) and can be configured to track
+single production units, but it's not the point.
+
 ```protobuf
 message ProductType {
-    // Possible different values for unit of measure.
+    // Possible values for unit of measure.
     enum UnitOfMeasure {
         KILOS = 0;
         LITRE = 1;
         METRE = 2;
         UNIT = 3;
     }
-    
+
     // Unique identifier.
     string id = 1;
+
     // Product name.
     string name = 2;
+
     // Product description.
     string description = 3;
-    // Product unit of measure.
+
+    // Product quanity unit of measure.
     UnitOfMeasure measure = 4;
+
     // Unique identifiers of different derived products types.
     repeated string derivedProductsType = 5;
 }
 ```
 
 ### Event Parameter Type
-Event parameters allows to construct a custom additional information that can be associated to an event filling it with a value.
+Due to the variety of supply-chain relevant events, it's not possible to figure out which information should be added in general.
+For this purpose, Event Parameter Type allows to construct a custom piece of additional information that is used to make up an Event Type.
+
 ```protobuf
 message EventParameterType {
-    // Event Parameter information type.
+    // Event Parameter values for type.
     enum Type {
         NUMBER = 0;
         STRING = 1;
         BYTES = 2;
         ENUM = 3;
+        BOOL = 4;
     }
-    
+
     // Unique identifier.
     string id = 1;
+
     // Event Parameter name.
     string name = 2;
+
     // Event Parameter type.
     Type type = 3;
 }
 ```
 
 ### Event Type
-Event types are used to define a particular activity that can be done on a subset of products.
-The event can represent an important production, processing or retailing step executed over a certain quantity of product (Batch) by an operator with a specific role.
+An Event Type represent an important production, processing or retailing activity performed on a field or production batch.
+The same event can be recorded in different kind of products from operators assigned to different tasks.
+
+Relevant events are made up through a list of previously defined Event Parameters Types.
+Each parameter can be enriched with some fields depends on his type (required, min/max value and length) that needs to be satisfied to record it correctly.
+For example, a parameter *Notes* can have a *required* property set to *true* and a *maxValue* property set to *80*.
+A value must not be assigned to 'values' fields, it's going to be assigned during Event recording step.
+Exclusively only one values field will be validated based on parameter type.
+As in the previous example, *Notes* must have the *stringValue* field filled with a string having a number of characters greater than 0 and less than 80.
+
+The *typology* field is used to separate Event Types that deals with transformations of products and his quantities (TRANSFORMATION) to ones that provides
+information and data about an activity (DESCRIPTION). If the Event Type deals with transformations, the *derivedProductTypes* field must be filled in.
+
 ```protobuf
 message EventType {
-    // Custom parameter structure used for Event Type.
+    // Different typology of events.
+    enum EventTypology {
+        DESCRIPTION = 0; // Information only.
+        TRANSFORMATION = 1; // Quantity and product changes.
+    }
+
+    // Event Parameter structure.
     message EventParameter {
         // Parameter Type identifier.
         string parameterTypeId = 1;
@@ -125,59 +213,167 @@ message EventType {
         int32 maxValue = 4;
         int32 minLength = 5;
         int32 maxLength = 6;
+
+        // Values fields.
+        float floatValue = 7;
+        string stringValue = 8;
+        bytes bytesValue = 9;
+        int32 enumValue = 10;
+        bool boolValue = 11;
     }
 
     // Unique identifier.
     string id = 1;
-    // Event Type name.
-    string name = 2;
-    // Evnet Type description.
-    string description = 3;
-    // List of event parameters. 
-    repeated EventParameter parameters = 4;
+
+    // Event typology.
+    EventTypology typology = 2;
+
+    // Event name.
+    string name = 3;
+
+    // Event description.
+    string description = 4;
+
+    // List of Event Parameters.
+    repeated EventParameter parameters = 5;
+
+    // List of Task Type identifiers.
+    repeated string enabledTaskTypes = 6;
+
+    // List of Product Type identifiers.
+    repeated string enabledProductTypes = 7;
+
+    // List of Derived Product Type identifiers (for TRANSFORMATION typology only).
+    repeated string derivedProductTypes = 8;
 }
 ```
 
-### Addressing
-AgriChain state objects are stored under the namespace obtained by taking the first six characters of the SHA-512 hash of the string *AgriChain* (**f4cb6d**).
-The next two characters of an AgriChain object's address are obtained by a string of two numbers different for each entity class:
+## Entities
+### Company
+Along the entire supply-chain, different companies compete to decrease costs and to maximize earnings.
+Consequently, it's obvious that every company needs information integrity and reliability from untrusted parties without revealing any secret.
+A Company is uniquely identified by the hash of the first 10 characters of the public key of its Company Admin.
+To avoid single point of failure, every Company has a list of authorized Operators.
+The Operators can create batches for the Company and record events on them.
+To improve traceability, each production Company has an additional list of his production Fields.
 
-* Users: **00**
-* Types: **01**
-* Company: **02**
-* Field: **03**
-* Batch: **04**
-* Event: **05**
+```protobuf
+message Company {
+    // Company unique identifier (First 10 characters of sha512 of adminPublicKey).
+    string id = 1;
 
-For users and types classes there is a second two characters prefix obtained by a string of two numbers different for each possible value of the class:
-**Users**
-* System Admin: **10**
-* Company Admin: **11**
-* Operator: **12**
-* Certification Authority: **13**
-**Types**
-* Task Type: **20**
-* Product Type: **21**
-* Event Type: **22**
-* Event Parameter Type: **23**
+    // Company name.
+    string name = 2;
 
-The remaining characters of an object's address (60 characters for Users and Types objects and 62 for different entities), are determined as follows:
-* System Admin: a string of 60 characters of zeros (this address is unique).
-* Company Admin:  *todo*
-* Operator:  *todo*
-* Certification Authority:  *todo*
-* Task Type: the first 62 characters of the hash of its identifier.
-* Product Type: the first 62 characters of the hash of its identifier.
-* Event Type: the first 62 characters of the hash of its identifier.
-* Event Parameter Type: the first 62 characters of the hash of its identifier.
-* Company: *todo*
-* Field: *todo*
-* Batch: *todo*
-* Event: *todo*
+    // Company description.
+    string description = 3;
+
+    // Company website.
+    string website = 4;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 5;
+
+    // Company Admin public key.
+    string adminPublicKey = 6;
+
+    // List of Company Fields (only for production companies).
+    repeated string fields = 7;
+
+    // List of Company Operators.
+    repeated string operators = 8;
+
+    // List of Company Batches.
+    repeated string batches = 9;
+}
+```
+
+### Field
+The primary production phase is the most sensible to introduction of un-tracked materials and products.
+It's impossible to avoid the totality of the problems, but it's possible to mitigate them. Using a prediction of the production quantity of a field,
+it's possible to limit the creation of production batches, mitigating the introduction of un-tracked products because their quantity it's not related to the field. 
+The list of recorded Events related to the Field, are stored inside the Field state object itself.
+
+```protobuf
+message Field {
+    // Field identifier.
+    string id = 1;
+
+    // Field description.
+    string description = 2;
+
+    // Owner Company identifier.
+    string company = 3;
+
+    // Cultivated Product Type.
+    string product = 4;
+
+    // Predicted production quantity.
+    float quantity = 5;
+
+    // Location coordinates.
+    Location location = 6;
+
+    // List of recorded Events.
+    repeated Event events = 7;
+}
+
+```
+
+## Addressing
+SawChain state objects are stored under the namespace obtained by taking the first six characters of the SHA-512 hash of the string SawChain (**87f67d**).
+The addressing flexibility in Sawtooth permits to use each hexadecimal character after the namespace as you wish in order to make more easy to retrieve information stored in the state
+(check [Sawtooth Addressing](https://sawtooth.hyperledger.org/docs/core/releases/latest/app_developers_guide/address_and_namespace.html?highlight=addressing) for more info).
+
+The SawChain addressing scheme uses the next two hexadecimal characters after the namespace to group together addresses containing the same kind of data.
+
+* Users: `00`
+* Types: `01`
+* Company: `02`
+* Field: `03`
+* Batch: `04`
+* Event: `05`
+
+There's a subsequent subdivision of next hexadecimal characters based on which information is going to be stored.
+The remaining 62 characters of an object's address are determined as below:
+
+For Users and Types, the subsequent two hexadecimal characters are useful to group different kind of users.
+
+* System Admin
+    - The two hexadecimal characters `10`,
+    - The first 60 characters of zeros.
+* Company Admin
+    - The two hexadecimal characters `11`,
+    - The first 60 characters of the SHA-512 of its public key.
+* Operator
+    - The two hexadecimal characters `12`,
+    - The first 60 characters of the SHA-512 of its public key.
+
+* Task Type
+    - The two hexadecimal characters `20`,
+    - The first 60 characters of the SHA-512 of its identifier.
+* Product Type
+    - The two hexadecimal characters `21`,
+    - The first 60 characters of the SHA-512 of its identifier.
+* Event Parameter Type
+    - The two hexadecimal characters `22`,
+    - The first 60 characters of the SHA-512 of its identifier.
+* Event Type
+    - The two hexadecimal characters `23`,
+    - The first 60 characters of the SHA-512 of its identifier.
+
+* Company
+    - The two hexadecimal characters `02`,
+    - The first 60 characters of the SHA-512 of its identifier.
+* Company
+    - The two hexadecimal characters `03`,
+    - The first 36 characters of the SHA-512 of its identifier.
+    - The first 24 characters of the SHA-512 of company identifier.
 
 ## Transactions
 ### Transaction Payload
-All AgriChain transactions are wrapped in a tagged payload object to allow the transaction dispatching to the appropriate handling logic.
+All SawChain transactions are wrapped in a tagged payload object to allow the transaction dispatching to the appropriate handling logic.
+
 ```protobuf
 message ACPayload {
     enum Action {
@@ -187,6 +383,9 @@ message ACPayload {
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
+        CREATE_COMPANY = 6;
+        CREATE_FIELD = 7;
+        CREATE_OPERATOR = 8;
     }
 
     Action action = 1;
@@ -197,81 +396,108 @@ message ACPayload {
     UpdateSystemAdminAction updateSysAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
-    CreateEventParameterType createEventParameterType = 6;
-    CreateEventType createEventType = 7;
+    CreateEventParameterTypeAction createEventParameterType = 6;
+    CreateEventTypeAction createEventType = 7;
+    CreateCompanyAction createCompany = 8;
+    CreateFieldAction createField = 9;
+    CreateOperatorAction createOperator = 10;
 }
 ```
-Any transaction is invalid if its timestamp is greater than the validator's system time.
+
+Any transaction is invalid if its timestamp is greater than the validator's system time or correspondent action field is not provided.
 
 ### Create System Admin
-Records the System Admin state object. The signer_public_key in the transaction header is used as the System Admin's public key.
+Records the System Admin into the state. The `signer_pubkey` in the transaction header is used as the System Admin's public key.
+
 A Create System Admin transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * System Admin is already recorded.
-* The public key field is already associated to a different recorded user.
+* There is already a user with the signer's public key.
 
 ### Update System Admin
-Update the System Admin state object with a new public key reference. The new System Admin must be different to the previous one.
+A System Admin can be changed by updating the public key recorded into the System Admin unique state address.
+
 ```protobuf
 message UpdateSystemAdminAction {
     // New System Admin's public key.
     string publicKey = 1;
 }
 ```
+
 An Update System Admin transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * Public key field is not set.
 * Public key field doesn't contain a valid public key.
-* No System Admin is previously recorded.
-* The public key field contains the current System Admin public key.
-* The public key field is already associated to a different recorded user.
-* Transaction signer is different from the previous System Admin.
+* System Admin is not recorded.
+* There is a user already associated to given public key.
+* Transaction signer is not the System Admin.
 
 ### Create Task Type
-Record a new user-defined Task Type giving the identifier and the particular task/role. 
+When the System Admin creates a Task Type he has to specify a unique identifier among these types and a string which describes the role.
+
 ```protobuf
 message CreateTaskTypeAction {
-    // Unique identifier.
+    // Task Type unique identifier.
     string id = 1;
-    // Role name.
+
+    // Task name.
     string role = 2;
 }
 ```
+
 A Create Task Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * Identifier is not set.
 * Role is not set.
-* Transaction signer is different from the current System Admin.
-* Identifier is already associated to a different Task Type.
+* Transaction signer is not the System Admin.
+* There is a Task Type already associated to given id.
 
 ### Create Product Type
-Record a new user-defined Product Type which has an identifier, a product name and description. 
-One of the possible quantity measures must be chosen. An optional derived products list can be specified.
+To create a Product Type, the System Admin needs to provide a unique identifier and some products information, such as name, description and unit of measure.
+If there are types of products that are derivable through a transformation event from it, then they must be specified.
+
 ```protobuf
 message CreateProductTypeAction {
+    // Product Type unique identifier.
     string id = 1;
+
+    // Product Type name.
     string name = 2;
+
+    // Product Type description.
     string description = 3;
+
+    // Product Type unit of measure.
     ProductType.UnitOfMeasure measure = 4;
+
+    // List of derived product types.
     repeated string derivedProductsType = 5;
 }
 ```
+None of the provided PropertyValues match the types specified in the Record's RecordType.
+
 A Create Product Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * Identifier is not set.
 * Name is not set.
 * Description is not set.
-* Unit of measure is different from one of the possible values.
-* Transaction signer is different from the current System Admin.
-* Identifier is already associated to a different Product Type.
-* Derived products type field contains Product Type that are not recorded yet.
+* Provided value for unit of measure doesn't match the types specified in the ProductType's UnitOfMeasure.
+* Transaction signer is not the System Admin.
+* There is a Product Type already associated to given id.
+* At least one of the provided Product Types values for derived product types match a valid Product Type.
 
 ### Create Event Parameter Type
-Record a new user-defined Event Parameter Type which has an identifier and a name. One of the possible types must be chosen.
+When the System Admin creates a Event Parameter Type he has to specify a unique identifier among these types, a name and a correct information type.
+
 ```protobuf
-message CreateEventParameterType {
+message CreateEventParameterTypeAction {
+    // Event Parameter Type unique identifier.
     string id = 1;
+
+    // Event Parameter Type name.
     string name = 2;
+
+    // Event Parameter Type information type.
     EventParameterType.Type type = 3;
 }
 ```
@@ -279,25 +505,138 @@ A Create Event Parameter Type transaction is invalid if one of the following con
 * Timestamp is not set.
 * Identifier is not set.
 * Name is not set.
-* Type is different from one of the possible values.
-* Transaction signer is different from the current System Admin.
-* Identifier is already associated to a different Event Parameter Type.
+* Provided value for unit of measure doesn't match the types specified in the EventParameterType's Type.
+* Transaction signer is not the System Admin.
+* There is a Event Parameter Type already associated to given id.
 
 ### Create Event Type
-Record a new user-defined Event Type each of which has an identifier, a name, a description and a list of Event Parameters. 
+To create a Event Type, the System Admin needs to provide a unique identifier, the typology, a name and description.
+The list of event parameters can be specified to customize the information requirements that needs to be provided for recording the event into the state.
+To decide who can record and where can be recorded an event with a specific type, the Task Types and Product Types lists must be specified.
+If the typology indicates there's an activity that involves product transformation, a list of types of products that are derivable through a transformation event from it must be specified.
+
 ```protobuf
-message CreateEventType {
+message CreateEventTypeAction {
+    // Event Type unique identifier.
     string id = 1;
-    string name = 2;
-    string description = 3;
-    repeated EventType.EventParameter parameters = 4;
+
+    // Event Type typology (description/transformation).
+    EventType.EventTypology typology = 2;
+
+    // Event Type name.
+    string name = 3;
+
+    // Event Type description.
+    string description = 4;
+
+    // List of EventParameters.
+    repeated EventType.EventParameter parameters = 5;
+    
+    // List of authorized Task Types.
+    repeated string enabledTaskTypes = 6;
+
+    // List of enabled Product Types.
+    repeated string enabledProductTypes = 7;
+
+    // List of derived Product Types (for transformations typology only)
+    repeated string derivedProductTypes = 8;
 }
 ```
 A Create Event Type transaction is invalid if one of the following conditions occurs:
-* Timestamp not set.
+* Timestamp is not set.
 * Identifier is not set.
+* Provided value for typology doesn't match the types specified in the EventType's EventTypology.
 * Name is not set.
 * Description is not set.
-* Transaction signer is different from the current System Admin.
-* Identifier is already associated to a different Event Type.
-* Event parameters type field contains a Event Parameter Type that are not recorded yet.
+* Transaction signer is not the System Admin.
+* There is a Event Type already associated to given id.
+* At least one of the provided Task Types values for enable task types match a valid Task Type.
+* At least one of the provided Product Types values for enable product types match a valid Product Type.
+* At least one of the provided Product Types values for derived product types match a valid Product Type.
+
+### Create Company
+To create a Company, the System Admin needs to provide some information: a name, a description, a website reference and the public key of the Company Admin.
+The identifier of the Company is derived from the public key of the Company Admin.
+This transaction record a new Company and a new Company Admin into the state.
+
+```protobuf
+message CreateCompanyAction {
+    // Company name.
+    string name = 1;
+
+    // Company description.
+    string description = 2;
+
+    // Company website.
+    string website = 3;
+
+    // Company Admin public key.
+    string admin = 4;
+}
+```
+
+A Create Company transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Name is not set.
+* Description is not set.
+* Website is not set.
+* Admin public key is not set.
+* Admin public key doesn't contain a valid public key.
+* Transaction signer is not the System Admin.
+* There is already a user with the admin's public key.
+
+### Create Field
+A Field can be created by a Company Admin associated to a Company recorded into the state.
+The Company Admin needs to specify the unique identifier, a description, the cultivated product, the predicted production quantity and the approximation of Field's location.
+
+```
+message CreateFieldAction {
+    // Field unique identifier.
+    string id = 1;
+
+    // Field description.
+    string description = 2;
+
+    // Field cultivated product.
+    string product = 3;
+
+    // Field predicted production quantity.
+    float quantity = 4;
+
+    // Field location.
+    Location location = 5;
+}
+```
+
+A Create Field transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Id is not set.
+* Description is not set.
+* Product is not set.
+* Location is not set.
+* Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
+* The provided Product Type value for product doesn't match a valid Product Type.
+
+## Create Operator
+A Company Admin can create an Operator enabled to record production batches and events for his Company. 
+The Company Admin needs to specify the Operator public key and the Task Type associated to his role inside the Company. 
+The transaction creates a new Operator into the state and updates Company Admin's Company operators list.
+
+```
+message CreateOperatorAction {
+    // Operator public key.
+    string publicKey = 1;
+
+    // Operator task.
+    string task = 2;
+}
+```
+
+A Create Operator transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Operator public key is not set.
+* Task is not set.
+* Operator public key doesn't contain a valid public key.
+* Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
+* There is already a user with the operator's public key.
+* The provided Task Type value for task doesn't match a valid Task Type.
