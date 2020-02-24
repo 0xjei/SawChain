@@ -1,14 +1,17 @@
 'use strict';
 
-const AgriChainHandler = require('../../handler');
+const SawChainHandler = require('../../handler');
 
-// A wrapper class to make testing AgriChain's easier.
-class AgriChainHandlerWrapper {
+/**
+ * Wrapper class for SawChain Handler used to make TDD development more faster.
+ */
+class SawChainHandlerWrapper {
+
     constructor() {
-        this.handler = new AgriChainHandler()
+        this.handler = new SawChainHandler()
     }
 
-    // This method may throw an error or return a rejected Promise.
+    // Apply wrapper.
     apply(txn, context) {
         try {
             return this.handler.apply(txn, context)
@@ -18,4 +21,4 @@ class AgriChainHandlerWrapper {
     }
 }
 
-module.exports = AgriChainHandlerWrapper;
+module.exports = SawChainHandlerWrapper;

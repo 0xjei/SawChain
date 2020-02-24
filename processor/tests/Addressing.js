@@ -2,7 +2,9 @@
 
 const {expect} = require('chai');
 const {randomBytes} = require('crypto');
-const {getSliceOfStrHash} = require('../services/utils');
+const {
+    getSHA512
+} = require('../services/utils');
 const {
     NAMESPACE,
     PREFIXES,
@@ -15,6 +17,8 @@ const {
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
+    getCompanyAddress,
+    getFieldAddress,
     isValidAddress
 } = require('../services/addressing');
 
@@ -48,7 +52,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getCompanyAdminAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data,60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -70,7 +74,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getOperatorAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data, 60);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -92,7 +96,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-taskType-id";
             address = getTaskTypeAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data, 60);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -114,7 +118,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-productType-id";
             address = getProductTypeAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data, 60);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -136,7 +140,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-eventParameterType-id";
             address = getEventParameterTypeAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data, 60);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -158,7 +162,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-eventType-id";
             address = getEventTypeAddress(data);
-            dataHash = getSliceOfStrHash(data, 0, 60);
+            dataHash = getSHA512(data, 60);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -171,6 +175,51 @@ describe('Addressing Service', function () {
                 NAMESPACE +
                 PREFIXES.TYPES +
                 TYPE_PREFIXES.EVENT_TYPE +
+                dataHash
+            )
+        })
+    });
+
+    describe('Company Address', function () {
+        before(function () {
+            data = "mock-company-id";
+            address = getCompanyAddress(data);
+            dataHash = getSHA512(data, 62);
+        });
+
+        it('Should return a hexadecimal string', function () {
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
+        });
+
+        it('Should return a valid Company address', function () {
+            expect(address).to.equal(
+                NAMESPACE +
+                PREFIXES.COMPANY +
+                dataHash
+            )
+        })
+    });
+
+    describe('Field Address', function () {
+        let company = null;
+
+        before(function () {
+            data = "mock-field-id";
+            company = "mock-company-id";
+            address = getFieldAddress(data, company);
+            dataHash = getSHA512(data, 42) + getSHA512(company, 20);
+        });
+
+        it('Should return a hexadecimal string', function () {
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
+        });
+
+        it('Should return a valid Company address', function () {
+            expect(address).to.equal(
+                NAMESPACE +
+                PREFIXES.FIELD +
                 dataHash
             )
         })

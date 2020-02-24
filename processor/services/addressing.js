@@ -123,7 +123,7 @@ const getCompanyAddress = id => {
  * @param {String} company The Company unique identifier.
  */
 const getFieldAddress = (id, company) => {
-    return FULL_PREFIXES.FIELD + getSHA512(id, 36) + getSHA512(company, 24)
+    return FULL_PREFIXES.FIELD + getSHA512(id, 42) + getSHA512(company, 20)
 };
 
 /**

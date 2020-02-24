@@ -2,8 +2,9 @@
 
 const chai = require('chai');
 
-// Asserts that a string is an hexadecimal string.
-// Useful for addressing purposes.
+/**
+ * Assert that a string is an hexadecimal string. It's used for addressing tests.
+ */
 chai.Assertion.addProperty('hexString', function () {
     this.assert(
         typeof this._obj === 'string' && /^[0-9a-f]*$/.test(this._obj),
@@ -12,8 +13,10 @@ chai.Assertion.addProperty('hexString', function () {
     )
 });
 
-// Asserts that a promise has been rejected with a particular error type.
-// Useful for Sawtooth InvalidTransaction error.
+/**
+ * Asserts that a promise has been rejected with a particular error type.
+ * It's used for Sawtooth InvalidTransaction error.
+ */
 chai.Assertion.addMethod('rejectedWith', function (errorClass) {
     let errorInstance = null;
 

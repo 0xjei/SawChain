@@ -1,18 +1,18 @@
 'use strict';
 
+const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const {expect} = require('chai');
-const AgriChainHandler = require('./services/handler_wrapper');
+const SawChainHandler = require('./services/handler_wrapper');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-const {ACPayload} = require('../services/proto');
+const {SCPayload} = require('../services/proto');
 
 describe('Core Handler Behavior', function () {
     let handler = null;
     let context = null;
 
     before(function () {
-        handler = new AgriChainHandler()
+        handler = new SawChainHandler()
     });
 
     beforeEach(function () {
@@ -27,7 +27,7 @@ describe('Core Handler Behavior', function () {
     });
 
     it('Should reject poorly encoded payloads', async function () {
-        const txn = new Txn(ACPayload.create({action: 'NO_ACTION'}));
+        const txn = new Txn(SCPayload.create({action: 'NO_ACTION'}));
         const rejected = handler.apply(txn, context);
 
         return expect(rejected).to.be.rejectedWith(InvalidTransaction);
