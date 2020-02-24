@@ -4,10 +4,10 @@ const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
-const AgriChainHandler = require('./services/handler_wrapper');
+const SawChainHandler = require('./services/handler_wrapper');
 const {
-    ACPayload,
-    ACPayloadActions,
+    SCPayload,
+    SCPayloadActions,
     SystemAdmin,
     UpdateSystemAdminAction
 } = require('../services/proto');
@@ -21,7 +21,7 @@ describe('Users Actions', function () {
     let state = null;
 
     before(function () {
-        handler = new AgriChainHandler();
+        handler = new SawChainHandler();
         context = new Context();
     });
 
@@ -35,8 +35,8 @@ describe('Users Actions', function () {
         describe('Create System Admin', function () {
             it('Should reject if no timestamp is given', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.CREATE_SYSADMIN
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_SYSADMIN
                     })
                 );
 
@@ -47,8 +47,8 @@ describe('Users Actions', function () {
 
             it('Should create the System Admin', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.CREATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_SYSADMIN,
                         timestamp: Date.now()
                     })
                 );
@@ -68,8 +68,8 @@ describe('Users Actions', function () {
 
             it('Should reject if System Admin is already recorded', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.CREATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_SYSADMIN,
                         timestamp: Date.now()
                     })
                 );
@@ -90,8 +90,8 @@ describe('Users Actions', function () {
 
             it('Should reject if no timestamp is given', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         updateSysAdmin: UpdateSystemAdminAction.create({})
                     })
                 );
@@ -103,8 +103,8 @@ describe('Users Actions', function () {
 
             it('Should reject if no action data field is given', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now()
                     })
                 );
@@ -116,8 +116,8 @@ describe('Users Actions', function () {
 
             it('Should reject if no public key is given', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({})
                     })
@@ -129,8 +129,8 @@ describe('Users Actions', function () {
 
             it('Should reject if public key is not valid', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey.slice(0, 65)
@@ -145,8 +145,8 @@ describe('Users Actions', function () {
 
             it('Should reject if public key is the same as System Admin public key', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({
                             publicKey: adminPublicKey
@@ -161,8 +161,8 @@ describe('Users Actions', function () {
 
             it('Should reject if current System Admin is not the transaction signer', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey
@@ -178,8 +178,8 @@ describe('Users Actions', function () {
 
             it('Should update the System Admin', async function () {
                 txn = new Txn(
-                    ACPayload.create({
-                        action: ACPayloadActions.UPDATE_SYSADMIN,
+                    SCPayload.create({
+                        action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey

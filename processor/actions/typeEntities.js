@@ -1,26 +1,37 @@
 'use strict';
 
 const {
-    getTaskTypeAddress,
-    getSystemAdminAddress,
-    getProductTypeAddress,
-    getEventParameterTypeAddress,
-    getEventTypeAddress
-} = require('../services/addressing');
-const {
     SystemAdmin,
     TaskType,
     ProductType,
     EventParameterType,
     EventType
 } = require('../services/proto');
-const {reject} = require('../services/utils');
+const {
+    reject
+} = require('../services/utils');
+const {
+    getTaskTypeAddress,
+    getSystemAdminAddress,
+    getProductTypeAddress,
+    getEventParameterTypeAddress,
+    getEventTypeAddress
+} = require('../services/addressing');
 
-async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
+/**
+ * Handle a Task Type transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Task Type unique identifier.
+ * @param {String} role A string describing a task/role bindable to Operators.
+ */
+async function createTaskType(
+    context,
+    signerPublicKey,
+    timestamp,
+    {id, role}
+) {
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
@@ -39,13 +50,13 @@ async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the SA.
+    // Validation: Transaction signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
         reject(`You must be the System Admin to create a Task Type!`);
 
-    // Validation: Given id is already associated to a task type.
+    // Validation: There is a Task Type already associated to given id.
     if (state[taskTypeAddress].length > 0)
-        reject(`Given id is already associated to a Task Type!`);
+        reject(`There is a Task Type already associated to given id: ${id}!`);
 
     // State update.
     const updates = {};
@@ -58,11 +69,23 @@ async function createTaskType(context, signerPublicKey, timestamp, {id, role}) {
     await context.setState(updates)
 }
 
-async function createProductType(context, signerPublicKey, timestamp, {id, name, description, measure, derivedProductsType}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
+/**
+ * Handle a Product Type transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Product Type unique identifier.
+ * @param {String} name Product name.
+ * @param {String} description Product description.
+ * @param {Number} measure Product unit of measure from enumeration of possible values.
+ * @param {String[]} derivedProductsType List of identifiers of derived product types.
+ */
+async function createProductType(
+    context,
+    signerPublicKey,
+    timestamp,
+    {id, name, description, measure, derivedProductsType}
+) {
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
@@ -75,9 +98,9 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
     if (!description)
         reject(`Description is not set!`);
 
-    // Validation: Unit of measure is not equal to one of the enum values.
+    // Validation: Provided value for measure doesn't match the types specified in the ProductType's UnitOfMeasure.
     if (!Object.values(ProductType.UnitOfMeasure).some((value) => value === measure))
-        reject(`Unit of measure is different from one of the possible values!`);
+        reject(`Provided value for measure doesn't match any possible value!`);
 
     const systemAdminAddress = getSystemAdminAddress();
     const productTypeAddress = getProductTypeAddress(id);
@@ -89,15 +112,15 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the SA.
+    // Validation: Transaction signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a type!`);
+        reject(`Transaction signer is not the System Admin!`);
 
-    // Validation: Id is not unique for product types.
+    // Validation: There is a Product Type already associated to given id.
     if (state[productTypeAddress].length > 0)
-        reject(`Given id is already used in a different product type!`);
+        reject(`There is a Product Type already associated to given id!`);
 
-    // Validation: Derived products type are not recorded yet.
+    // Validation: At least one of the provided values for derivedProductTypes doesn't match a valid Product Type.
     for (const derivedProductId of derivedProductsType) {
         let derivedProductTypeAddress = getProductTypeAddress(derivedProductId);
 
@@ -106,7 +129,7 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
         ]);
 
         if (!derivedProductState[derivedProductTypeAddress].length) {
-            reject(`Given derived Product Type with ${id} id is not recorded yet!`);
+            reject(`The provided Product Type ${id} doesn't match a valid Product Type!`);
         }
     }
 
@@ -124,11 +147,21 @@ async function createProductType(context, signerPublicKey, timestamp, {id, name,
     await context.setState(updates)
 }
 
-async function createEventParameterType(context, signerPublicKey, timestamp, {id, name, type}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
+/**
+ * Handle a Event Parameter Type transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Event Parameter Type unique identifier.
+ * @param {String} name Event Parameter name.
+ * @param {Number} type Event Parameter type from enumeration of possible values.
+ */
+async function createEventParameterType(
+    context,
+    signerPublicKey,
+    timestamp,
+    {id, name, type}
+) {
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
@@ -137,9 +170,9 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     if (!name)
         reject(`Name is not set!`);
 
-    // Validation: Type is not equal to one of the enum values.
+    // Validation: Provided value for type doesn't match the types specified in the EventParameter's EventParameterType.
     if (!Object.values(EventParameterType.Type).some((value) => value === type))
-        reject(`Type is different from one of the possible units values!`);
+        reject(`Provided value for type doesn't match any possible value!`);
 
     const systemAdminAddress = getSystemAdminAddress();
     const eventParameterTypeAddress = getEventParameterTypeAddress(id);
@@ -151,13 +184,13 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the System Admin.
+    // Validation: Transaction signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a type!`);
+        reject(`Transaction signer is not the System Admin!`);
 
-    // Validation: Id is not unique for event parameter types.
+    // Validation: There is an Event Parameter Type already associated to given id.
     if (state[eventParameterTypeAddress].length > 0)
-        reject(`Given id is already used in a different event parameter type!`);
+        reject(`There is an Event Parameter Type already associated to given id!`);
 
     // State update.
     const updates = {};
@@ -171,24 +204,42 @@ async function createEventParameterType(context, signerPublicKey, timestamp, {id
     await context.setState(updates)
 }
 
+/**
+ * Handle a Event Type transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Event Type unique identifier.
+ * @param {Number} typology Event Type typology from enumeration of possible values.
+ * @param {String} name Event name.
+ * @param {String} description Event description.
+ * @param {String[]} parameters List of identifiers of Event Parameter Types that customize the Event Type data.
+ * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Event Type.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Event Type can be recorded.
+ * @param {String[]} derivedProductTypes List of identifiers of derived Product Types.
+ */
 async function createEventType(
     context,
     signerPublicKey,
     timestamp,
-    {id, typology, name, description, parameters, enabledTaskTypes, enabledProductTypes, derivedProductTypes}
+    {
+        id,
+        typology,
+        name,
+        description,
+        parameters,
+        enabledTaskTypes,
+        enabledProductTypes,
+        derivedProductTypes
+    }
 ) {
-
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
 
-    // Validation: Typology is not equal to one of the enum values.
+    // Validation: Provided value for typology doesn't match the types specified in the EventType's EventTypology.
     if (!Object.values(EventType.EventTypology).some((value) => value === typology))
-        reject(`Typology is different from one of the possible values!`);
+        reject(`Provided value for typology doesn't match any possible value!`);
 
     // Validation: Name is not set.
     if (!name)
@@ -208,15 +259,15 @@ async function createEventType(
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the System Admin.
+    // Validation: Transaction signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a type!`);
+        reject(`Transaction signer is not the System Admin!`);
 
-    // Validation: Id is not unique for event parameter types.
+    // Validation: There is a Event Type already associated to given id.
     if (state[eventTypeAddress].length > 0)
-        reject(`Given id is already used in a different event type!`);
+        reject(`There is an Event Type already associated to given id!`);
 
-    // Validation: At least one parameter is not recorded yet.
+    // Validation: At least one of the provided Event Parameter Types values for parameters doesn't match a valid Event Parameter Type.
     for (const parameter of parameters) {
         let parameterTypeAddress = getEventParameterTypeAddress(parameter.parameterTypeId);
 
@@ -225,11 +276,11 @@ async function createEventType(
         ]);
 
         if (!parameterTypeState[parameterTypeAddress].length) {
-            reject(`Given parameter Type with ${parameter.parameterTypeId} id is not recorded yet!`);
+            reject(`The provided Event Parameter Type ${parameter.parameterTypeId} doesn't match a valid Event Parameter Type!`);
         }
     }
 
-    // Validation: At least one enabled task type is not recorded yet.
+    // Validation: At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
     for (const taskTypeId of enabledTaskTypes) {
         let taskTypeAddress = getTaskTypeAddress(taskTypeId);
 
@@ -238,11 +289,11 @@ async function createEventType(
         ]);
 
         if (!taskTypeState[taskTypeAddress].length) {
-            reject(`Given Task Type with ${taskTypeId} id is not recorded yet!`);
+            reject(`The provided Task Type ${taskTypeId} doesn't match a valid Task Type!`);
         }
     }
 
-    // Validation: At least one enabled product type is not recorded yet.
+    // Validation: At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
     for (const productTypeId of enabledProductTypes) {
         let productTypeAddress = getProductTypeAddress(productTypeId);
 
@@ -251,19 +302,19 @@ async function createEventType(
         ]);
 
         if (!productTypeState[productTypeAddress].length) {
-            reject(`Given enabled Product Type with ${productTypeId} id is not recorded yet!`);
+            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
         }
     }
 
-    // Validation: No derived products for transformation event.
+    // Validation: No derived products for transformation event typology.
     if (typology === EventType.EventTypology.TRANSFORMATION && !derivedProductTypes.length)
-        reject(`No derived Product Type given for transformation event!`);
+        reject(`No derived products for transformation event typology!`);
 
-    // Validation: Given derived products for not transformation event.
+    // Validation: Derived products for description event.
     if (typology !== EventType.EventTypology.TRANSFORMATION && derivedProductTypes.length > 0)
-        reject(`Derived Product Type must be empty for non transformation event!`);
+        reject(`Derived products for description event.!`);
 
-    // Validation: At least one derived product type is not recorded yet.
+    // Validation: At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
     for (const productTypeId of derivedProductTypes) {
         let productTypeAddress = getProductTypeAddress(productTypeId);
 
@@ -272,7 +323,7 @@ async function createEventType(
         ]);
 
         if (!productTypeState[productTypeAddress].length) {
-            reject(`Given derived Product Type with ${productTypeId} id is not recorded yet!`);
+            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
         }
     }
 

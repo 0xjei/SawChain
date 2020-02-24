@@ -1,15 +1,6 @@
 'use strict';
 
 const {
-    getSystemAdminAddress,
-    getCompanyAdminAddress,
-    getOperatorAddress,
-    getTaskTypeAddress,
-    getProductTypeAddress,
-    getCompanyAddress,
-    getFieldAddress
-} = require('../services/addressing');
-const {
     SystemAdmin,
     CompanyAdmin,
     Operator,
@@ -20,12 +11,33 @@ const {
     reject,
     getSHA512
 } = require('../services/utils');
+const {
+    getSystemAdminAddress,
+    getCompanyAdminAddress,
+    getOperatorAddress,
+    getTaskTypeAddress,
+    getProductTypeAddress,
+    getCompanyAddress,
+    getFieldAddress
+} = require('../services/addressing');
 
-async function createCompany(context, signerPublicKey, timestamp, {name, description, website, admin}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
+/**
+ * Handle a create Company transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Company unique identifier.
+ * @param {String} name Company name.
+ * @param {String} description Company description.
+ * @param {String} website Company website.
+ * @param {String} admin Company Admin public key.
+ */
+async function createCompany(
+    context,
+    signerPublicKey,
+    timestamp,
+    {name, description, website, admin}
+    ) {
     // Validation: Name is not set.
     if (!name)
         reject(`Name is not set!`);
@@ -38,13 +50,13 @@ async function createCompany(context, signerPublicKey, timestamp, {name, descrip
     if (!website)
         reject(`Website is not set!`);
 
-    // Validation: CA public key field is not set.
+    // Validation: Admin public key is not set.
     if (!admin)
-        reject(`Company Admin public key is not set!`);
+        reject(`Admin public key is not set!`);
 
-    // Validation: CA public key field doesn't contain a valid public key.
+    // Validation: Admin public key doesn't contain a valid public key.
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(admin))
-        reject(`Company Admin public key is invalid!`);
+        reject(`Admin public key doesn't contain a valid public key!`);
 
     const id = getSHA512(admin, 10);
     const systemAdminAddress = getSystemAdminAddress();
@@ -61,21 +73,19 @@ async function createCompany(context, signerPublicKey, timestamp, {name, descrip
 
     const adminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Sender is not the SA.
+    // Validation: Transaction signer is not the System Admin.
     if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a Company!`);
+        reject(`Transaction signer is not the System Admin!`);
 
-    // Validation: Given public key is associated to current SA.
+    // Validation: There is already a user with the admin's public key.
     if (signerPublicKey === admin)
-        reject(`Company Admin public key is equals to System Admin public key!`);
+        reject(`There is already the System Admin with the signer's public key!`);
 
-    // Validation: Given public key is already associated to a CA.
     if (state[companyAdminAddress].length > 0)
-        reject(`Company Admin public key is already associated to a Company Admin!`);
+        reject(`There is already a Company Admin with the signer's public key!`);
 
-    // Validation: Given public key is already associated to an OP.
     if (state[operatorAddress].length > 0)
-        reject(`Company Admin public key is already associated to an Operator!`);
+        reject(`There is already an Operator with the signer's public key!`);
 
     // State update.
     const updates = {};
@@ -103,11 +113,23 @@ async function createCompany(context, signerPublicKey, timestamp, {name, descrip
     await context.setState(updates)
 }
 
-async function createField(context, signerPublicKey, timestamp, {id, description, product, quantity, location}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
-
+/**
+ * Handle a create Field transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Field unique identifier.
+ * @param {String} description Field description.
+ * @param {String} product Product Type for the cultivable product on the Field.
+ * @param {Number} quantity Max predicted production quantity for the Field.
+ * @param {Object} location Approximation for the location of the Field.
+ */
+async function createField(
+    context,
+    signerPublicKey,
+    timestamp,
+    {id, description, product, quantity, location}
+    ) {
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
@@ -128,7 +150,7 @@ async function createField(context, signerPublicKey, timestamp, {id, description
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(companyId);
     const productAddress = getProductTypeAddress(product);
-    const fieldAddress = getFieldAddress(id);
+    const fieldAddress = getFieldAddress(id, companyId);
 
     const state = await context.getState([
         companyAdminAddress,
@@ -140,21 +162,21 @@ async function createField(context, signerPublicKey, timestamp, {id, description
     const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
     const companyState = Company.decode(state[companyAddress]);
 
-    // Validation: Sender is not a CA or doesn't have a Company associated.
+    // Validation: Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
     if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
         reject(`You must be a Company Admin for a Company to create a Field!`);
 
-    // Validation: Given id is already used inside the given Company.
+    // Validation: There is already a Field with the provided id into the Company.
     if (state[fieldAddress].length > 0)
-        reject(`Given id is already used for a different Field inside given Company!`);
+        reject(`There is already a Field with the provided id into the Company!`);
 
-    // Validation: Given product is not recorded yet.
+    // Validation: The provided Product Type value for product doesn't match a valid Product Type.
     if (!state[productAddress].length)
-        reject(`Given Product Type with ${product} id is not recorded yet!`);
+        reject(`The provided Product Type value for product doesn't match a valid Product Type!`);
 
-    // Validation: Given quantity is lower than or equal to zero.
+    // Validation: Quantity is lower than or equal to zero.
     if (quantity <= 0)
-        reject(`Given quantity is lower than or equal to zero!`);
+        reject(`Quantity is lower than or equal to zero!`);
 
     // State update.
     const updates = {};
@@ -177,77 +199,9 @@ async function createField(context, signerPublicKey, timestamp, {id, description
     await context.setState(updates);
 }
 
-async function createOperator(context, signerPublicKey, timestamp, {publicKey, task}) {
-    // Validation: Timestamp not set.
-    if (!timestamp.low && !timestamp.high)
-        reject(`Timestamp is not set!`);
 
-    // Validation: Operator public key field is not set.
-    if (!publicKey)
-        reject(`Operator public key is not set!`);
-
-    // Validation: Task is not set.
-    if (!task)
-        reject(`Task is not set!`);
-
-    // Validation: Operator public key field doesn't contain a valid public key.
-    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
-        reject(`Operator public key is invalid!`);
-
-    const companyId = getSHA512(signerPublicKey, 10);
-    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
-    const companyAddress = getCompanyAddress(companyId);
-    const operatorAddress = getOperatorAddress(publicKey);
-    const companyAdminOperatorAddress = getCompanyAdminAddress(publicKey);
-    const taskTypeAddress = getTaskTypeAddress(task);
-
-    const state = await context.getState([
-        companyAdminAddress,
-        companyAddress,
-        operatorAddress,
-        companyAdminOperatorAddress,
-        taskTypeAddress
-    ]);
-
-    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
-    const companyState = Company.decode(state[companyAddress]);
-
-    // Validation: Sender is not a CA or doesn't have a Company associated.
-    if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
-        reject(`You must be a Company Admin for a Company to create an Operator!`);
-
-    // Validation: Given public key is already associated to a CA.
-    if (state[companyAdminOperatorAddress].length > 0)
-        reject(`Operator public key is already associated to a Company Admin!`);
-
-    // Validation: Given public key is already associated to an OP.
-    if (state[operatorAddress].length > 0)
-        reject(`Operator public key is already associated to an Operator!`);
-
-    // Validation: Given task is not recorded yet.
-    if (!state[taskTypeAddress].length)
-        reject(`Given Task Type with ${task} id is not recorded yet!`);
-
-    // State update.
-    const updates = {};
-
-    // Record field.
-    updates[operatorAddress] = Operator.encode({
-        publicKey: publicKey,
-        company: companyId,
-        task: task,
-        timestamp: timestamp
-    }).finish();
-
-    // Update company.
-    companyState.operators.push(publicKey);
-    updates[companyAddress] = Company.encode(companyState).finish();
-
-    await context.setState(updates);
-}
 
 module.exports = {
     createCompany,
-    createField,
-    createOperator
+    createField
 };

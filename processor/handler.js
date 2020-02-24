@@ -14,8 +14,9 @@ const {
 } = require('./services/utils');
 const {
     createSystemAdmin,
-    updateSystemAdmin
-} = require('./actions/systemAdmin');
+    updateSystemAdmin,
+    createOperator
+} = require('./actions/users');
 const {
     createTaskType,
     createProductType,
@@ -24,8 +25,7 @@ const {
 } = require('./actions/typeEntities');
 const {
     createCompany,
-    createField,
-    createOperator
+    createField
 } = require('./actions/entities');
 
 /**
@@ -52,6 +52,10 @@ class SawChainHandler extends TransactionHandler {
         const action = payload.action;
         const signerPublicKey = txn.header.signerPublicKey;
         const timestamp = payload.timestamp;
+
+        // General Transaction Validation: Timestamp is not set.
+        if (!timestamp.low && !timestamp.high)
+            reject(`Timestamp is not set!`);
 
         // Handling actions.
         switch (action) {
