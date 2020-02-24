@@ -1,15 +1,17 @@
 syntax = "proto3";
-package agrichain;
+
+package sawchain;
 
 message TaskType {
     // Unique identifier.
     string id = 1;
+
     // Task name.
     string role = 2;
 }
 
 message ProductType {
-    // Possible different values for unit of measure.
+    // Possible values for unit of measure.
     enum UnitOfMeasure {
         KILOS = 0;
         LITRE = 1;
@@ -19,18 +21,22 @@ message ProductType {
 
     // Unique identifier.
     string id = 1;
+
     // Product name.
     string name = 2;
+
     // Product description.
     string description = 3;
-    // Product unit of measure.
+
+    // Product quantity unit of measure.
     UnitOfMeasure measure = 4;
+
     // Unique identifiers of different derived products types.
     repeated string derivedProductsType = 5;
 }
 
 message EventParameterType {
-    // Event Parameter information type.
+    // Event Parameter values for type.
     enum Type {
         NUMBER = 0;
         STRING = 1;
@@ -41,19 +47,22 @@ message EventParameterType {
 
     // Unique identifier.
     string id = 1;
+
     // Event Parameter name.
     string name = 2;
+
     // Event Parameter type.
     Type type = 3;
 }
 
 message EventType {
+    // Different typology of events.
     enum EventTypology {
-        DESCRIPTION = 0;
-        TRANSFORMATION = 1;
+        DESCRIPTION = 0; // Information only.
+        TRANSFORMATION = 1; // Quantity and product changes.
     }
 
-    // Custom parameter structure used for Event Type.
+    // Event Parameter structure.
     message EventParameter {
         // Parameter Type identifier.
         string parameterTypeId = 1;
@@ -65,7 +74,7 @@ message EventType {
         int32 minLength = 5;
         int32 maxLength = 6;
 
-        // Values.
+        // Values fields.
         float floatValue = 7;
         string stringValue = 8;
         bytes bytesValue = 9;
@@ -75,18 +84,25 @@ message EventType {
 
     // Unique identifier.
     string id = 1;
+
     // Event typology.
     EventTypology typology = 2;
-    // Event Type name.
+
+    // Event name.
     string name = 3;
-    // Event Type description.
+
+    // Event description.
     string description = 4;
-    // List of event parameters.
+
+    // List of Event Parameters.
     repeated EventParameter parameters = 5;
+
     // List of Task Type identifiers.
     repeated string enabledTaskTypes = 6;
+
     // List of Product Type identifiers.
     repeated string enabledProductTypes = 7;
-    // List of Derived Product Type identifiers (only for TRANSFORMATION typology).
+
+    // List of Derived Product Type identifiers (for TRANSFORMATION typology only).
     repeated string derivedProductTypes = 8;
 }

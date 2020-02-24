@@ -1,14 +1,17 @@
 syntax = "proto3";
-package agrichain;
+
+package sawchain;
 
 message SystemAdmin {
+    // The System Admin's public key.
     string publicKey = 1;
 
-    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 2;
 }
 
 message CompanyAdmin {
+    // The Company Admin's public key.
     string publicKey = 1;
 
     // Company identifier.
@@ -19,12 +22,13 @@ message CompanyAdmin {
 }
 
 message Operator {
+    // The Operator's public key.
     string publicKey = 1;
 
     // Company identifier.
     string company = 2;
 
-    // Role inside the company.
+    // Assigned task into the company.
     string task = 3;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp

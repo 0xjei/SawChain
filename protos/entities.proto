@@ -1,51 +1,73 @@
 syntax = "proto3";
-package agrichain;
+package sawchain;
 
 message Company {
-    // Company Unique Identifier.
+    // Company unique identifier (First 10 characters of sha512 of adminPublicKey).
     string id = 1;
 
-    // Company info.
+    // Company name.
     string name = 2;
+
+    // Company description.
     string description = 3;
+
+    // Company website.
     string website = 4;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 5;
 
-    // Company Admin.
+    // Company Admin public key.
     string adminPublicKey = 6;
 
-    // List of Company Fields. (optional)
+    // List of Company Fields (only for production companies).
     repeated string fields = 7;
+
     // List of Company Operators.
     repeated string operators = 8;
-    // List of batches.
+
+    // List of Company Batches.
     repeated string batches = 9;
 }
 
+
 message Field {
-    // Field id.
+    // Field identifier.
     string id = 1;
+
     // Field description.
     string description = 2;
-    // Company.
+
+    // Owner Company identifier.
     string company = 3;
-    // Cultivable product.
+
+    // Cultivated Product Type.
     string product = 4;
-    // Initial quantity.
+
+    // Predicted production quantity.
     float quantity = 5;
-    // Field location.
+
+    // Location coordinates.
     Location location = 6;
-    // List of field events.
+
+    // List of recorded Events.
     repeated Event events = 7;
 }
 
+message Location {
+    // Coordinates are expected to be in millionths of a degree
+    sint64 latitude = 1;
+
+    sint64 longitude = 2;
+}
+
+/// todo in progress
 message Event {
     string typeId = 1;
     string reporter = 2;
     uint64 timestamp = 3;
 }
 
-/// todo refactor (?)
 message Batch {
     string product = 1;
     float quantity = 2;
@@ -56,8 +78,3 @@ message Batch {
     bool finalized = 7;
 }
 
-message Location {
-    // Coordinates are expected to be in millionths of a degree
-    sint64 latitude = 1;
-    sint64 longitude = 2;
-}

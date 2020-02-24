@@ -1,9 +1,11 @@
 syntax = "proto3";
-package agrichain;
+
+package sawchain;
+
 import "types.proto";
 import "entities.proto";
 
-message ACPayload {
+message SCPayload {
     enum Action {
         CREATE_SYSADMIN = 0;
         UPDATE_SYSADMIN = 1;
@@ -32,55 +34,107 @@ message ACPayload {
 }
 
 message UpdateSystemAdminAction {
+    // New System Admin's public key.
     string publicKey = 1;
 }
 
 message CreateTaskTypeAction {
+    // Task Type unique identifier.
     string id = 1;
+
+    // Task name.
     string role = 2;
 }
 
 message CreateProductTypeAction {
+    // Product Type unique identifier.
     string id = 1;
+
+    // Product Type name.
     string name = 2;
+
+    // Product Type description.
     string description = 3;
+
+    // Product Type unit of measure.
     ProductType.UnitOfMeasure measure = 4;
+
+    // List of derived product types.
     repeated string derivedProductsType = 5;
 }
 
 message CreateEventParameterTypeAction {
+    // Event Parameter Type unique identifier.
     string id = 1;
+
+    // Event Parameter Type name.
     string name = 2;
+
+    // Event Parameter Type information type.
     EventParameterType.Type type = 3;
 }
 
 message CreateEventTypeAction {
+    // Event Type unique identifier.
     string id = 1;
+
+    // Event Type typology (description/transformation).
     EventType.EventTypology typology = 2;
+
+    // Event Type name.
     string name = 3;
+
+    // Event Type description.
     string description = 4;
+
+    // List of EventParameters.
     repeated EventType.EventParameter parameters = 5;
+
+    // List of authorized Task Types.
     repeated string enabledTaskTypes = 6;
+
+    // List of enabled Product Types.
     repeated string enabledProductTypes = 7;
+
+    // List of derived Product Types (for transformations typology only)
     repeated string derivedProductTypes = 8;
 }
 
 message CreateCompanyAction {
+    // Company name.
     string name = 1;
+
+    // Company description.
     string description = 2;
+
+    // Company website.
     string website = 3;
+
+    // Company Admin public key.
     string admin = 4;
 }
 
 message CreateFieldAction {
+    // Field unique identifier.
     string id = 1;
+
+    // Field description.
     string description = 2;
+
+    // Field cultivated product.
     string product = 3;
+
+    // Field predicted production quantity.
     float quantity = 4;
+
+    // Field location.
     Location location = 5;
 }
 
 message CreateOperatorAction {
+    // Operator public key.
     string publicKey = 1;
+
+    // Operator task.
     string task = 2;
 }
