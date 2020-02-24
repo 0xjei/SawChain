@@ -1,9 +1,11 @@
 'use strict';
 
-const {getSHA512} = require('./utils');
+const {
+    getSHA512
+} = require('./utils');
 
-const NAMESPACE = 'f4cb6d';
-const FAMILY_NAME = 'AgriChain';
+const FAMILY_NAME = 'SawChain';
+const NAMESPACE = getSHA512(FAMILY_NAME, 6);
 const VERSION = '0.1';
 const PREFIXES = {
     // Entities.
@@ -28,97 +30,110 @@ const TYPE_PREFIXES = {
 };
 
 /**
- * Return an object containing a concatenation of namespace and prefix for each ones.
+ * Object that contains strings formed by the concatenation of namespaces and each prefix.
  */
-const FULL_PREFIXES = Object.keys(PREFIXES).reduce((prefixes, key) => {
-    prefixes[key] = NAMESPACE + PREFIXES[key];
-    return prefixes
-}, {});
-
-// Return a full user address for a specific public key and prefix. 
-const makeUsersAddress = (publicKey, userPrefix) =>
-    FULL_PREFIXES.USERS +
-    userPrefix +
-    getSHA512(publicKey).slice(0, 60);
-
-// Return a full type address for a specific public key and prefix.
-const makeTypeAddress = (id, typePrefix) =>
-    FULL_PREFIXES.TYPES +
-    typePrefix +
-    getSHA512(id).slice(0, 60);
+const FULL_PREFIXES =
+    Object.keys(PREFIXES).reduce((prefixes, key) => {
+        prefixes[key] = NAMESPACE + PREFIXES[key];
+        return prefixes
+    }, {});
 
 /**
- * A function that takes a public key and returns the corresponding system admin
- * address.
+ * Create a full-address for a user state object.
+ * @param {String} publicKey User public key.
+ * @param {String} prefix A prefix from USER_PREFIXES object.
+ */
+const makeUsersAddress = (publicKey, prefix) =>
+    FULL_PREFIXES.USERS + prefix + getSHA512(publicKey, 60);
+
+/**
+ * Create a full-address for a type state object.
+ * @param {String} id Type unique identifier.
+ * @param {String} prefix A prefix from TYPE_PREFIXES object.
+ */
+const makeTypeAddress = (id, prefix) =>
+    FULL_PREFIXES.TYPES + prefix + getSHA512(id, 60);
+
+/**
+ * Return the System Admin state address.
  */
 const getSystemAdminAddress = () => {
     return FULL_PREFIXES.USERS + USER_PREFIXES.SYSTEM_ADMIN + '0'.repeat(60)
 };
 
 /**
- * A function that takes a public key and returns the corresponding company admin
- * address.
+ * Return a Company Admin state address.
+ * @param {String} publicKey The Company Admin public key.
  */
 const getCompanyAdminAddress = publicKey => {
     return makeUsersAddress(publicKey, USER_PREFIXES.COMPANY_ADMIN)
 };
 
 /**
- * A function that takes a company owner public key and operator public key, returning the
- * corresponding operator address.
+ * Return a Operator state address.
+ * @param {String} publicKey The Operator public key.
  */
 const getOperatorAddress = publicKey => {
     return makeUsersAddress(publicKey, USER_PREFIXES.OPERATOR)
 };
 
 /**
- * A function that takes an id and returns the corresponding task type address.
+ * Return a Task Type state address.
+ * @param {String} id The Task Type unique identifier.
  */
 const getTaskTypeAddress = id => {
     return makeTypeAddress(id, TYPE_PREFIXES.TASK_TYPE)
 };
 
 /**
- * A function that takes an id and returns the corresponding product type address.
+ * Return a Product Type state address.
+ * @param {String} id The Product Type unique identifier.
  */
 const getProductTypeAddress = id => {
     return makeTypeAddress(id, TYPE_PREFIXES.PRODUCT_TYPE)
 };
 
 /**
- * A function that takes an id and returns the corresponding parameter type address.
+ * Return a Event Parameter Type state address.
+ * @param {String} id The Event Parameter Type unique identifier.
  */
 const getEventParameterTypeAddress = id => {
     return makeTypeAddress(id, TYPE_PREFIXES.EVENT_PARAMETER_TYPE)
 };
 
 /**
- * A function that takes an id and returns the corresponding event type address.
+ * Return a Event Type state address.
+ * @param {String} id The Event Type unique identifier.
  */
 const getEventTypeAddress = id => {
     return makeTypeAddress(id, TYPE_PREFIXES.EVENT_TYPE)
 };
 
 /**
- * A function that takes an id and returns the corresponding company address.
+ * Return a Company state address.
+ * @param {String} id The Company unique identifier.
  */
 const getCompanyAddress = id => {
-    return FULL_PREFIXES.COMPANY + getSHA512(id).slice(0, 62)
-};
-
-const getFieldAddress = id => {
-    return FULL_PREFIXES.FIELD + getSHA512(id).slice(0, 62)
+    return FULL_PREFIXES.COMPANY + getSHA512(id, 62)
 };
 
 /**
- * A function that takes an address and returns true or false depending on
- * whether or not it is a valid address. It should reject an address if:
- *   - it is not a string
- *   - it is not 70 hex characters
- *   - it does not start with the correct namespace
+ * Return a Field state address.
+ * @param {String} id The Field unique identifier.
+ * @param {String} company The Company unique identifier.
+ */
+const getFieldAddress = (id, company) => {
+    return FULL_PREFIXES.FIELD + getSHA512(id, 36) + getSHA512(company, 24)
+};
+
+/**
+ * Return true or false depending on whether or not the given state address is a valid address.
+ * It should reject an address if it's not a string or not 70 hex characters, and if it doesn't start with the namespace
+ * @param {String} address A state address to validate.
  */
 const isValidAddress = address => {
     const regExp = `^${NAMESPACE}[0-9A-Fa-f]{64}$`;
+
     return RegExp(regExp).test(address)
 };
 

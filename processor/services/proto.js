@@ -1,28 +1,29 @@
 'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const protobuf = require('protobufjs');
 
-// Empty Protobuf root instance.
+// A new empty protobuf root instance.
 let root = new protobuf.Root();
 
-// Retrieve all protobufs files.
+// Retrieve protobuf files.
 let files = fs
     .readdirSync(path.resolve(__dirname, '../../protos'))
     .map(f => path.resolve(__dirname, '../../protos', f))
     .filter(f => f.endsWith('.proto'));
 
 try {
-    // Load synchronously multiple protobuf files.
+    // Load synchronously the retrieved protobuf files.
     root = root.loadSync(files)
 } catch (error) {
     throw error
 }
 
-// Payload lookup.
-const ACPayload = root.lookup('ACPayload');
-const ACPayloadActions = ACPayload.Action;
-const ACPayloadFields = ACPayload.fields;
+// Payload utilities lookup.
+const SCPayload = root.lookup('SCPayload');
+const SCPayloadActions = SCPayload.Action;
+const SCPayloadFields = SCPayload.fields;
 
 // Users lookup.
 const SystemAdmin = root.lookup('SystemAdmin');
@@ -49,14 +50,14 @@ const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
 const CreateOperatorAction = root.lookup('CreateOperatorAction');
 
-// Other messages lookup.
+// Other protobuf messages lookup.
 const Location = root.lookup('Location');
 
 module.exports = {
     root,
-    ACPayload,
-    ACPayloadActions,
-    ACPayloadFields,
+    SCPayload,
+    SCPayloadActions,
+    SCPayloadFields,
     SystemAdmin,
     CompanyAdmin,
     Operator,
