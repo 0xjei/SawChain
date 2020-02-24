@@ -2,8 +2,16 @@
 
 const {TransactionHandler} = require('sawtooth-sdk/processor/handler');
 const {TpProcessRequest} = require('sawtooth-sdk/protobuf');
-const {ACPayload, ACPayloadActions, ACPayloadFields} = require('./services/proto');
 const {FAMILY_NAME, NAMESPACE, VERSION} = require('./services/addressing');
+const {
+    SCPayload,
+    SCPayloadActions,
+    SCPayloadFields
+} = require('./services/proto');
+const {
+    reject,
+    getActionFieldFromPayload
+} = require('./services/utils');
 const {
     createSystemAdmin,
     updateSystemAdmin
@@ -19,12 +27,11 @@ const {
     createField,
     createOperator
 } = require('./actions/entities');
-const {reject, getPayloadActionField} = require('./services/utils');
 
 /**
- * Extension of TransactionHandler class for the AgriChain Transaction Processor logic.
+ * Extension of TransactionHandler class to implement the SawChain Transaction Processor logic.
  */
-class AgriChainHandler extends TransactionHandler {
+class SawChainHandler extends TransactionHandler {
     /**
      * TransactionHandler constructor registers itself with the
      * validator, declaring which family name, versions, and
@@ -35,92 +42,99 @@ class AgriChainHandler extends TransactionHandler {
     }
 
     /**
-     * Smart contract logic core. It'll be called once for every transaction.
-     * Validate each action logic and update state according to it.
+     * Evaluate and execute every transaction, updating the state according to the action.
      * @param {TpProcessRequest} txn Transaction process request.
      * @param {Context} context Current state context.
      */
     async apply(txn, context) {
-        const payload = ACPayload.decode(txn.payload);
-
-        // Get action.
+        // Retrieve SawChain Payload from transaction.
+        const payload = SCPayload.decode(txn.payload);
         const action = payload.action;
         const signerPublicKey = txn.header.signerPublicKey;
         const timestamp = payload.timestamp;
 
-        // Action handling.
+        // Handling actions.
         switch (action) {
-            case ACPayloadActions.CREATE_SYSADMIN:
+            case SCPayloadActions.CREATE_SYSADMIN:
                 await createSystemAdmin(context, signerPublicKey, timestamp);
                 break;
-            case ACPayloadActions.UPDATE_SYSADMIN:
+
+            case SCPayloadActions.UPDATE_SYSADMIN:
                 await updateSystemAdmin(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.updateSysAdmin.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.updateSysAdmin.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_TASK_TYPE:
+
+            case SCPayloadActions.CREATE_TASK_TYPE:
                 await createTaskType(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createTaskType.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createTaskType.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_PRODUCT_TYPE:
+
+            case SCPayloadActions.CREATE_PRODUCT_TYPE:
                 await createProductType(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createProductType.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createProductType.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE:
+
+            case SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE:
                 await createEventParameterType(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createEventParameterType.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createEventParameterType.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_EVENT_TYPE:
+
+            case SCPayloadActions.CREATE_EVENT_TYPE:
                 await createEventType(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createEventType.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createEventType.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_COMPANY:
+
+            case SCPayloadActions.CREATE_COMPANY:
                 await createCompany(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createCompany.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createCompany.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_FIELD:
+
+            case SCPayloadActions.CREATE_FIELD:
                 await createField(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createField.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createField.name)
                 );
                 break;
-            case ACPayloadActions.CREATE_OPERATOR:
+
+            case SCPayloadActions.CREATE_OPERATOR:
                 await createOperator(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getPayloadActionField(payload, ACPayloadFields.createOperator.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.createOperator.name)
                 );
                 break;
+
             default:
-                reject(`Unknown action ${action}`);
+                reject(`Unknown action: ${action}`);
         }
     }
 }
 
-module.exports = AgriChainHandler;
+module.exports = SawChainHandler;

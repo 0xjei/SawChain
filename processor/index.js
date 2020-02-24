@@ -1,13 +1,14 @@
 'use strict';
 
 const {TransactionProcessor} = require('sawtooth-sdk/processor');
-const AgriChainHandler = require('./handler');
+const SawChainHandler = require('./handler');
 
-// Bind to validator.
+// Bind SawChain TP to Validator.
 const tp = new TransactionProcessor(process.env.VALIDATOR_URL || 'tcp://localhost:4004');
-const handler = new AgriChainHandler();
 
 // Handler recording.
+const handler = new SawChainHandler();
 tp.addHandler(handler);
+
 // Transaction Processor (tp) start.
 tp.start();
