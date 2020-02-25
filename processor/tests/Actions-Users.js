@@ -1,18 +1,32 @@
 'use_strict';
 
-const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
+const {expect} = require('chai');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
 const SawChainHandler = require('./services/handler_wrapper');
 const {
+    mockCreateCompany,
+    populateStateWithMockData
+} = require('./services/mock_entities');
+const {
     SCPayload,
     SCPayloadActions,
     SystemAdmin,
-    UpdateSystemAdminAction
+    Operator,
+    Company,
+    UpdateSystemAdminAction,
+    CreateOperatorAction
 } = require('../services/proto');
-const {getSystemAdminAddress} = require('../services/addressing');
-const {getNewKeyPair} = require('../services/utils');
+const {
+    getSystemAdminAddress,
+    getOperatorAddress,
+    getCompanyAddress
+} = require('../services/addressing');
+const {
+    getNewKeyPair,
+    getSHA512
+} = require('../services/utils');
 
 describe('Users Actions', function () {
     let handler = null;
@@ -20,15 +34,15 @@ describe('Users Actions', function () {
     let txn = null;
     let state = null;
 
+    // System admin key pair.
+    let sysAdminKeyPair = null;
+
     before(function () {
         handler = new SawChainHandler();
         context = new Context();
     });
 
     describe('System Admin Actions', function () {
-        // System admin key pair.
-        let adminPrivateKey = null;
-        let adminPublicKey = null;
 
         const systemAdminAddress = getSystemAdminAddress();
 
@@ -46,15 +60,16 @@ describe('Users Actions', function () {
             });
 
             it('Should create the System Admin', async function () {
+                const timestamp = Date.now();
+
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_SYSADMIN,
-                        timestamp: Date.now()
+                        timestamp: timestamp
                     })
                 );
                 // Retrieve System Admin key pair.
-                adminPrivateKey = txn._privateKey;
-                adminPublicKey = txn._publicKey;
+                sysAdminKeyPair = {privateKey: txn._privateKey, publicKey: txn._publicKey};
 
                 // Send and execute txn.
                 await handler.apply(txn, context);
@@ -63,7 +78,9 @@ describe('Users Actions', function () {
                 state = context._state[systemAdminAddress];
 
                 expect(state).to.not.be.null;
-                expect(SystemAdmin.decode(state).publicKey).to.equal(adminPublicKey)
+                expect(SystemAdmin.decode(state).publicKey).to.equal(sysAdminKeyPair.publicKey);
+                expect(parseInt(SystemAdmin.decode(state).timestamp)).to.equal(timestamp);
+
             });
 
             it('Should reject if System Admin is already recorded', async function () {
@@ -91,8 +108,7 @@ describe('Users Actions', function () {
             it('Should reject if no timestamp is given', async function () {
                 txn = new Txn(
                     SCPayload.create({
-                        action: SCPayloadActions.UPDATE_SYSADMIN,
-                        updateSysAdmin: UpdateSystemAdminAction.create({})
+                        action: SCPayloadActions.UPDATE_SYSADMIN
                     })
                 );
 
@@ -127,7 +143,7 @@ describe('Users Actions', function () {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if public key is not valid', async function () {
+            it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
@@ -143,13 +159,13 @@ describe('Users Actions', function () {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if public key is the same as System Admin public key', async function () {
+            it('Should reject if there is a user already associated to given public key', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSysAdmin: UpdateSystemAdminAction.create({
-                            publicKey: adminPublicKey
+                            publicKey: sysAdminKeyPair.publicKey
                         })
                     })
                 );
@@ -159,7 +175,7 @@ describe('Users Actions', function () {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             });
 
-            it('Should reject if current System Admin is not the transaction signer', async function () {
+            it('Should reject if transaction signer is not the System Admin', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
@@ -177,26 +193,239 @@ describe('Users Actions', function () {
             });
 
             it('Should update the System Admin', async function () {
+                const timestamp = Date.now();
+
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
-                        timestamp: Date.now(),
+                        timestamp: timestamp,
                         updateSysAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey
                         })
                     }),
-                    adminPrivateKey
+                    sysAdminKeyPair.privateKey
                 );
+
+                // Update System Admin key pair.
+                sysAdminKeyPair = newAdminKeys;
 
                 await handler.apply(txn, context);
 
                 state = context._state[systemAdminAddress];
 
                 expect(state).to.not.be.null;
-                expect(SystemAdmin.decode(state).publicKey).to.equal(newAdminKeys.publicKey)
+                expect(SystemAdmin.decode(state).publicKey).to.equal(newAdminKeys.publicKey);
+                expect(parseInt(SystemAdmin.decode(state).timestamp)).to.equal(timestamp);
             });
-
         });
     });
 
+    describe('Create Operator Action', async function () {
+        const task = "task1";
+
+        let cmpAdminKeyPair = null;
+        let optKeyPair = null;
+
+        let companyId = null;
+        const companyName = "mock-company-name";
+        const companyDescription = "mock-company-description";
+        const companyWebsite = "mock-company-website";
+
+        let companyAddress = null;
+        let operatorAddress = null;
+
+        before(async function () {
+            // Populate the state with mock types.
+            await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
+
+            // Company Admin key pair.
+            cmpAdminKeyPair = getNewKeyPair();
+            companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+            companyAddress = getCompanyAddress(companyId);
+
+            // Populate the state with a Company.
+            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, companyName, companyDescription, companyWebsite, cmpAdminKeyPair.publicKey);
+
+            // Operator key pair.
+            optKeyPair = getNewKeyPair();
+            operatorAddress = getOperatorAddress(optKeyPair.publicKey);
+        });
+
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no public key is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no task is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey.slice(0, 30),
+                        task: task
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if transaction signer is not the Company Admin', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey,
+                        task: task
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if given public key match with a Company Admin one', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: cmpAdminKeyPair.publicKey,
+                        task: task
+                    })
+                }),
+                cmpAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided value for task doesn\'t match a valid Task Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey,
+                        task: "error"
+                    })
+                }),
+                cmpAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Operator', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: timestamp,
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey,
+                        task: task
+                    })
+                }),
+                cmpAdminKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[operatorAddress];
+
+            expect(state).to.not.be.null;
+            expect(Operator.decode(state).publicKey).to.equal(optKeyPair.publicKey);
+            expect(Operator.decode(state).company).to.equal(companyId);
+            expect(Operator.decode(state).task).to.equal(task);
+            expect(parseInt(Operator.decode(state).timestamp)).to.equal(timestamp);
+
+            // Company.
+            state = context._state[companyAddress];
+
+            expect(state).to.not.be.null;
+            expect(Company.decode(state).operators.length).to.equal(1);
+        });
+
+        it('Should reject if there is already an Operator with the provided public key', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: optKeyPair.publicKey,
+                        task: task
+                    })
+                }),
+                cmpAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+    });
 });

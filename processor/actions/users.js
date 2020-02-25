@@ -42,13 +42,6 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
     if (systemAdmin.publicKey !== '')
         reject(`System Admin is already recorded!`);
 
-    // Validation: There is already a user with the signer's public key.
-    if (state[companyAdminAddress].length > 0)
-        reject(`There is already a Company Admin with the signer's public key!`);
-
-    if (state[operatorAddress].length > 0)
-        reject(`There is already an Operator with the signer's public key!`);
-
     // State update.
     const updates = {};
 
@@ -137,7 +130,7 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
 
     // Validation: Public key field doesn't contain a valid public key.
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
-        reject(`Public key doesn't contain a valid public key!`);
+        reject(`Public key field doesn't contain a valid public key!`);
 
     const companyId = getSHA512(signerPublicKey, 10);
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);

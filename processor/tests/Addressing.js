@@ -52,7 +52,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getCompanyAdminAddress(data);
-            dataHash = getSHA512(data,60)
+            dataHash = getSHA512(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {

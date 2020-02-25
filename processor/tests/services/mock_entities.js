@@ -8,7 +8,8 @@ const {
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
-    CreateEventTypeAction
+    CreateEventTypeAction,
+    CreateCompanyAction
 } = require('../../services/proto');
 
 /**
@@ -183,12 +184,48 @@ const mockCreateEventType = async (
 };
 
 /**
+ * Execute a Create Company action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} sysAdminPrivateKey System Admin private key.
+ * @param {String} name Company name.
+ * @param {String} description Company description.
+ * @param {String} website Company website.
+ * @param {String} cmpAdminPublicKey Company Admin public key.
+ */
+const mockCreateCompany = async (
+    context,
+    handler,
+    sysAdminPrivateKey,
+    name,
+    description,
+    website,
+    cmpAdminPublicKey
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_COMPANY,
+            timestamp: Date.now(),
+            createCompany: CreateCompanyAction.create({
+                name: name,
+                description: description,
+                website: website,
+                admin: cmpAdminPublicKey
+            })
+        }),
+        sysAdminPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
+/**
  * Populate a food supply-chain with mock data.
  * @param {Context} context Current state context.
  * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
  * @param {String} sysAdminPrivateKey System Admin private key.
  */
-const populateWithMockData = async (context, handler, sysAdminPrivateKey) => {
+const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) => {
     // Task types.
     await mockCreateTaskType(context, handler, sysAdminPrivateKey, "task1", "role1");
     await mockCreateTaskType(context, handler, sysAdminPrivateKey, "task2", "role2");
@@ -231,7 +268,6 @@ const populateWithMockData = async (context, handler, sysAdminPrivateKey) => {
     await mockCreateEventType(context, handler, sysAdminPrivateKey, "event3", EventType.EventTypology.DESCRIPTION, "name3", "desc3", [param1, param3], ["task3"], ["prd1"]);
     await mockCreateEventType(context, handler, sysAdminPrivateKey, "event4", EventType.EventTypology.TRANSFORMATION, "name4", "desc4", [param1, param2], ["task1"], ["prd4"], ["prd2"]);
     await mockCreateEventType(context, handler, sysAdminPrivateKey, "event5", EventType.EventTypology.TRANSFORMATION, "name5", "desc5", [param1, param2], ["task1"], ["prd6"], ["prd4"]);
-
 };
 
 module.exports = {
@@ -239,5 +275,6 @@ module.exports = {
     mockCreateTaskType,
     mockCreateProductType,
     mockCreateEventParameterType,
-    populateWithMockData
+    populateStateWithMockData,
+    mockCreateCompany
 };

@@ -1,29 +1,26 @@
 'use_strict';
 
-const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
+const {expect} = require('chai');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
-const AgriChainHandler = require('./services/handler_wrapper');
+const SawChainHandler = require('./services/handler_wrapper');
 const {
     mockCreateSystemAdmin,
-    bootstrapSystem
+    populateStateWithMockData
 } = require('./services/mock_entities');
 const {
-    ACPayload,
-    ACPayloadActions,
+    SCPayload,
+    SCPayloadActions,
     CompanyAdmin,
-    Operator,
     Company,
     Field,
     Location,
     CreateCompanyAction,
     CreateFieldAction,
-    CreateOperatorAction
 } = require('../services/proto');
 const {
     getCompanyAdminAddress,
-    getOperatorAddress,
     getCompanyAddress,
     getFieldAddress
 } = require('../services/addressing');
@@ -38,31 +35,31 @@ describe('Entities Actions', function () {
     let txn = null;
     let state = null;
 
-    let keyPairSA = null;
-    let keyPairCA = null;
-    let keyPairOP1 = null;
+    let sysAdminKeyPair = null;
+    let cmpAdminKeyPair = null;
 
-    let company = null;
+    let companyId = null;
     let companyAddress = null;
 
     before(async function () {
-        handler = new AgriChainHandler();
+        handler = new SawChainHandler();
         context = new Context();
 
-        // Bootstrap System Admin and Types.
-        keyPairSA = await mockCreateSystemAdmin(context, handler);
-        await bootstrapSystem(context, handler, keyPairSA.privateKey);
+        // Record the System Admin and get key pair.
+        sysAdminKeyPair = await mockCreateSystemAdmin(context, handler);
+
+        // Populate the state with mock types.
+        await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
 
         // Company Admin key pair.
-        keyPairCA = getNewKeyPair();
-        company = getSHA512(keyPairCA.publicKey, 10);
-        companyAddress = getCompanyAddress(getSHA512(keyPairCA.publicKey, 10));
-        // Operator key pair.
-        keyPairOP1 = getNewKeyPair();
+        cmpAdminKeyPair = getNewKeyPair();
+        companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+
+        // Company address.
+        companyAddress = getCompanyAddress(getSHA512(cmpAdminKeyPair.publicKey, 10));
     });
 
     describe('Create Company', async function () {
-        let id = null;
         let name = "mock-companyName";
         let description = "mock-companyDescription";
         let website = "mock-companyWebsite";
@@ -70,16 +67,13 @@ describe('Entities Actions', function () {
         let companyAdminAddress = null;
 
         before(async function () {
-            id = getSHA512(keyPairCA.publicKey, 10);
-
-            companyAdminAddress = getCompanyAdminAddress(keyPairCA.publicKey)
+            companyAdminAddress = getCompanyAdminAddress(cmpAdminKeyPair.publicKey)
         });
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
-                    createCompany: CreateCompanyAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY
                 })
             );
 
@@ -90,8 +84,9 @@ describe('Entities Actions', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
+                    timestamp: Date.now()
                 })
             );
 
@@ -102,8 +97,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no name is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({})
                 })
@@ -117,8 +112,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no description is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name
@@ -133,8 +128,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no website is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
@@ -148,10 +143,10 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no company admin public key is given', async function () {
+        it('Should reject if no public key is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
@@ -166,16 +161,16 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if company admin public key is not valid', async function () {
+        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
                         description: description,
                         website: website,
-                        admin: keyPairCA.publicKey.slice(0, 65)
+                        admin: cmpAdminKeyPair.publicKey.slice(0, 65)
                     })
                 })
             );
@@ -185,16 +180,16 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if current System Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the System Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
                         description: description,
                         website: website,
-                        admin: keyPairCA.publicKey
+                        admin: cmpAdminKeyPair.publicKey
                     })
                 })
             );
@@ -204,19 +199,19 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given company admin public key is equal to system admin public key', async function () {
+        it('Should reject if given public key match with the System Admin one', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
                         description: description,
                         website: website,
-                        admin: keyPairSA.publicKey
+                        admin: sysAdminKeyPair.publicKey
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -228,17 +223,17 @@ describe('Entities Actions', function () {
             let timestamp = Date.now();
 
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: timestamp,
                     createCompany: CreateCompanyAction.create({
                         name: name,
                         description: description,
                         website: website,
-                        admin: keyPairCA.publicKey
+                        admin: cmpAdminKeyPair.publicKey
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeyPair.privateKey
             );
 
             await handler.apply(txn, context);
@@ -247,12 +242,12 @@ describe('Entities Actions', function () {
             state = context._state[companyAddress];
 
             expect(state).to.not.be.null;
-            expect(Company.decode(state).id).to.equal(id);
+            expect(Company.decode(state).id).to.equal(companyId);
             expect(Company.decode(state).name).to.equal(name);
             expect(Company.decode(state).description).to.equal(description);
             expect(Company.decode(state).website).to.equal(website);
             expect(parseInt(Company.decode(state).timestamp)).to.equal(timestamp);
-            expect(Company.decode(state).adminPublicKey).to.equal(keyPairCA.publicKey);
+            expect(Company.decode(state).adminPublicKey).to.equal(cmpAdminKeyPair.publicKey);
             expect(Company.decode(state).operators).to.be.empty;
             expect(Company.decode(state).fields).to.be.empty;
             expect(Company.decode(state).batches).to.be.empty;
@@ -261,24 +256,24 @@ describe('Entities Actions', function () {
             state = context._state[companyAdminAddress];
 
             expect(state).to.not.be.null;
-            expect(CompanyAdmin.decode(state).publicKey).to.equal(keyPairCA.publicKey);
-            expect(CompanyAdmin.decode(state).company).to.equal(id);
+            expect(CompanyAdmin.decode(state).publicKey).to.equal(cmpAdminKeyPair.publicKey);
+            expect(CompanyAdmin.decode(state).company).to.equal(companyId);
             expect(parseInt(CompanyAdmin.decode(state).timestamp)).to.equal(timestamp);
         });
 
-        it('Should reject if given company admin public key is already associated to a company admin', async function () {
+        it('Should reject if there is a user already associated to given public key', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_COMPANY,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({
                         name: name,
                         description: description,
                         website: website,
-                        admin: keyPairCA.publicKey
+                        admin: cmpAdminKeyPair.publicKey
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -301,15 +296,14 @@ describe('Entities Actions', function () {
         let fieldAddress = null;
 
         before(async function () {
-            fieldAddress = getFieldAddress(id);
-            companyAddress = getCompanyAddress(company)
+            fieldAddress = getFieldAddress(id, companyId);
+            companyAddress = getCompanyAddress(companyId)
         });
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
-                    createField: CreateFieldAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD
                 })
             );
 
@@ -320,8 +314,9 @@ describe('Entities Actions', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now()
                 })
             );
 
@@ -332,8 +327,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({})
                 })
@@ -346,8 +341,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no description is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id
@@ -362,8 +357,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no product is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -379,8 +374,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if no location is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -396,10 +391,10 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if a Company Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the Company Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -416,10 +411,10 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given product type is not recorded yet', async function () {
+        it('Should reject if the provided value for product doesn\'t match a valid Product Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -429,7 +424,7 @@ describe('Entities Actions', function () {
                         location: location
                     })
                 }),
-                keyPairCA.privateKey
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -439,8 +434,8 @@ describe('Entities Actions', function () {
 
         it('Should reject if given quantity is lower than or equal to zero', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -450,7 +445,7 @@ describe('Entities Actions', function () {
                         location: location
                     })
                 }),
-                keyPairCA.privateKey
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -460,8 +455,8 @@ describe('Entities Actions', function () {
 
         it('Should create the Field', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -471,7 +466,7 @@ describe('Entities Actions', function () {
                         location: location
                     })
                 }),
-                keyPairCA.privateKey
+                cmpAdminKeyPair.privateKey
             );
 
             await handler.apply(txn, context);
@@ -482,7 +477,7 @@ describe('Entities Actions', function () {
             expect(state).to.not.be.null;
             expect(Field.decode(state).id).to.equal(id);
             expect(Field.decode(state).description).to.equal(description);
-            expect(Field.decode(state).company).to.equal(company);
+            expect(Field.decode(state).company).to.equal(companyId);
             expect(Field.decode(state).product).to.equal(product);
             expect(Field.decode(state).quantity).to.equal(productQuantity);
             expect(parseInt(Field.decode(state).location.latitude)).to.equal(parseInt(location.latitude.toString()));
@@ -496,10 +491,10 @@ describe('Entities Actions', function () {
             expect(Company.decode(state).fields.length).to.equal(1);
         });
 
-        it('Should reject if given id is already associated to a field inside given company', async function () {
+        it('Should reject if there is already a Field with the provided id into the Company', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_FIELD,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
                         id: id,
@@ -509,196 +504,7 @@ describe('Entities Actions', function () {
                         location: location
                     })
                 }),
-                keyPairCA.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-    });
-
-    describe('Create Operator', async function () {
-        const task = "task1";
-
-        let publicKey = null;
-        let operatorAddress = null;
-
-        before(async function () {
-            publicKey = keyPairOP1.publicKey;
-
-            operatorAddress = getOperatorAddress(publicKey);
-        });
-
-
-        it('Should reject if no timestamp is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    createOperator: CreateOperatorAction.create({})
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction);
-        });
-
-        it('Should reject if no action data field is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if no task is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey
-                    })
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction);
-        });
-
-        it('Should reject if no operator public key is given', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({})
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if operator public key is not valid', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey.slice(0, 30)
-                    })
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if a Company Admin is not the transaction signer', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey,
-                        task: task
-                    })
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if given operator public key is already associated to a company admin', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: keyPairCA.publicKey,
-                        task: task
-                    })
-                }),
-                keyPairCA.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if given task is not recorded', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey,
-                        task: "error"
-                    })
-                }),
-                keyPairCA.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should create the Operator', async function () {
-            const timestamp = Date.now();
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: timestamp,
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey,
-                        task: task
-                    })
-                }),
-                keyPairCA.privateKey
-            );
-
-            await handler.apply(txn, context);
-
-            // Field.
-            state = context._state[operatorAddress];
-
-            expect(state).to.not.be.null;
-            expect(Operator.decode(state).publicKey).to.equal(publicKey);
-            expect(Operator.decode(state).company).to.equal(company);
-            expect(Operator.decode(state).task).to.equal(task);
-            expect(parseInt(Operator.decode(state).timestamp)).to.equal(timestamp);
-
-            // Company.
-            state = context._state[companyAddress];
-
-            expect(state).to.not.be.null;
-            expect(Company.decode(state).operators.length).to.equal(1);
-        });
-
-        it('Should reject if given operator public key is already associated to a operator', async function () {
-            txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: publicKey,
-                        task: task
-                    })
-                }),
-                keyPairCA.privateKey
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);

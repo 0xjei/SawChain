@@ -1,14 +1,14 @@
 'use_strict';
 
-const {expect} = require('chai');
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
+const {expect} = require('chai');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
-const AgriChainHandler = require('./services/handler_wrapper');
+const SawChainHandler = require('./services/handler_wrapper');
 const {mockCreateSystemAdmin} = require('./services/mock_entities');
 const {
-    ACPayload,
-    ACPayloadActions,
+    SCPayload,
+    SCPayloadActions,
     TaskType,
     ProductType,
     EventParameterType,
@@ -31,27 +31,26 @@ describe('Types Creation', function () {
     let txn = null;
     let state = null;
 
-    let keyPairSA = null;
+    let sysAdminKeys = null;
 
     before(async function () {
-        handler = new AgriChainHandler();
+        handler = new SawChainHandler();
         context = new Context();
 
-        // Bootstrap System Admin.
-        keyPairSA = await mockCreateSystemAdmin(context, handler);
+        // Record the System Admin and get key pair.
+        sysAdminKeys = await mockCreateSystemAdmin(context, handler);
     });
 
     describe('Create Task Type', function () {
-        let taskTypeId = "mock-taskType-id";
-        let taskTypeRole = "mock-taskType-role";
+        const taskTypeId = "mock-taskType-id";
+        const taskTypeRole = "mock-taskType-role";
 
         const taskTypeAddress = getTaskTypeAddress(taskTypeId);
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
-                    createTaskType: CreateTaskTypeAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE
                 })
             );
 
@@ -62,8 +61,9 @@ describe('Types Creation', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
+                    timestamp: Date.now()
                 })
             );
 
@@ -74,8 +74,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({})
                 })
@@ -88,8 +88,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no role is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({
                         id: taskTypeId
@@ -102,10 +102,10 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if current System Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the System Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({
                         id: taskTypeId,
@@ -120,15 +120,15 @@ describe('Types Creation', function () {
 
         it('Should create the Task Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({
                         id: taskTypeId,
                         role: taskTypeRole
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
@@ -140,17 +140,17 @@ describe('Types Creation', function () {
             expect(TaskType.decode(state).role).to.equal(taskTypeRole);
         });
 
-        it('Should reject if given id is already associated to a Task Type', async function () {
+        it('Should reject if there is a Task Type already associated to given id', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_TASK_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({
                         id: taskTypeId,
                         role: taskTypeRole
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -160,25 +160,24 @@ describe('Types Creation', function () {
     });
 
     describe('Create Product Type', function () {
-        const productTypeId = "mock-productType-id";
-        const productTypeName = "mock-productType-name";
-        const productTypeDescription = "mock-productType-description";
-        const productTypeUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
+        const firstProductTypeId = "mock-productType-id";
+        const firstProductTypeName = "mock-productType-name";
+        const firstProductTypeDescription = "mock-productType-description";
+        const firstProductTypeUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
 
-        const productTypeId2 = "mock-productType-id2";
-        const productTypeName2 = "mock-productType-name2";
-        const productTypeDescription2 = "mock-productType-description2";
-        const productTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
+        const secondProductTypeId = "mock-productType-id2";
+        const secondProductTypeName2 = "mock-productType-name2";
+        const secondProductTypeDescription2 = "mock-productType-description2";
+        const secondProductTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
         const derivedProductsType = ["mock-productType-id"];
 
-        const productTypeAddress = getProductTypeAddress(productTypeId);
-        const productTypeAddress2 = getProductTypeAddress(productTypeId2);
+        const firstProductTypeAddress = getProductTypeAddress(firstProductTypeId);
+        const secondProductTypeAddress = getProductTypeAddress(secondProductTypeId);
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
-                    createProductType: CreateProductTypeAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE
                 })
             );
 
@@ -189,8 +188,9 @@ describe('Types Creation', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
+                    timestamp: Date.now()
                 })
             );
 
@@ -201,8 +201,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({})
                 })
@@ -215,11 +215,11 @@ describe('Types Creation', function () {
 
         it('Should reject if no name is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId
+                        id: firstProductTypeId
                     })
                 })
             );
@@ -231,12 +231,12 @@ describe('Types Creation', function () {
 
         it('Should reject if no description is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName
+                        id: firstProductTypeId,
+                        name: firstProductTypeName
                     })
                 })
             );
@@ -246,15 +246,15 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no valid unit of measure is given', async function () {
+        it('Should reject if provided measure doesn\'t match one of the possible values', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName,
-                        description: productTypeDescription,
+                        id: firstProductTypeId,
+                        name: firstProductTypeName,
+                        description: firstProductTypeDescription,
                         measure: -1
                     })
                 })
@@ -265,16 +265,16 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if current System Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the System Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName,
-                        description: productTypeDescription,
-                        measure: productTypeUnitOfMeasure
+                        id: firstProductTypeId,
+                        name: firstProductTypeName,
+                        description: firstProductTypeDescription,
+                        measure: firstProductTypeUnitOfMeasure
                     })
                 })
             );
@@ -284,20 +284,20 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if at least one of given derived products types is not recorded yet', async function () {
+        it('Should reject if at least one of the provided values for derivedProductTypes doesn\'t match a valid Product Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName,
-                        description: productTypeDescription,
-                        measure: productTypeUnitOfMeasure,
+                        id: firstProductTypeId,
+                        name: firstProductTypeName,
+                        description: firstProductTypeDescription,
+                        measure: firstProductTypeUnitOfMeasure,
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -305,74 +305,74 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should create the Product Type with no derived products associated', async function () {
+        it('Should create a Product Type with no derived products associated', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName,
-                        description: productTypeDescription,
-                        measure: productTypeUnitOfMeasure
+                        id: firstProductTypeId,
+                        name: firstProductTypeName,
+                        description: firstProductTypeDescription,
+                        measure: firstProductTypeUnitOfMeasure
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[productTypeAddress];
+            state = context._state[firstProductTypeAddress];
 
             expect(state).to.not.be.null;
-            expect(ProductType.decode(state).id).to.equal(productTypeId);
-            expect(ProductType.decode(state).name).to.equal(productTypeName);
-            expect(ProductType.decode(state).description).to.equal(productTypeDescription);
-            expect(ProductType.decode(state).measure).to.equal(productTypeUnitOfMeasure);
+            expect(ProductType.decode(state).id).to.equal(firstProductTypeId);
+            expect(ProductType.decode(state).name).to.equal(firstProductTypeName);
+            expect(ProductType.decode(state).description).to.equal(firstProductTypeDescription);
+            expect(ProductType.decode(state).measure).to.equal(firstProductTypeUnitOfMeasure);
             expect(ProductType.decode(state).derivedProductsType).to.be.empty;
         });
 
-        it('Should create the Product Type with derived products associated', async function () {
+        it('Should create a Product Type with derived products associated', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId2,
-                        name: productTypeName2,
-                        description: productTypeDescription2,
-                        measure: productTypeUnitOfMeasure2,
+                        id: secondProductTypeId,
+                        name: secondProductTypeName2,
+                        description: secondProductTypeDescription2,
+                        measure: secondProductTypeUnitOfMeasure2,
                         derivedProductsType: derivedProductsType
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[productTypeAddress2];
+            state = context._state[secondProductTypeAddress];
 
             expect(state).to.not.be.null;
-            expect(ProductType.decode(state).id).to.equal(productTypeId2);
-            expect(ProductType.decode(state).name).to.equal(productTypeName2);
-            expect(ProductType.decode(state).description).to.equal(productTypeDescription2);
-            expect(ProductType.decode(state).measure).to.equal(productTypeUnitOfMeasure2);
-            expect(ProductType.decode(state).derivedProductsType[0]).to.equal(derivedProductsType[0]);
+            expect(ProductType.decode(state).id).to.equal(secondProductTypeId);
+            expect(ProductType.decode(state).name).to.equal(secondProductTypeName2);
+            expect(ProductType.decode(state).description).to.equal(secondProductTypeDescription2);
+            expect(ProductType.decode(state).measure).to.equal(secondProductTypeUnitOfMeasure2);
+            expect(ProductType.decode(state).derivedProductsType.length).to.equal(1);
         });
 
-        it('Should reject if given id is already associated to a Product Type', async function () {
+        it('Should reject if there is a Product Type already associated to given id', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_PRODUCT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({
-                        id: productTypeId,
-                        name: productTypeName,
-                        description: productTypeDescription,
-                        measure: productTypeUnitOfMeasure
+                        id: firstProductTypeId,
+                        name: firstProductTypeName,
+                        description: firstProductTypeDescription,
+                        measure: firstProductTypeUnitOfMeasure
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -390,9 +390,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
-                    createEventParameterType: CreateEventParameterTypeAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE
                 })
             );
 
@@ -403,8 +402,9 @@ describe('Types Creation', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                    timestamp: Date.now()
                 })
             );
 
@@ -415,8 +415,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({})
                 })
@@ -429,8 +429,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no name is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId
@@ -443,10 +443,10 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no valid type is given', async function () {
+        it('Should reject if provided value for type doesn\'t one of the possible values', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
@@ -461,10 +461,10 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if current System Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the System Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
@@ -481,8 +481,8 @@ describe('Types Creation', function () {
 
         it('Should create the Event Parameter Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
@@ -490,7 +490,7 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
@@ -501,12 +501,13 @@ describe('Types Creation', function () {
             expect(EventParameterType.decode(state).id).to.equal(eventParameterTypeId);
             expect(EventParameterType.decode(state).name).to.equal(eventParameterTypeName);
             expect(EventParameterType.decode(state).type).to.equal(eventParameterType);
+
         });
 
-        it('Should reject if given id is already associated to an Event Parameter Type', async function () {
+        it('Should reject if there is an Event Parameter Type already associated to given id', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId,
@@ -514,7 +515,7 @@ describe('Types Creation', function () {
                         type: eventParameterType
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -524,15 +525,15 @@ describe('Types Creation', function () {
     });
 
     describe('Create Event Type', function () {
-        const eventTypeId = "mock-eventType-id";
-        const eventTypology = EventType.EventTypology.DESCRIPTION;
-        const eventTypeName = "mock-eventType-name";
-        const eventTypeDescription = "mock-eventType-description";
+        const firstEventTypeId = "mock-eventType-id";
+        const firstEventTypology = EventType.EventTypology.DESCRIPTION;
+        const firstEventTypeName = "mock-eventType-name";
+        const firstEventTypeDescription = "mock-eventType-description";
 
-        const eventTypeId2 = "mock-eventType-id2";
-        const eventTypology2 = EventType.EventTypology.DESCRIPTION;
-        const eventTypeName2 = "mock-eventType-name2";
-        const eventTypeDescription2 = "mock-eventType-description2";
+        const secondEventTypeId = "mock-eventType-id2";
+        const secondEventTypology = EventType.EventTypology.DESCRIPTION;
+        const secondEventTypeName = "mock-eventType-name2";
+        const secondEventTypeDescription = "mock-eventType-description2";
 
         const eventTypeParameters = [
             EventType.EventParameter.create({
@@ -545,14 +546,13 @@ describe('Types Creation', function () {
         const enabledTaskTypes = ["mock-taskType-id"];
         const enabledProductTypes = ["mock-productType-id"];
 
-        const eventTypeAddress = getEventTypeAddress(eventTypeId);
-        const eventTypeAddress2 = getEventTypeAddress(eventTypeId2);
+        const firstEventTypeAddress = getEventTypeAddress(firstEventTypeId);
+        const secondEventTypeAddress = getEventTypeAddress(secondEventTypeId);
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
-                    createEventType: CreateEventParameterTypeAction.create({})
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE
                 })
             );
 
@@ -563,8 +563,9 @@ describe('Types Creation', function () {
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now()
                 })
             );
 
@@ -575,8 +576,8 @@ describe('Types Creation', function () {
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({})
                 })
@@ -587,13 +588,14 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if typology is not equal to one of the enum values', async function () {
+        it('Should reject if provided value for typology doesn\'t match one of the possible values', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId
+                        id: firstEventTypeId,
+                        typology: -1
                     })
                 })
             );
@@ -605,12 +607,12 @@ describe('Types Creation', function () {
 
         it('Should reject if no name is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology
+                        id: firstEventTypeId,
+                        typology: firstEventTypology
                     })
                 })
             );
@@ -622,13 +624,13 @@ describe('Types Creation', function () {
 
         it('Should reject if no description is given', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName
                     })
                 })
             );
@@ -638,16 +640,16 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if current System Admin is not the transaction signer', async function () {
+        it('Should reject if transaction signer is not the System Admin', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription
                     })
                 })
             );
@@ -657,16 +659,16 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given parameters type are not recorded yet', async function () {
+        it('Should reject if at least one of the provided values for parameters doesn\'t match a valid Event Parameter Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters:
                             [
                                 EventType.EventParameter.create({
@@ -680,7 +682,7 @@ describe('Types Creation', function () {
                             ]
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -688,23 +690,23 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given enabled task types are not recorded yet', async function () {
+        it('Should reject if at least one of the provided values for enable task types doesn\'t match a valid Task Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledTaskTypes: [
                             "mock-taskType-id100"
                         ]
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -712,23 +714,23 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given enabled product types are not recorded yet', async function () {
+        it('Should reject if at least one of the provided values for enable product types doesn\'t match a valid Product Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledProductTypes: [
                             "mock-productType-id100"
                         ]
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -736,22 +738,22 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no derived product types are given for typology transformation event', async function () {
+        it('Should reject if no derived products for transformation event typology', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
+                        id: firstEventTypeId,
                         typology: EventType.EventTypology.TRANSFORMATION,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: []
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -759,16 +761,16 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if derived product types are given for typology not transformation event', async function () {
+        it('Should reject if ferived products are given for description event', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: [
@@ -776,7 +778,7 @@ describe('Types Creation', function () {
                         ]
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -784,16 +786,16 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given derived product types are not recorded yet', async function () {
+        it('Should reject if at least one of the provided values for derived product types doesn\'t match a valid Product Type', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: [
@@ -801,7 +803,7 @@ describe('Types Creation', function () {
                         ]
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -811,78 +813,78 @@ describe('Types Creation', function () {
 
         it('Should create the Event Type with no parameters', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription,
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[eventTypeAddress];
+            state = context._state[firstEventTypeAddress];
 
             expect(state).to.not.be.null;
-            expect(EventType.decode(state).id).to.equal(eventTypeId);
-            expect(EventType.decode(state).name).to.equal(eventTypeName);
-            expect(EventType.decode(state).description).to.equal(eventTypeDescription);
+            expect(EventType.decode(state).id).to.equal(firstEventTypeId);
+            expect(EventType.decode(state).name).to.equal(firstEventTypeName);
+            expect(EventType.decode(state).description).to.equal(firstEventTypeDescription);
             expect(EventType.decode(state).parameters).to.be.empty;
-            expect(EventType.decode(state).enabledTaskTypes[0]).to.be.equal(enabledTaskTypes[0]);
-            expect(EventType.decode(state).enabledProductTypes[0]).to.be.equal(enabledProductTypes[0]);
+            expect(EventType.decode(state).enabledTaskTypes.length).to.be.equal(1);
+            expect(EventType.decode(state).enabledProductTypes.length).to.be.equal(1);
         });
 
         it('Should create the Event Type with parameters', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId2,
-                        typology: eventTypology2,
-                        name: eventTypeName2,
-                        description: eventTypeDescription2,
+                        id: secondEventTypeId,
+                        typology: secondEventTypology,
+                        name: secondEventTypeName,
+                        description: secondEventTypeDescription,
                         parameters: eventTypeParameters,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             await handler.apply(txn, context);
 
-            state = context._state[eventTypeAddress2];
+            state = context._state[secondEventTypeAddress];
 
             expect(state).to.not.be.null;
-            expect(EventType.decode(state).id).to.equal(eventTypeId2);
-            expect(EventType.decode(state).name).to.equal(eventTypeName2);
-            expect(EventType.decode(state).description).to.equal(eventTypeDescription2);
-            expect(EventType.decode(state).parameters[0].parameterTypeId).to.be.equal(eventTypeParameters[0].parameterTypeId);
-            expect(EventType.decode(state).enabledTaskTypes[0]).to.be.equal(enabledTaskTypes[0]);
-            expect(EventType.decode(state).enabledProductTypes[0]).to.be.equal(enabledProductTypes[0]);
+            expect(EventType.decode(state).id).to.equal(secondEventTypeId);
+            expect(EventType.decode(state).name).to.equal(secondEventTypeName);
+            expect(EventType.decode(state).description).to.equal(secondEventTypeDescription);
+            expect(EventType.decode(state).parameters.length).to.be.equal(1);
+            expect(EventType.decode(state).enabledTaskTypes.length).to.be.equal(1);
+            expect(EventType.decode(state).enabledProductTypes.length).to.be.equal(1);
         });
 
-        it('Should reject if given id is already associated to an Event Type', async function () {
+        it('Should reject if there is a Event Type already associated to given id', async function () {
             txn = new Txn(
-                ACPayload.create({
-                    action: ACPayloadActions.CREATE_EVENT_TYPE,
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({
-                        id: eventTypeId,
-                        typology: eventTypology,
-                        name: eventTypeName,
-                        description: eventTypeDescription
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription
                     })
                 }),
-                keyPairSA.privateKey
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -890,5 +892,4 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
     });
-
 });

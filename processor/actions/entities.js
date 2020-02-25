@@ -37,7 +37,7 @@ async function createCompany(
     signerPublicKey,
     timestamp,
     {name, description, website, admin}
-    ) {
+) {
     // Validation: Name is not set.
     if (!name)
         reject(`Name is not set!`);
@@ -129,7 +129,7 @@ async function createField(
     signerPublicKey,
     timestamp,
     {id, description, product, quantity, location}
-    ) {
+) {
     // Validation: Id is not set.
     if (!id)
         reject(`Id is not set!`);
@@ -198,7 +198,6 @@ async function createField(
 
     await context.setState(updates);
 }
-
 
 
 module.exports = {

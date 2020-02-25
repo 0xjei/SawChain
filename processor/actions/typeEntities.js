@@ -310,9 +310,9 @@ async function createEventType(
     if (typology === EventType.EventTypology.TRANSFORMATION && !derivedProductTypes.length)
         reject(`No derived products for transformation event typology!`);
 
-    // Validation: Derived products for description event.
+    // Validation: Derived products are given for description event.
     if (typology !== EventType.EventTypology.TRANSFORMATION && derivedProductTypes.length > 0)
-        reject(`Derived products for description event.!`);
+        reject(`Derived products are given for description event!`);
 
     // Validation: At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
     for (const productTypeId of derivedProductTypes) {
