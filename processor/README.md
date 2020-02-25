@@ -1,4 +1,4 @@
-# SawChain Transaction Family Specification.
+# SawChain Transaction Family Specification
 ## Overview
 The SawChain Transaction Family allows each member of a consortium to rely on a predefined set of immutable transaction actions 
 for updating a single shared ledger. The external agreements as well as users, products and events are managed through a user-specifiable set of types adaptable to every use-case.
@@ -55,7 +55,7 @@ Referencing an external agent is possible to avoid tampering or internal advanta
 There can be only one system administrator for each release.
 
 ```protobuf
-message SystemAdmin {
+message Users {
     // The System Admin's public key.
     string publicKey = 1;
     
@@ -317,7 +317,6 @@ message Field {
     // List of recorded Events.
     repeated Event events = 7;
 }
-
 ```
 
 ## Addressing
@@ -412,7 +411,6 @@ Records the System Admin into the state. The `signer_pubkey` in the transaction 
 A Create System Admin transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * System Admin is already recorded.
-* There is already a user with the signer's public key.
 
 ### Update System Admin
 A System Admin can be changed by updating the public key recorded into the System Admin unique state address.
@@ -484,7 +482,7 @@ A Create Product Type transaction is invalid if one of the following conditions 
 * Provided value for unit of measure doesn't match the types specified in the ProductType's UnitOfMeasure.
 * Transaction signer is not the System Admin.
 * There is a Product Type already associated to given id.
-* At least one of the provided Product Types values for derived product types match a valid Product Type.
+* At least one of the provided values for derivedProductTypes doesn't match a valid Product Type.
 
 ### Create Event Parameter Type
 When the System Admin creates a Event Parameter Type he has to specify a unique identifier among these types, a name and a correct information type.
@@ -505,9 +503,9 @@ A Create Event Parameter Type transaction is invalid if one of the following con
 * Timestamp is not set.
 * Identifier is not set.
 * Name is not set.
-* Provided value for unit of measure doesn't match the types specified in the EventParameterType's Type.
+* Provided value for type doesn't match the types specified in the EventParameter's EventParameterType.
 * Transaction signer is not the System Admin.
-* There is a Event Parameter Type already associated to given id.
+* There is an Event Parameter Type already associated to given id.
 
 ### Create Event Type
 To create a Event Type, the System Admin needs to provide a unique identifier, the typology, a name and description.
@@ -549,10 +547,13 @@ A Create Event Type transaction is invalid if one of the following conditions oc
 * Name is not set.
 * Description is not set.
 * Transaction signer is not the System Admin.
-* There is a Event Type already associated to given id.
-* At least one of the provided Task Types values for enable task types match a valid Task Type.
-* At least one of the provided Product Types values for enable product types match a valid Product Type.
-* At least one of the provided Product Types values for derived product types match a valid Product Type.
+* There is an Event Type already associated to given id.
+* At least one of the provided Event Parameter Types values for parameters doesn't match a valid Event Parameter Type.
+* At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
+* At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
+* No derived products for transformation event typology.
+* Derived products for description event.
+* At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
 
 ### Create Company
 To create a Company, the System Admin needs to provide some information: a name, a description, a website reference and the public key of the Company Admin.
@@ -615,7 +616,9 @@ A Create Field transaction is invalid if one of the following conditions occurs:
 * Product is not set.
 * Location is not set.
 * Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
+* There is already a Field with the provided id into the Company.
 * The provided Product Type value for product doesn't match a valid Product Type.
+* Quantity is lower than or equal to zero.
 
 ## Create Operator
 A Company Admin can create an Operator enabled to record production batches and events for his Company. 
@@ -634,9 +637,9 @@ message CreateOperatorAction {
 
 A Create Operator transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Operator public key is not set.
+* Public key is not set.
 * Task is not set.
-* Operator public key doesn't contain a valid public key.
+* Public key doesn't contain a valid public key.
 * Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
 * There is already a user with the operator's public key.
 * The provided Task Type value for task doesn't match a valid Task Type.
