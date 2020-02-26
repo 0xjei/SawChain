@@ -126,9 +126,18 @@ every product needs to be monitored as well as each possible derived product fro
 Every product that can be produced, processed and sell along the supply chain is recorded as Product Type.
 This is so important to notice that SawChain tracks units of amount of products (i.e. production batch) and can be configured to track
 single production units, but it's not the point.
+The conversion rate for each derived product enable the recording of real quantity changes.
 
 ```protobuf
 message ProductType {
+    message DerivedProduct {
+        // Derived Product Type identifier.
+        string derivedProductType = 1;
+
+        // Quantity conversion rate.
+        float conversionRate = 2;
+    }
+
     // Possible values for unit of measure.
     enum UnitOfMeasure {
         KILOS = 0;
@@ -146,11 +155,11 @@ message ProductType {
     // Product description.
     string description = 3;
 
-    // Product quanity unit of measure.
+    // Product quantity unit of measure.
     UnitOfMeasure measure = 4;
 
-    // Unique identifiers of different derived products types.
-    repeated string derivedProductsType = 5;
+    // List of derived products.
+    repeated DerivedProduct derivedProducts = 5;
 }
 ```
 
@@ -452,7 +461,7 @@ A Create Task Type transaction is invalid if one of the following conditions occ
 
 ### Create Product Type
 To create a Product Type, the System Admin needs to provide a unique identifier and some products information, such as name, description and unit of measure.
-If there are types of products that are derivable through a transformation event from it, then they must be specified.
+If there are types of products that are derivable through a transformation event from it, then id and conversion rate from new quantity must be specified.
 
 ```protobuf
 message CreateProductTypeAction {
@@ -469,7 +478,7 @@ message CreateProductTypeAction {
     ProductType.UnitOfMeasure measure = 4;
 
     // List of derived product types.
-    repeated string derivedProductsType = 5;
+    repeated ProductType.DerivedProduct derivedProducts = 5;
 }
 ```
 None of the provided PropertyValues match the types specified in the Record's RecordType.
