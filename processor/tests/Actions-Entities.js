@@ -12,6 +12,7 @@ const {
 const {
     SCPayload,
     SCPayloadActions,
+    ProductType,
     CompanyAdmin,
     Company,
     Field,

@@ -169,7 +169,12 @@ describe('Types Creation', function () {
         const secondProductTypeName2 = "mock-productType-name2";
         const secondProductTypeDescription2 = "mock-productType-description2";
         const secondProductTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
-        const derivedProductsType = ["mock-productType-id"];
+        const derivedProducts = [
+            ProductType.DerivedProduct.create({
+                derivedProductType: "mock-productType-id",
+                conversionRate: 0.8
+            })
+        ];
 
         const firstProductTypeAddress = getProductTypeAddress(firstProductTypeId);
         const secondProductTypeAddress = getProductTypeAddress(secondProductTypeId);
@@ -284,7 +289,7 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if at least one of the provided values for derivedProductTypes doesn\'t match a valid Product Type', async function () {
+        it('Should reject if at least one of the provided values for derivedProducts doesn\'t match a valid Product Type', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PRODUCT_TYPE,
@@ -294,7 +299,7 @@ describe('Types Creation', function () {
                         name: firstProductTypeName,
                         description: firstProductTypeDescription,
                         measure: firstProductTypeUnitOfMeasure,
-                        derivedProductsType: derivedProductsType
+                        derivedProducts: derivedProducts
                     })
                 }),
                 sysAdminKeys.privateKey
@@ -329,7 +334,34 @@ describe('Types Creation', function () {
             expect(ProductType.decode(state).name).to.equal(firstProductTypeName);
             expect(ProductType.decode(state).description).to.equal(firstProductTypeDescription);
             expect(ProductType.decode(state).measure).to.equal(firstProductTypeUnitOfMeasure);
-            expect(ProductType.decode(state).derivedProductsType).to.be.empty;
+            expect(ProductType.decode(state).derivedProducts).to.be.empty;
+        });
+
+        /// todo
+        it('Should reject if at least one of the provided values for derivedProducts doesn\'t have a conversionRate greater than 0', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PRODUCT_TYPE,
+                    timestamp: Date.now(),
+                    createProductType: CreateProductTypeAction.create({
+                        id: secondProductTypeId,
+                        name: secondProductTypeName2,
+                        description: secondProductTypeDescription2,
+                        measure: secondProductTypeUnitOfMeasure2,
+                        derivedProducts: [
+                            ProductType.DerivedProduct.create({
+                                derivedProductType: "mock-productType-id",
+                                conversionRate: 0.0
+                            })
+                        ]
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
         it('Should create a Product Type with derived products associated', async function () {
@@ -342,7 +374,7 @@ describe('Types Creation', function () {
                         name: secondProductTypeName2,
                         description: secondProductTypeDescription2,
                         measure: secondProductTypeUnitOfMeasure2,
-                        derivedProductsType: derivedProductsType
+                        derivedProducts: derivedProducts
                     })
                 }),
                 sysAdminKeys.privateKey
@@ -357,7 +389,7 @@ describe('Types Creation', function () {
             expect(ProductType.decode(state).name).to.equal(secondProductTypeName2);
             expect(ProductType.decode(state).description).to.equal(secondProductTypeDescription2);
             expect(ProductType.decode(state).measure).to.equal(secondProductTypeUnitOfMeasure2);
-            expect(ProductType.decode(state).derivedProductsType.length).to.equal(1);
+            expect(ProductType.decode(state).derivedProducts.length).to.equal(1);
         });
 
         it('Should reject if there is a Product Type already associated to given id', async function () {

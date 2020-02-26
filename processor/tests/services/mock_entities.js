@@ -4,6 +4,7 @@ const Txn = require('./mock_txn');
 const {
     SCPayload,
     SCPayloadActions,
+    ProductType,
     EventType,
     CreateTaskTypeAction,
     CreateProductTypeAction,
@@ -72,7 +73,7 @@ const mockCreateTaskType = async (
  * @param {String} name Product name.
  * @param {String} description Product description.
  * @param {Number} measure Product unit of measure from enumeration of possible values.
- * @param {String[]} derivedProductsType List of identifiers of derived product types.
+ * @param {Object[]} derivedProducts List of identifiers and conversion rate for derived product types.
  */
 const mockCreateProductType = async (
     context,
@@ -82,7 +83,7 @@ const mockCreateProductType = async (
     name,
     description,
     measure,
-    derivedProductsType
+    derivedProducts
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -93,7 +94,7 @@ const mockCreateProductType = async (
                 name: name,
                 description: description,
                 measure: measure,
-                derivedProductsType: derivedProductsType
+                derivedProducts: derivedProducts
             })
         }),
         sysAdminPrivateKey
@@ -232,12 +233,32 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
     await mockCreateTaskType(context, handler, sysAdminPrivateKey, "task3", "role3");
 
     // Product Types.
+    const derivedProd1 = ProductType.DerivedProduct.create({
+        derivedProductType: "prd1",
+        conversionRate: 0.8
+    });
+
+    const derivedProd2 = ProductType.DerivedProduct.create({
+        derivedProductType: "prd2",
+        conversionRate: 0.7
+    });
+
+    const derivedProd3 = ProductType.DerivedProduct.create({
+        derivedProductType: "prd3",
+        conversionRate: 1.1
+    });
+
+    const derivedProd4 = ProductType.DerivedProduct.create({
+        derivedProductType: "prd4",
+        conversionRate: 1.2
+    });
+
     await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd1", "name1", "desc1", 3, []);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd2", "name2", "desc2", 1, ["prd1"]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd3", "name3", "desc3", 1, ["prd1"]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd4", "name4", "desc4", 0, ["prd2"]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd5", "name5", "desc5", 0, ["prd3"]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd6", "name6", "desc6", 0, ["prd4"]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd2", "name2", "desc2", 1, [derivedProd1]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd3", "name3", "desc3", 1, [derivedProd1]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd4", "name4", "desc4", 0, [derivedProd2]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd5", "name5", "desc5", 0, [derivedProd3]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd6", "name6", "desc6", 0, [derivedProd4]);
 
     // Event Parameter Types.
     await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param1", "name1", 0);
