@@ -78,13 +78,13 @@ async function createTaskType(
  * @param {String} name Product name.
  * @param {String} description Product description.
  * @param {Number} measure Product unit of measure from enumeration of possible values.
- * @param {String[]} derivedProductsType List of identifiers of derived product types.
+ * @param {Object[]} derivedProducts List of identifiers and conversion rate for derived product types.
  */
 async function createProductType(
     context,
     signerPublicKey,
     timestamp,
-    {id, name, description, measure, derivedProductsType}
+    {id, name, description, measure, derivedProducts}
 ) {
     // Validation: Id is not set.
     if (!id)
@@ -120,9 +120,9 @@ async function createProductType(
     if (state[productTypeAddress].length > 0)
         reject(`There is a Product Type already associated to given id!`);
 
-    // Validation: At least one of the provided values for derivedProductTypes doesn't match a valid Product Type.
-    for (const derivedProductId of derivedProductsType) {
-        let derivedProductTypeAddress = getProductTypeAddress(derivedProductId);
+    // Validation: At least one of the provided values for derivedProducts doesn't match a valid Product Type.
+    for (const derivedProduct of derivedProducts) {
+        let derivedProductTypeAddress = getProductTypeAddress(derivedProduct.derivedProductType);
 
         let derivedProductState = await context.getState([
             derivedProductTypeAddress
@@ -130,6 +130,11 @@ async function createProductType(
 
         if (!derivedProductState[derivedProductTypeAddress].length) {
             reject(`The provided Product Type ${id} doesn't match a valid Product Type!`);
+        }
+
+        // Validation: At least one of the provided values for derivedProducts doesn't have a conversionRate greater than 0
+        if (!derivedProduct.conversionRate > 0) {
+            reject(`The provided conversion rate for ${id} is lower than 0!`);
         }
     }
 
@@ -141,7 +146,7 @@ async function createProductType(
         name: name,
         description: description,
         measure: measure,
-        derivedProductsType: derivedProductsType
+        derivedProducts: derivedProducts
     }).finish();
 
     await context.setState(updates)

@@ -60,7 +60,7 @@ message CreateProductTypeAction {
     ProductType.UnitOfMeasure measure = 4;
 
     // List of derived product types.
-    repeated string derivedProductsType = 5;
+    repeated ProductType.DerivedProduct derivedProducts = 5;
 }
 
 message CreateEventParameterTypeAction {

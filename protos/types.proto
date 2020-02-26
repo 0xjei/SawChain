@@ -11,6 +11,14 @@ message TaskType {
 }
 
 message ProductType {
+    message DerivedProduct {
+        // Derived Product Type identifier.
+        string derivedProductType = 1;
+
+        // Quantity conversion rate.
+        float conversionRate = 2;
+    }
+
     // Possible values for unit of measure.
     enum UnitOfMeasure {
         KILOS = 0;
@@ -31,8 +39,8 @@ message ProductType {
     // Product quantity unit of measure.
     UnitOfMeasure measure = 4;
 
-    // Unique identifiers of different derived products types.
-    repeated string derivedProductsType = 5;
+    // List of derived products.
+    repeated DerivedProduct derivedProducts = 5;
 }
 
 message EventParameterType {
@@ -74,7 +82,8 @@ message EventType {
         int32 minLength = 5;
         int32 maxLength = 6;
 
-        // Values fields.
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
         float floatValue = 7;
         string stringValue = 8;
         bytes bytesValue = 9;

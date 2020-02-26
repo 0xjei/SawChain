@@ -63,9 +63,33 @@ message Location {
 
 /// todo in progress
 message Event {
-    string typeId = 1;
+    // Event Parameter value.
+    message EventParameterValue {
+        // Event Parameter identifier.
+        string parameterTypeId = 1;
+
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
+        float floatValue = 2;
+        string stringValue = 3;
+        bytes bytesValue = 4;
+        int32 enumValue = 5;
+        bool boolValue = 6;
+    }
+
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // Public key of the transaction sender.
     string reporter = 2;
-    uint64 timestamp = 3;
+
+    // Unique identifiers of different EventParameterValues.
+    repeated EventParameterValue values = 3;
+
+    uint64 timestamp = 4;
+
+    // Quantity for transformation typology.
+    float quantity = 5;
 }
 
 message Batch {
