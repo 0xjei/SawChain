@@ -10,7 +10,8 @@ const {
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
-    CreateCompanyAction
+    CreateCompanyAction,
+    CreateOperatorAction
 } = require('../../services/proto');
 
 /**
@@ -220,6 +221,37 @@ const mockCreateCompany = async (
     await handler.apply(txn, context);
 };
 
+
+/**
+ * Execute a Create Operator action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} cmpAdminPrivateKey The Company Admin public key.
+ * @param {String} optPublicKey Operator public key.
+ * @param {String} task Task Type identifier for Operator task.
+ */
+const mockCreateOperator = async (
+    context,
+    handler,
+    cmpAdminPrivateKey,
+    optPublicKey,
+    task
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_OPERATOR,
+            timestamp: Date.now(),
+            createOperator: CreateOperatorAction.create({
+                publicKey: optPublicKey,
+                task: task
+            })
+        }),
+        cmpAdminPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
 /**
  * Populate a food supply-chain with mock data.
  * @param {Context} context Current state context.
@@ -243,52 +275,130 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         conversionRate: 0.7
     });
 
-    const derivedProd3 = ProductType.DerivedProduct.create({
-        derivedProductType: "prd3",
-        conversionRate: 1.1
-    });
-
-    const derivedProd4 = ProductType.DerivedProduct.create({
-        derivedProductType: "prd4",
-        conversionRate: 1.2
-    });
-
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd1", "name1", "desc1", 3, []);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd2", "name2", "desc2", 1, [derivedProd1]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd3", "name3", "desc3", 1, [derivedProd1]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd4", "name4", "desc4", 0, [derivedProd2]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd5", "name5", "desc5", 0, [derivedProd3]);
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd6", "name6", "desc6", 0, [derivedProd4]);
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd1", "name1", "desc1", 3, []); // Bottles.
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd2", "name2", "desc2", 1, [derivedProd1]); // Olive oil.
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd3", "name3", "desc3", 0, [derivedProd2]); // Olives.
 
     // Event Parameter Types.
     await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param1", "name1", 0);
     await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param2", "name2", 1);
     await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param3", "name3", 2);
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param4", "name4", 3);
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param5", "name5", 4);
+    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param4", "name4", 0);
+    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param5", "name5", 1);
+    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param6", "name6", 2);
 
     // Event Types.
     const param1 = EventType.EventParameter.create({
         parameterTypeId: "param1",
         required: true,
-        minValue: 1,
-        maxValue: 1000
+        minValue: 10,
+        maxValue: 100
     });
     const param2 = EventType.EventParameter.create({
         parameterTypeId: "param2",
         required: true,
-        maxLength: 100
+        minLength: 3,
+        maxLength: 10
     });
     const param3 = EventType.EventParameter.create({
         parameterTypeId: "param3",
+        required: true
+    });
+
+    const param4 = EventType.EventParameter.create({
+        parameterTypeId: "param4",
+        required: false,
+        minValue: 10,
+        maxValue: 100
+    });
+    const param5 = EventType.EventParameter.create({
+        parameterTypeId: "param5",
+        required: false,
+        minLength: 1,
+        maxLength: 10
+    });
+    const param6 = EventType.EventParameter.create({
+        parameterTypeId: "param6",
         required: false
     });
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey, "event1", EventType.EventTypology.TRANSFORMATION, "name1", "desc1", [param1, param2], ["task1"], ["prd2", "prd3"], ["prd1"]);
-    await mockCreateEventType(context, handler, sysAdminPrivateKey, "event2", EventType.EventTypology.DESCRIPTION, "name2", "desc2", [param3], ["task2"], ["prd4", "prd5"]);
-    await mockCreateEventType(context, handler, sysAdminPrivateKey, "event3", EventType.EventTypology.DESCRIPTION, "name3", "desc3", [param1, param3], ["task3"], ["prd1"]);
-    await mockCreateEventType(context, handler, sysAdminPrivateKey, "event4", EventType.EventTypology.TRANSFORMATION, "name4", "desc4", [param1, param2], ["task1"], ["prd4"], ["prd2"]);
-    await mockCreateEventType(context, handler, sysAdminPrivateKey, "event5", EventType.EventTypology.TRANSFORMATION, "name5", "desc5", [param1, param2], ["task1"], ["prd6"], ["prd4"]);
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event1",
+        EventType.EventTypology.DESCRIPTION,
+        "name1",
+        "desc1",
+        [param1, param2, param3],
+        ["task1"],
+        ["prd1"],
+        []
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event2",
+        EventType.EventTypology.DESCRIPTION,
+        "name2",
+        "desc2",
+        [param4, param5, param6],
+        ["task1"],
+        ["prd1"],
+        []
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event3",
+        EventType.EventTypology.DESCRIPTION,
+        "name3",
+        "desc3",
+        [param1, param4],
+        ["task1"],
+        ["prd2"],
+        []
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event4",
+        EventType.EventTypology.DESCRIPTION,
+        "name4",
+        "desc4",
+        [param4],
+        ["task2"],
+        ["prd2"],
+        []
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event5",
+        EventType.EventTypology.TRANSFORMATION,
+        "name5",
+        "desc5",
+        [param1],
+        ["task2"],
+        ["prd2"],
+        ["prd1"]
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event6",
+        EventType.EventTypology.DESCRIPTION,
+        "name6",
+        "desc6",
+        [],
+        ["task1"],
+        ["prd1"],
+        []
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event7",
+        EventType.EventTypology.DESCRIPTION,
+        "name7",
+        "desc7",
+        [param1, param4],
+        ["task1"],
+        ["prd1"],
+        []
+    );
+    // todo transformation events
 };
 
 module.exports = {
@@ -296,6 +406,7 @@ module.exports = {
     mockCreateTaskType,
     mockCreateProductType,
     mockCreateEventParameterType,
+    mockCreateOperator,
     populateStateWithMockData,
     mockCreateCompany
 };
