@@ -600,7 +600,7 @@ A Create Company transaction is invalid if one of the following conditions occur
 A Field can be created by a Company Admin associated to a Company recorded into the state.
 The Company Admin needs to specify the unique identifier, a description, the cultivated product, the predicted production quantity and the approximation of Field's location.
 
-```
+```protobuf
 message CreateFieldAction {
     // Field unique identifier.
     string id = 1;
@@ -635,7 +635,7 @@ A Company Admin can create an Operator enabled to record production batches and 
 The Company Admin needs to specify the Operator public key and the Task Type associated to his role inside the Company. 
 The transaction creates a new Operator into the state and updates Company Admin's Company operators list.
 
-```
+```protobuf
 message CreateOperatorAction {
     // Operator public key.
     string publicKey = 1;
@@ -665,7 +665,7 @@ The Operator must specify an EventType identifier, one Batch or Field where to r
 The EventType identifier is used to retrieve the information about the EventType to perform comparisons between with the incoming data.
 The transaction creates a new description Event for a Field or a Batch updating the Event list for the Field or the Batch.
 
-```
+```protobuf
 message CreateDescriptionEvent {
     // Event Type identifier.
     string eventTypeId = 1;
