@@ -32,6 +32,7 @@ Any individual is able to read information from ledger state to reconstruct the 
     * [Create Company](#create-company)
     * [Create Field](#create-field)
     * [Create Operator](#create-operator)
+    * [Create Description Event](#create-description-event)
     
 ## State
 Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
@@ -652,3 +653,51 @@ A Create Operator transaction is invalid if one of the following conditions occu
 * Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
 * There is already a user with the operator's public key.
 * The provided Task Type value for task doesn't match a valid Task Type.
+
+## Create Description Event
+Currently, it's possible to define and record the configuration of the supply-chain and its participants into the state. 
+These records are the building blocks to deal with the main challenge which is the ability to record data about production entities,
+respecting the constraints imposed on quantities, event parameters, tasks, products, etc.
+Along the supply-chain different fundamentals activities are executed on the production fields and batches.
+A description Event allow a Company Operator to record and certify information data of the activities performed on a Field or Batch held by a Company into the state.
+This type of Event does not deal with the quantity of a Field or a Batch.
+The Operator must specify an EventType identifier, one Batch or Field where to record the Event and an optional list of EventParameterValue.
+The EventType identifier is used to retrieve the information about the EventType to perform comparisons between with the incoming data.
+The transaction creates a new description Event for a Field or a Batch updating the Event list for the Field or the Batch.
+
+```
+message CreateDescriptionEvent {
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // Company Batch for event recording.
+    string batch = 2;
+
+    // Company Field for event recording.
+    string field = 3;
+
+    // Unique identifiers and values of necessary EventParameterValues.
+    repeated Event.EventParameterValue values = 4;
+}
+```
+
+A Create Description Event transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Event Type identifier is not set.
+* Batch or Field is not set.
+* Transaction signer is not an Operator for a Company.
+* Provided value for field does not match with a Company Field.
+* Provided value for batch does not match with a Company Batch.
+* Provided value for eventTypeId does not match with a valid Event Type.
+* Provided Event Type doesn't match a valid description Event Type.
+* Operator's task doesn't match one of the enabled Task Types for the Event Type.
+* Field Product Type doesn't match one of the enabled Product Types for the Event Type.
+* Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
+* No values are provided for required Event Parameters.+
+* No correct value field is provided for required parameter of type number.
+* The provided number is lower than the minimum value constraint.
+* The provided number is greater than the maximum value constraint.
+* No correct value field is provided for required parameter of type string.
+* The provided string length is lower than the minimum length constraint.
+* The provided string length is greater than the maximum length constraint.
+* No correct value field is provided for required parameter of type bytes.
