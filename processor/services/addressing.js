@@ -127,6 +127,15 @@ const getFieldAddress = (id, company) => {
 };
 
 /**
+ * Return a Batch state address.
+ * @param {String} id The Field unique identifier.
+ * @param {String} company The Company unique identifier.
+ */
+const getBatchAddress = (id, company) => {
+    return FULL_PREFIXES.BATCH + getSHA512(id, 42) + getSHA512(company, 20)
+};
+
+/**
  * Return true or false depending on whether or not the given state address is a valid address.
  * It should reject an address if it's not a string or not 70 hex characters, and if it doesn't start with the namespace
  * @param {String} address A state address to validate.
@@ -154,5 +163,6 @@ module.exports = {
     getEventTypeAddress,
     getCompanyAddress,
     getFieldAddress,
+    getBatchAddress,
     isValidAddress
 };

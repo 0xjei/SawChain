@@ -33,6 +33,8 @@ const Operator = root.lookup('Operator');
 // Entities lookup.
 const Company = root.lookup('Company');
 const Field = root.lookup('Field');
+const Event = root.lookup('Event');
+const Batch = root.lookup('Batch');
 
 // Types lookup.
 const TaskType = root.lookup('TaskType');
@@ -49,6 +51,7 @@ const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
 const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
 const CreateOperatorAction = root.lookup('CreateOperatorAction');
+const CreateDescriptionEvent = root.lookup('CreateDescriptionEvent');
 
 // Other protobuf messages lookup.
 const Location = root.lookup('Location');
@@ -67,6 +70,8 @@ module.exports = {
     EventType,
     Company,
     Field,
+    Event,
+    Batch,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
@@ -75,5 +80,6 @@ module.exports = {
     CreateCompanyAction,
     CreateFieldAction,
     CreateOperatorAction,
+    CreateDescriptionEvent,
     Location
 };

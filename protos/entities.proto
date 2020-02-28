@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package sawchain;
 
 message Company {
@@ -61,8 +62,16 @@ message Location {
     sint64 longitude = 2;
 }
 
-/// todo in progress
 message Event {
+    // Resource (Batch or Field) quantity to use for transformation events.
+    message TransformationResource {
+        // Batch/Field identifier.
+        string resourceId = 1;
+
+        // Quantity to use from resourceId.
+        float quantity = 2;
+    }
+
     // Event Parameter value.
     message EventParameterValue {
         // Event Parameter identifier.
@@ -73,8 +82,6 @@ message Event {
         float floatValue = 2;
         string stringValue = 3;
         bytes bytesValue = 4;
-        int32 enumValue = 5;
-        bool boolValue = 6;
     }
 
     // Event Type identifier.
@@ -87,11 +94,9 @@ message Event {
     repeated EventParameterValue values = 3;
 
     uint64 timestamp = 4;
-
-    // Quantity for transformation typology.
-    float quantity = 5;
 }
 
+/// todo in progress
 message Batch {
     string product = 1;
     float quantity = 2;

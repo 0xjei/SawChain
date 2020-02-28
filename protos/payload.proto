@@ -16,6 +16,7 @@ message SCPayload {
         CREATE_COMPANY = 6;
         CREATE_FIELD = 7;
         CREATE_OPERATOR = 8;
+        CREATE_DESCRIPTION_EVENT = 9;
     }
 
     Action action = 1;
@@ -31,6 +32,7 @@ message SCPayload {
     CreateCompanyAction createCompany = 8;
     CreateFieldAction createField = 9;
     CreateOperatorAction createOperator = 10;
+    CreateDescriptionEvent createDescriptionEvent = 11;
 }
 
 message UpdateSystemAdminAction {
@@ -137,4 +139,18 @@ message CreateOperatorAction {
 
     // Operator task.
     string task = 2;
+}
+
+message CreateDescriptionEvent {
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // Company Batch for event recording.
+    string batch = 2;
+
+    // Company Field for event recording.
+    string field = 3;
+
+    // Unique identifiers and values of necessary EventParameterValues.
+    repeated Event.EventParameterValue values = 4;
 }

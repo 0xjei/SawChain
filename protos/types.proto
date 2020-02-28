@@ -49,8 +49,6 @@ message EventParameterType {
         NUMBER = 0;
         STRING = 1;
         BYTES = 2;
-        ENUM = 3;
-        BOOL = 4;
     }
 
     // Unique identifier.
@@ -87,8 +85,6 @@ message EventType {
         float floatValue = 7;
         string stringValue = 8;
         bytes bytesValue = 9;
-        int32 enumValue = 10;
-        bool boolValue = 11;
     }
 
     // Unique identifier.
