@@ -7,23 +7,28 @@ const Context = require('./services/mock_context');
 const SawChainHandler = require('./services/handler_wrapper');
 const {
     mockCreateSystemAdmin,
+    mockCreateOperator,
     populateStateWithMockData
 } = require('./services/mock_entities');
 const {
     SCPayload,
     SCPayloadActions,
-    ProductType,
     CompanyAdmin,
+    Operator,
     Company,
     Field,
+    Event,
     Location,
     CreateCompanyAction,
     CreateFieldAction,
+    CreateDescriptionEvent
 } = require('../services/proto');
 const {
     getCompanyAdminAddress,
+    getOperatorAddress,
     getCompanyAddress,
-    getFieldAddress
+    getFieldAddress,
+    getBatchAddress
 } = require('../services/addressing');
 const {
     getSHA512,
@@ -298,7 +303,6 @@ describe('Entities Actions', function () {
 
         before(async function () {
             fieldAddress = getFieldAddress(id, companyId);
-            companyAddress = getCompanyAddress(companyId)
         });
 
         it('Should reject if no timestamp is given', async function () {
@@ -513,5 +517,624 @@ describe('Entities Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
+    });
+
+    describe('Create Description Event', async function () {
+        const eventTypeIdReqParams = "event1";
+        const eventTypeIdNoParams = "event6";
+        const eventTypeIdNoReqParams = "event2";
+        const eventTypeIdReqAndNoReqParams = "event7";
+        const field = "field1";
+        const batch = "batch1";
+
+        // Parameter values.
+        const valuesReqParams = [
+            Event.EventParameterValue.create({
+                parameterTypeId: "param1",
+                floatValue: 99
+            }),
+            Event.EventParameterValue.create({
+                parameterTypeId: "param2",
+                stringValue: "aaaaaaaaa"
+            }),
+            Event.EventParameterValue.create({
+                parameterTypeId: "param3",
+                bytesValue: ['0xABC']
+            })
+        ];
+
+        const valuesNoReqParams = [
+            Event.EventParameterValue.create({
+                parameterTypeId: "param4",
+                floatValue: 99
+            })
+        ];
+
+        const valuesReqAndNoReqParams = [
+            Event.EventParameterValue.create({
+                parameterTypeId: "param1",
+                floatValue: 99
+            }),
+            Event.EventParameterValue.create({
+                parameterTypeId: "param4",
+                floatValue: 99
+            })
+        ];
+
+        let fieldAddress = null;
+        let batchAddress = null;
+
+        let optTask = "task1";
+        let optKeyPair = null;
+        let operatorAddress = null;
+
+        before(async function () {
+            // Create a new key pair for an Operator.
+            optKeyPair = getNewKeyPair();
+            operatorAddress = getOperatorAddress(optKeyPair.publicKey);
+
+            // Field and Batch addresses.
+            fieldAddress = getFieldAddress(field, companyId);
+            batchAddress = getBatchAddress(field, companyId);
+
+            // Record the Operator for the Company.
+            await mockCreateOperator(context, handler, cmpAdminKeyPair.privateKey, optKeyPair.publicKey, optTask);
+        });
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no Event Type id is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if Batch or Field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if both Batch and Field are given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        batch: batch
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if transaction signer is not an Operator for a Company', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided field is not a Company Field', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: "no-field"
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided batch is not a Company Batch', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        batch: "no-batch"
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: "no-event-type-id",
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided Event Type identifier doesn\'t match a description Event Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: "event5",
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: "event4",
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the field Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: "event3",
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        // todo after batch definition.
+        // it('Should reject if the batch Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
+        //     txn = new Txn(
+        //         SCPayload.create({
+        //             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+        //             timestamp: Date.now(),
+        //             createDescriptionEvent: CreateDescriptionEvent.create({
+        //                 eventTypeId: ?,
+        //                 batch: ?
+        //             })
+        //         }),
+        //         optKeyPair.privateKey
+        //     );
+        //
+        //     const submission = handler.apply(txn, context);
+        //     console.log(await submission)
+        //     return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        // });
+
+        it('Should reject if the Event Type has at least one EventParameter required but no values are given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a required parameter of type number', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                stringValue: "wrong-type-value"
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided number value is lower than the minimum value constraint for a parameter of type number', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 1
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided number value is greater than the maximum value constraint for a parameter of type number', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 101
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a required parameter of type string', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 99
+                            }),
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param2",
+                                floatValue: 1
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided string value is lower than the minimum length constraint for a parameter of type string', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 99
+                            }),
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param2",
+                                stringValue: "aa"
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the provided string value is greater than the maximum length constraint for a parameter of type string', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 99
+                            }),
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param2",
+                                stringValue: "aaaaaaaaaaa"
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a required parameter of type bytes', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: Date.now(),
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: [
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param1",
+                                floatValue: 99
+                            }),
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param2",
+                                stringValue: "aaaaaaaaa"
+                            }),
+                            Event.EventParameterValue.create({
+                                parameterTypeId: "param3",
+                                stringValue: ""
+                            })
+                        ]
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create an Event with no parameters on the provided Field', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: timestamp,
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdNoParams,
+                        field: field
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[fieldAddress];
+
+            expect(state).to.not.be.null;
+            expect(Field.decode(state).events.length).to.equal(1);
+
+            // Event.
+            const event = Field.decode(state).events[Field.decode(state).events.length - 1];
+
+            expect(event.eventTypeId).to.equal(eventTypeIdNoParams);
+            expect(event.reporter).to.equal(optKeyPair.publicKey);
+            expect(event.values).to.be.empty;
+            expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
+        });
+
+        it('Should create an Event with required parameters on the provided Field', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: timestamp,
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqParams,
+                        field: field,
+                        values: valuesReqParams
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[fieldAddress];
+
+            expect(state).to.not.be.null;
+            expect(Field.decode(state).events.length).to.equal(2);
+
+            // Event.
+            const event = Field.decode(state).events[Field.decode(state).events.length - 1];
+
+            expect(event.eventTypeId).to.equal(eventTypeIdReqParams);
+            expect(event.reporter).to.equal(optKeyPair.publicKey);
+            expect(event.values.length).to.equal(valuesReqParams.length);
+            expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
+        });
+
+        it('Should create an Event with no required parameters on the provided Field', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: timestamp,
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdNoReqParams,
+                        field: field,
+                        values: valuesNoReqParams
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[fieldAddress];
+
+            expect(state).to.not.be.null;
+            expect(Field.decode(state).events.length).to.equal(3);
+
+            // Event.
+            const event = Field.decode(state).events[Field.decode(state).events.length - 1];
+
+            expect(event.eventTypeId).to.equal(eventTypeIdNoReqParams);
+            expect(event.reporter).to.equal(optKeyPair.publicKey);
+            expect(event.values.length).to.equal(valuesNoReqParams.length);
+            expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
+        });
+
+        it('Should create an Event with either required and no required parameters on the provided Field', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                    timestamp: timestamp,
+                    createDescriptionEvent: CreateDescriptionEvent.create({
+                        eventTypeId: eventTypeIdReqAndNoReqParams,
+                        field: field,
+                        values: valuesReqAndNoReqParams
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Field.
+            state = context._state[fieldAddress];
+
+            expect(state).to.not.be.null;
+            expect(Field.decode(state).events.length).to.equal(4);
+
+            // Event.
+            const event = Field.decode(state).events[Field.decode(state).events.length - 1];
+
+            expect(event.eventTypeId).to.equal(eventTypeIdReqAndNoReqParams);
+            expect(event.reporter).to.equal(optKeyPair.publicKey);
+            expect(event.values.length).to.equal(valuesReqAndNoReqParams.length);
+            expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
+        });
+
+        // todo add same tests for batch
     });
 });
