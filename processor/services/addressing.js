@@ -78,6 +78,14 @@ const getOperatorAddress = publicKey => {
 };
 
 /**
+ * Return a Certification Authority state address.
+ * @param {String} publicKey The Certification Authority public key.
+ */
+const getCertificationAuthorityAddress = publicKey => {
+    return makeUsersAddress(publicKey, USER_PREFIXES.CERTIFICATION_AUTHORITY)
+};
+
+/**
  * Return a Task Type state address.
  * @param {String} id The Task Type unique identifier.
  */
@@ -157,6 +165,7 @@ module.exports = {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
+    getCertificationAuthorityAddress,
     getTaskTypeAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,

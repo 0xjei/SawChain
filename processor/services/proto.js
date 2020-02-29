@@ -29,6 +29,7 @@ const SCPayloadFields = SCPayload.fields;
 const SystemAdmin = root.lookup('SystemAdmin');
 const CompanyAdmin = root.lookup('CompanyAdmin');
 const Operator = root.lookup('Operator');
+const CertificationAuthority = root.lookup('CertificationAuthority');
 
 // Entities lookup.
 const Company = root.lookup('Company');
@@ -48,6 +49,7 @@ const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 const CreateEventParameterTypeAction = root.lookup('CreateEventParameterTypeAction');
 const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
+const CreateCertificationAuthorityAction = root.lookup('CreateCertificationAuthorityAction');
 const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
 const CreateOperatorAction = root.lookup('CreateOperatorAction');
@@ -65,6 +67,7 @@ module.exports = {
     SystemAdmin,
     CompanyAdmin,
     Operator,
+    CertificationAuthority,
     TaskType,
     ProductType,
     EventParameterType,
@@ -78,6 +81,7 @@ module.exports = {
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
+    CreateCertificationAuthorityAction,
     CreateCompanyAction,
     CreateFieldAction,
     CreateOperatorAction,

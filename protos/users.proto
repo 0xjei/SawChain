@@ -34,3 +34,14 @@ message Operator {
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 4;
 }
+
+message CertificationAuthority {
+    // The CertificationAuthority's public key.
+    string publicKey = 1;
+
+    // The CertificationAuthority name.
+    string name = 2;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 3;
+}

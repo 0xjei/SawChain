@@ -4,6 +4,7 @@ const {
     SystemAdmin,
     CompanyAdmin,
     Operator,
+    CertificationAuthority,
     Company
 } = require('../services/proto');
 const {
@@ -14,6 +15,7 @@ const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
+    getCertificationAuthorityAddress,
     getTaskTypeAddress,
     getCompanyAddress
 } = require('../services/addressing');
@@ -36,10 +38,10 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
         operatorAddress
     ]);
 
-    const systemAdmin = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
 
     // Validation: System Admin is already recorded.
-    if (systemAdmin.publicKey !== '')
+    if (systemAdminState.publicKey !== '')
         reject(`System Admin is already recorded!`);
 
     // State update.
@@ -72,21 +74,23 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
     const systemAdminAddress = getSystemAdminAddress();
     const companyAdminAddress = getCompanyAdminAddress(publicKey);
     const operatorAddress = getOperatorAddress(publicKey);
+    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey);
 
     const state = await context.getState([
         systemAdminAddress,
         companyAdminAddress,
-        operatorAddress
+        operatorAddress,
+        certificationAuthorityAddress
     ]);
 
-    const systemAdmin = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
 
     // Validation: System Admin is not recorded.
-    if (systemAdmin.publicKey === '')
+    if (systemAdminState.publicKey === '')
         reject(`System Admin is not recorded!`);
 
     // Validation: There is a user already associated to given public key.
-    if (systemAdmin.publicKey === publicKey)
+    if (systemAdminState.publicKey === publicKey)
         reject(`The public key is associated with the current System Admin!`);
 
     // Validation: There is a user already associated to given public key.
@@ -96,8 +100,12 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
     if (state[operatorAddress].length > 0)
         reject(`There is already an Operator with the signer's public key!`);
 
+    // Validation: Given public key is already associated to a CertAuth.
+    if (state[certificationAuthorityAddress].length > 0)
+        reject(`There is already a Certification Authority with the given public key!`);
+
     // Validation: Transaction signer is not the System Admin.
-    if (systemAdmin.publicKey !== signerPublicKey)
+    if (systemAdminState.publicKey !== signerPublicKey)
         reject(`Transaction signer is not the System Admin!`);
 
     // State update.
@@ -132,21 +140,26 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
         reject(`Public key field doesn't contain a valid public key!`);
 
+    const systemAdminAddress = getSystemAdminAddress();
     const companyId = getSHA512(signerPublicKey, 10);
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(companyId);
     const operatorAddress = getOperatorAddress(publicKey);
+    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey);
     const companyAdminOperatorAddress = getCompanyAdminAddress(publicKey);
     const taskTypeAddress = getTaskTypeAddress(task);
 
     const state = await context.getState([
+        systemAdminAddress,
         companyAdminAddress,
         companyAddress,
         operatorAddress,
+        certificationAuthorityAddress,
         companyAdminOperatorAddress,
         taskTypeAddress
     ]);
 
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
     const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
     const companyState = Company.decode(state[companyAddress]);
 
@@ -154,13 +167,20 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
     if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
         reject(`You must be a Company Admin for a Company to create an Operator!`);
 
-    // Validation: There is already a user with the operator's public key.
+    // Validation: There is a user already associated to given public key.
+    if (systemAdminState.publicKey === publicKey)
+        reject(`The public key is associated with the current System Admin!`);
+
     if (state[companyAdminOperatorAddress].length > 0)
-        reject(`There is already a Company Admin with the signer's public key!`);
+        reject(`There is already a Company Admin with the given public key!`);
 
     // Validation: Given public key is already associated to an OP.
     if (state[operatorAddress].length > 0)
-        reject(`There is already an Operator with the signer's public key!`);
+        reject(`There is already an Operator with the given public key!`);
+
+    // Validation: Given public key is already associated to a CertAuth.
+    if (state[certificationAuthorityAddress].length > 0)
+        reject(`There is already a Certification Authority with the given public key!`);
 
     // Validation: The provided Task Type value for task doesn't match a valid Task Type.
     if (!state[taskTypeAddress].length)
@@ -183,8 +203,80 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
     await context.setState(updates);
 }
 
+/**
+ * Handle a create Certification Authority into the state.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {Object} publicKey The Certification Authority public key.
+ * @param {String} name The Certification Authority name.
+ */
+async function createCertificationAuthority(context, signerPublicKey, timestamp, {publicKey, name}) {
+    // Validation: Public key is not set.
+    if (!publicKey)
+        reject(`Public key is not set!`);
+
+    // Validation: Name is not set.
+    if (!name)
+        reject(`Name is not set!`);
+
+    // Validation: Public key field doesn't contain a valid public key.
+    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
+        reject(`Public key field doesn't contain a valid public key!`);
+
+    const systemAdminAddress = getSystemAdminAddress();
+    const companyAdminAddress = getCompanyAdminAddress(publicKey);
+    const operatorAddress = getOperatorAddress(publicKey);
+    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey);
+
+    const state = await context.getState([
+        systemAdminAddress,
+        companyAdminAddress,
+        operatorAddress,
+        certificationAuthorityAddress
+    ]);
+
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
+
+    // Validation: System Admin is not recorded.
+    if (systemAdminState.publicKey === '')
+        reject(`System Admin is not recorded!`);
+
+    // Validation: There is a user already associated to given public key.
+    if (systemAdminState.publicKey === publicKey)
+        reject(`The public key is associated with the current System Admin!`);
+
+    // Validation: Given public key is already associated to a CA.
+    if (state[companyAdminAddress].length0)
+        reject(`There is already a Company Admin with the given public key!`);
+
+    // Validation: Given public key is already associated to an OP.
+    if (state[operatorAddress].length > 0)
+        reject(`There is already an Operator with the given public key!`);
+
+    // Validation: Given public key is already associated to a CertAuth.
+    if (state[certificationAuthorityAddress].length > 0)
+        reject(`There is already a Certification Authority with the given public key!`);
+
+    // Validation: Transaction signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`Transaction signer is not the System Admin!`);
+
+    // State update.
+    const updates = {};
+
+    updates[certificationAuthorityAddress] = CertificationAuthority.encode({
+        publicKey: publicKey,
+        name: name,
+        timestamp: timestamp
+    }).finish();
+
+    await context.setState(updates);
+}
+
 module.exports = {
     createSystemAdmin,
     updateSystemAdmin,
-    createOperator
+    createOperator,
+    createCertificationAuthority
 };

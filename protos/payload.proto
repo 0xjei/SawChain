@@ -13,11 +13,12 @@ message SCPayload {
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
-        CREATE_COMPANY = 6;
-        CREATE_FIELD = 7;
-        CREATE_OPERATOR = 8;
-        CREATE_DESCRIPTION_EVENT = 9;
-        CREATE_TRANSFORMATION_EVENT = 10;
+        CREATE_CERTIFICATION_AUTHORITY = 6;
+        CREATE_COMPANY = 7;
+        CREATE_FIELD = 8;
+        CREATE_OPERATOR = 9;
+        CREATE_DESCRIPTION_EVENT = 10;
+        CREATE_TRANSFORMATION_EVENT = 11;
     }
 
     Action action = 1;
@@ -30,11 +31,12 @@ message SCPayload {
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterTypeAction createEventParameterType = 6;
     CreateEventTypeAction createEventType = 7;
-    CreateCompanyAction createCompany = 8;
-    CreateFieldAction createField = 9;
-    CreateOperatorAction createOperator = 10;
-    CreateDescriptionEvent createDescriptionEvent = 11;
-    CreateTransformationEvent createTransformationEvent = 12;
+    CreateCertificationAuthorityAction createCertificationAuthority = 8;
+    CreateCompanyAction createCompany = 9;
+    CreateFieldAction createField = 10;
+    CreateOperatorAction createOperator = 11;
+    CreateDescriptionEvent createDescriptionEvent = 12;
+    CreateTransformationEvent createTransformationEvent = 13;
 }
 
 message UpdateSystemAdminAction {
@@ -102,6 +104,14 @@ message CreateEventTypeAction {
 
     // List of derived Product Types (for transformations typology only)
     repeated string derivedProductTypes = 8;
+}
+
+message CreateCertificationAuthorityAction {
+    // CertificationAuthority public key.
+    string publicKey = 1;
+
+    // CertificationAuthority name.
+    string name = 2;
 }
 
 message CreateCompanyAction {

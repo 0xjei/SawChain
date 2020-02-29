@@ -15,7 +15,8 @@ const {
 const {
     createSystemAdmin,
     updateSystemAdmin,
-    createOperator
+    createOperator,
+    createCertificationAuthority
 } = require('./actions/users');
 const {
     createTaskType,
@@ -107,6 +108,15 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createEventType.name)
+                );
+                break;
+
+            case SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY:
+                await createCertificationAuthority(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getActionFieldFromPayload(payload, SCPayloadFields.createCertificationAuthority.name)
                 );
                 break;
 
