@@ -17,6 +17,7 @@ message SCPayload {
         CREATE_FIELD = 7;
         CREATE_OPERATOR = 8;
         CREATE_DESCRIPTION_EVENT = 9;
+        CREATE_TRANSFORMATION_EVENT = 10;
     }
 
     Action action = 1;
@@ -33,6 +34,7 @@ message SCPayload {
     CreateFieldAction createField = 9;
     CreateOperatorAction createOperator = 10;
     CreateDescriptionEvent createDescriptionEvent = 11;
+    CreateTransformationEvent createTransformationEvent = 12;
 }
 
 message UpdateSystemAdminAction {
@@ -153,4 +155,24 @@ message CreateDescriptionEvent {
 
     // Unique identifiers and values of necessary EventParameterValues.
     repeated Event.EventParameterValue values = 4;
+}
+
+message CreateTransformationEvent {
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // A list of Company Batches to transform.
+    repeated string batches = 2;
+
+    // A list of Company Fields to transform.
+    repeated string fields = 3;
+
+    // An ordered list of quantities to subtract from input resources (Batch/Field).
+    repeated float quantities = 4;
+
+    // Output Batch Product Type.
+    string derivedProduct = 5;
+
+    // Output Batch identifier.
+    string outputBatchId = 6;
 }

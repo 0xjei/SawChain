@@ -4,6 +4,7 @@ const {
     SystemAdmin,
     CompanyAdmin,
     Operator,
+    ProductType,
     EventParameterType,
     EventType,
     Company,
@@ -261,15 +262,15 @@ async function createField(
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
  * @param {String} eventTypeId EventType unique identifier.
- * @param {Object[]} values Unique identifiers and values of different EventParameterValues.
  * @param {String} batch Input batch where Event will be recorded.
  * @param {String} field Input field where Event will be recorded.
+ * @param {Object[]} values Unique identifiers and values of different EventParameterValues.
  */
 async function createDescriptionEvent(
     context,
     signerPublicKey,
     timestamp,
-    {eventTypeId, values, batch, field}
+    {eventTypeId, batch, field, values}
 ) {
     // Validation: Event Type id is not set.
     if (!eventTypeId)
@@ -310,15 +311,15 @@ async function createDescriptionEvent(
     const batchState = Batch.decode(state[batchAddress]);
 
     // Validation: Provided value for field does not match with a Company Field.
-    if(field && !(companyState.fields.indexOf(field) > -1))
+    if(field && companyState.fields.indexOf(field) === -1)
         reject(`The provided field ${field} is not a Company Field!`);
 
     // Validation: Provided value for batch does not match with a Company Batch.
-    if(batch && !(companyState.batches.indexOf(batch) > -1))
+    if(batch && companyState.batches.indexOf(batch) === -1)
         reject(`The provided batch ${batch} is not a Company Batch!`);
 
     // Validation: Provided value for eventTypeId does not match with a valid Event Type.
-    if (!state[eventTypeAddress].length)
+    if (!state[eventTypeAddress])
         reject(`The provided Event Type ${eventTypeId} doesn't match a valid Event Type!`);
 
     // Validation: Provided Event Type doesn't match a valid description Event Type.
@@ -385,8 +386,238 @@ async function createDescriptionEvent(
     await context.setState(updates);
 }
 
+/**
+ * Handle a Create Transformation Event transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} eventTypeId EventType unique identifier.
+ * @param {String[]} batches Input batches to transform.
+ * @param {String[]} fields Input fields to transform.
+ * @param {float[]} quantities Input quantities to subtract from fields or batches.
+ * @param {String} derivedProduct Output Product Type for the output Batch.
+ * @param {String} outputBatchId Output Batch identifier.
+ */
+
+async function createTransformationEvent(
+    context,
+    signerPublicKey,
+    timestamp,
+    {eventTypeId, batches, fields, quantities, derivedProduct, outputBatchId}
+) {
+    // Validation: Event Type id is not set.
+    if (!eventTypeId)
+        reject(`Event Type id is not set!`);
+
+    // Validation: A list of Batch or a list of Field is not set.
+    if ((!batches.length > 0 && !fields.length > 0) || (batches.length > 0 && fields.length > 0))
+        reject(`You must set a list of Batch or a list of Field to transform!`);
+
+    // Validation: A list of quantities not set.
+    if (!quantities.length > 0)
+        reject(`Quantities list is not set!`);
+
+    // Validation: Derived product is not set.
+    if (!derivedProduct)
+        reject(`Derived product is not set!`);
+
+    // Validation: Output Batch identifier is not set.
+    if (!outputBatchId)
+        reject(`Output Batch identifier is not set!`);
+
+    const operatorAddress = getOperatorAddress(signerPublicKey);
+
+    let state = await context.getState([
+        operatorAddress
+    ]);
+
+    const operatorState = Operator.decode(state[operatorAddress]);
+
+    // Validation: Transaction signer is not an Operator for a Company.
+    if (!state[operatorAddress].length)
+        reject(`You must be an Operator for a Company!`);
+
+    const companyAddress = getCompanyAddress(operatorState.company);
+    const eventTypeAddress = getEventTypeAddress(eventTypeId);
+    const outputBatchAddress = getBatchAddress(outputBatchId, operatorState.company);
+
+    state = await context.getState([
+        companyAddress,
+        eventTypeAddress,
+        outputBatchAddress
+    ]);
+
+    const companyState = Company.decode(state[companyAddress]);
+    const eventTypeState = EventType.decode(state[eventTypeAddress]);
+
+    // Validation: Provided value for eventTypeId does not match with a valid Event Type.
+    if (!state[eventTypeAddress])
+        reject(`The provided Event Type ${eventTypeId} doesn't match a valid Event Type!`);
+
+    const fieldsState = [];
+    const batchesState = [];
+
+    // Validation: At least one of the provided values for fields doesn't match a Company Field.
+    for (const field of fields) {
+        // Validation: Provided value for field does not match with a Company Field.
+        if(companyState.fields.indexOf(field) === -1)
+            reject(`The provided field ${field} is not a Company Field!`);
+
+        // Fields decoding.
+        const companyFieldAddress = getFieldAddress(field, operatorState.company);
+
+        state = await context.getState([
+            companyFieldAddress
+        ]);
+
+        fieldsState.push(Field.decode(state[companyFieldAddress]));
+    }
+
+    // Validation: At least one of the provided values for batches doesn't match a Company Batch.
+    for (const batch of batches) {
+        // Validation: Provided value for batch does not match with a Company Batch.
+        if(companyState.batches.indexOf(batch) === -1)
+            reject(`The provided batch ${batch} is not a Company Batch!`);
+
+        // Batches decoding.
+        const companyBatchAddress = getFieldAddress(batch, operatorState.company);
+
+        state = await context.getState([
+            companyBatchAddress
+        ]);
+
+        batchesState.push(Batch.decode(state[companyBatchAddress]));
+    }
+
+    // Validation: Provided Event Type doesn't match a valid transformation Event Type.
+    if (eventTypeState.typology !== 1)
+        reject(`The provided Event Type ${eventTypeId} is not a transformation event!`);
+
+    // Validation: Operator's task doesn't match one of the enabled Task Types for the Event Type.
+    if (!(eventTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
+        reject(`You cannot record this Event with a ${operatorState.task} task!`);
+
+    // Validation: At least a provided field doesn't match other Field's Product Type.
+    if (fieldsState.length > 0 && fieldsState.some(field => field.product !== fieldsState[fieldsState.length - 1].product))
+        reject(`You cannot transform fields with different products!`);
+
+    // Validation: At least a provided batch doesn't match other Batch's Product Type.
+    if (batchesState.length > 0 && batchesState.some(batch => batch.product !== batchesState[batchesState.length - 1].product))
+        reject(`You cannot transform batches with different products!`);
+
+    // Validation: Field Product Type doesn't match one of the enabled Product Types for the Event Type.
+    if (fieldsState.length > 0 && eventTypeState.enabledProductTypes.indexOf(fieldsState[fieldsState.length - 1].product) === -1)
+        reject(`You cannot record this Event on fields with product ${fieldsState[fieldsState.length - 1].product}!`);
+
+    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
+    if (batchesState.length > 0 && eventTypeState.enabledProductTypes.indexOf(batchesState[batchesState.length - 1].product) === -1)
+        reject(`You cannot record this Event on batches with product ${batchesState[batchesState.length - 1].product}!`);
+
+    // Validation: Derived product doesn't match one of the derived Product Types for the Event Type.
+    if (!(eventTypeState.derivedProductTypes.indexOf(derivedProduct) > -1))
+        reject(`You cannot transform with ${eventTypeId} event in order to create a Batch with ${derivedProduct} product!`);
+
+    /// Validation: At least one of the given quantities is less or equal to zero.
+    if (quantities.some(quantity => quantity <= 0))
+        reject(`At least one of the given quantities is less or equal to zero!`);
+
+    // Validation: The quantity to be subtracted cannot be greater than the current quantity of the Batch or Field.
+    quantities.forEach((quantity, index) => {
+        // Validation: Provided quantity greater than field quantity.
+        if (fieldsState.length > 0 && fieldsState[index].quantity - quantity < 0)
+            reject(`The provided quantity ${quantity} cannot be greater than the current ${fieldsState[index].id} Field quantity ${fieldsState[index].quantity}`);
+
+        // Validation: Provided quantity greater than batch quantity.
+        if (batchesState.length > 0 && batchesState[index].quantity - quantity < 0)
+            reject(`The provided quantity ${quantity} cannot be greater than the current ${batchesState[index].id} Batch quantity ${batchesState[index].quantity}`);
+    });
+
+    /// Validation: The provided output batch identifier is already used for another Company Batch.
+    if (companyState.batches.some(batch => batch === outputBatchId))
+        reject(`The provided output batch identifier ${outputBatchId} is already used for another Company Batch`);
+
+    // Retrieve conversion rate for derived product from Batch or Field product.
+    let productTypeAddress;
+    let outputProduct;
+
+    if (fields.length > 0) {
+        outputProduct = fieldsState[fieldsState.length - 1].product;
+        productTypeAddress = getProductTypeAddress(outputProduct);
+    } else {
+        outputProduct = batchesState[batchesState.length - 1].product;
+        productTypeAddress = getProductTypeAddress(outputProduct);
+    }
+
+    state = await context.getState([
+        productTypeAddress
+    ]);
+
+    const conversionRate = ProductType.decode(state[productTypeAddress])
+        .derivedProducts.filter(
+            drvPrd => drvPrd.derivedProductType === derivedProduct
+        )[0].conversionRate;
+
+    // State update.
+    const updates = {};
+
+    // Record Event on each input Field.
+    if (fields.length > 0) {
+        for (let i = 0; i < fieldsState.length; i++) {
+            const fieldAddress = getFieldAddress(fieldsState[i].id, operatorState.company);
+
+            fieldsState[i].events.push(Event.create({
+                eventTypeId: eventTypeId,
+                reporter: signerPublicKey,
+                values: [],
+                quantity: quantities[i],
+                timestamp: timestamp
+            }));
+
+            fieldsState[i].quantity -= quantities[i];
+            updates[fieldAddress] = Field.encode(fieldsState[i]).finish();
+        }
+    }
+
+    // Record Event on each input Batch.
+    if (batches.length > 0) {
+        for (let i = 0; i < batchesState.length; i++) {
+            const batchAddress = getBatchAddress(batchesState[i].id, operatorState.company);
+
+            batchesState[i].events.push(Event.create({
+                eventTypeId: eventTypeId,
+                reporter: signerPublicKey,
+                values: [],
+                quantity: quantities[i],
+                timestamp: timestamp
+            }));
+
+            batchesState[i].quantity -= quantities[i];
+            updates[batchAddress] = Batch.encode(batchesState[i]).finish();
+        }
+    }
+
+    // Create output Batch.
+    updates[outputBatchAddress] = Batch.encode({
+        id: outputBatchId,
+        product: outputProduct,
+        quantity: quantities.reduce((tot, sum) => { return tot + sum }) * conversionRate,
+        parentFields: fields,
+        parentBatches: batches,
+        events: [],
+        finalized: false,
+        timestamp: timestamp
+    }).finish();
+
+    // Update Company.
+    companyState.batches.push(outputBatchId);
+    updates[companyAddress] = Company.encode(companyState).finish();
+
+    await context.setState(updates)
+}
+
 module.exports = {
     createCompany,
     createField,
-    createDescriptionEvent
+    createDescriptionEvent,
+    createTransformationEvent
 };

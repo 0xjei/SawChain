@@ -26,7 +26,8 @@ const {
 const {
     createCompany,
     createField,
-    createDescriptionEvent
+    createDescriptionEvent,
+    createTransformationEvent
 } = require('./actions/entities');
 
 /**
@@ -142,6 +143,15 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createDescriptionEvent.name)
+                );
+                break;
+
+            case SCPayloadActions.CREATE_TRANSFORMATION_EVENT:
+                await createTransformationEvent(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getActionFieldFromPayload(payload, SCPayloadFields.createTransformationEvent.name)
                 );
                 break;
 

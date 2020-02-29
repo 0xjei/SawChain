@@ -52,6 +52,7 @@ const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
 const CreateOperatorAction = root.lookup('CreateOperatorAction');
 const CreateDescriptionEvent = root.lookup('CreateDescriptionEvent');
+const CreateTransformationEvent = root.lookup('CreateTransformationEvent');
 
 // Other protobuf messages lookup.
 const Location = root.lookup('Location');
@@ -81,5 +82,6 @@ module.exports = {
     CreateFieldAction,
     CreateOperatorAction,
     CreateDescriptionEvent,
+    CreateTransformationEvent,
     Location
 };
