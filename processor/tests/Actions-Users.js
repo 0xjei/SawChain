@@ -14,14 +14,17 @@ const {
     SCPayloadActions,
     SystemAdmin,
     Operator,
+    CertificationAuthority,
     Company,
     UpdateSystemAdminAction,
-    CreateOperatorAction
+    CreateOperatorAction,
+    CreateCertificationAuthorityAction
 } = require('../services/proto');
 const {
     getSystemAdminAddress,
     getOperatorAddress,
-    getCompanyAddress
+    getCompanyAddress,
+    getCertificationAuthorityAddress
 } = require('../services/addressing');
 const {
     getNewKeyPair,
@@ -341,7 +344,7 @@ describe('Users Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if given public key match with a Company Admin one', async function () {
+        it('Should reject if given public key match with a Company Admin', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR,
@@ -426,6 +429,151 @@ describe('Users Actions', function () {
             const submission = handler.apply(txn, context);
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+    });
+
+    describe('Create Certification Authority Action', async function () {
+        const caName = "ca1";
+
+        let caKeyPair = null;
+        let caAddress = null;
+
+        before(async function () {
+            // Certification Authority key pair.
+            caKeyPair = getNewKeyPair();
+            caAddress = getCertificationAuthorityAddress(caKeyPair.publicKey);
+        });
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no public key is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no name is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey.slice(0, 60),
+                        name: caName
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if there is a user already associated to given public key', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: sysAdminKeyPair.publicKey,
+                        name: caName
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if transaction signer is not the System Admin', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey,
+                        name: caName
+                    })
+                }),
+                caKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Certification Authority', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey,
+                        name: caName
+                    })
+                }),
+                sysAdminKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            state = context._state[caAddress];
+
+            expect(state).to.not.be.null;
+            expect(CertificationAuthority.decode(state).publicKey).to.equal(caKeyPair.publicKey);
+            expect(CertificationAuthority.decode(state).name).to.equal(caName);
+            expect(parseInt(CertificationAuthority.decode(state).timestamp)).to.equal(timestamp);
         });
     });
 });
