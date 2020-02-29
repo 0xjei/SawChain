@@ -321,14 +321,28 @@ async function createEventType(
 
     // Validation: At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
     for (const productTypeId of derivedProductTypes) {
-        let productTypeAddress = getProductTypeAddress(productTypeId);
+        const productTypeAddress = getProductTypeAddress(productTypeId);
 
-        let productTypeState = await context.getState([
+        let state = await context.getState([
             productTypeAddress
         ]);
 
-        if (!productTypeState[productTypeAddress].length) {
+        if (!state[productTypeAddress].length) {
             reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
+        }
+
+        // Validation: At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
+        for (const enableProductType of enabledProductTypes) {
+            let productTypeAddress = getProductTypeAddress(enableProductType);
+
+            let state = await context.getState([
+                productTypeAddress
+            ]);
+
+            const productTypeState = ProductType.decode(state[productTypeAddress]);
+
+            if (!productTypeState.derivedProducts.some(drvPrdTp => drvPrdTp.derivedProductType === productTypeId))
+                reject(`The provided derived Product Type ${productTypeId} doesn't match with one of those enabled for the Product Type!`);
         }
     }
 

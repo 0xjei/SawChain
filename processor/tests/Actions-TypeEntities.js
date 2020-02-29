@@ -337,7 +337,6 @@ describe('Types Creation', function () {
             expect(ProductType.decode(state).derivedProducts).to.be.empty;
         });
 
-        /// todo
         it('Should reject if at least one of the provided values for derivedProducts doesn\'t have a conversionRate greater than 0', async function () {
             txn = new Txn(
                 SCPayload.create({
@@ -793,7 +792,7 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if ferived products are given for description event', async function () {
+        it('Should reject if derived products are given for description event', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_TYPE,
@@ -833,6 +832,29 @@ describe('Types Creation', function () {
                         derivedProductTypes: [
                             "mock-productType-id100"
                         ]
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if at least one of the provided Product Types values for derived product types doesn\'t match with one of those enabled for the Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: firstEventTypeId,
+                        typology: 1,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
+                        parameters: eventTypeParameters,
+                        enabledProductTypes: ["mock-productType-id2"],
+                        derivedProductTypes: ["mock-productType-id2"]
                     })
                 }),
                 sysAdminKeys.privateKey

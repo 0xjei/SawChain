@@ -562,8 +562,9 @@ A Create Event Type transaction is invalid if one of the following conditions oc
 * At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
 * At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
 * No derived products for transformation event typology.
-* Derived products for description event.
+* Derived products are given for description event.
 * At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
+* At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
 
 ### Create Company
 To create a Company, the System Admin needs to provide some information: a name, a description, a website reference and the public key of the Company Admin.
@@ -664,6 +665,7 @@ This type of Event does not deal with the quantity of a Field or a Batch.
 The Operator must specify an EventType identifier, one Batch or Field where to record the Event and an optional list of EventParameterValue.
 The EventType identifier is used to retrieve the information about the EventType to perform comparisons between with the incoming data.
 The transaction creates a new description Event for a Field or a Batch updating the Event list for the Field or the Batch.
+The Event is stored inside the Batch or Field itself because each Event belongs uniquely to a Batch or Field which simplify the backtracking process.
 
 ```protobuf
 message CreateDescriptionEvent {
@@ -693,7 +695,7 @@ A Create Description Event transaction is invalid if one of the following condit
 * Operator's task doesn't match one of the enabled Task Types for the Event Type.
 * Field Product Type doesn't match one of the enabled Product Types for the Event Type.
 * Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
-* No values are provided for required Event Parameters.+
+* No values are provided for required Event Parameters.
 * No correct value field is provided for required parameter of type number.
 * The provided number is lower than the minimum value constraint.
 * The provided number is greater than the maximum value constraint.
