@@ -293,6 +293,85 @@ const mockCreateOperator = async (
 };
 
 /**
+ * Execute a Create Description Event action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} optPrivateKey The Operator private key.
+ * @param {String} eventTypeId EventType unique identifier.
+ * @param {String} batch Input batch where Event will be recorded.
+ * @param {String} field Input field where Event will be recorded.
+ * @param {Object[]} values Unique identifiers and values of different EventParameterValues.
+ */
+const mockCreateDescriptionEvent = async (
+    context,
+    handler,
+    optPrivateKey,
+    eventTypeId,
+    batch,
+    field,
+    values
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+            timestamp: Date.now(),
+            createDescriptionEvent: CreateDescriptionEvent.create({
+                eventTypeId: eventTypeId,
+                field: field,
+                batch: batch,
+                values: values
+            })
+        }),
+        optPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
+
+/**
+ * Execute a Create Transformation Event action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} optPrivateKey The Operator private key.
+ * @param {String} eventTypeId EventType unique identifier.
+ * @param {String[]} batches Input batches to transform.
+ * @param {String[]} fields Input fields to transform.
+ * @param {float[]} quantities Input quantities to subtract from fields or batches.
+ * @param {String} derivedProduct Output Product Type for the output Batch.
+ * @param {String} outputBatchId Output Batch identifier.
+ */
+const mockCreateTransformationEvent = async (
+    context,
+    handler,
+    optPrivateKey,
+    eventTypeId,
+    batches,
+    fields,
+    quantities,
+    derivedProduct,
+    outputBatchId
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+            timestamp: Date.now(),
+            createTransformationEvent: CreateTransformationEvent.create({
+                eventTypeId: eventTypeId,
+                fields: fields,
+                batches: batches,
+                quantities: quantities,
+                derivedProduct: derivedProduct,
+                outputBatchId: outputBatchId
+            })
+        }),
+        optPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
+/**
  * Populate a food supply-chain with mock data.
  * @param {Context} context Current state context.
  * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
@@ -473,5 +552,7 @@ module.exports = {
     mockCreateOperator,
     populateStateWithMockData,
     mockCreateCompany,
-    mockCreateField
+    mockCreateField,
+    mockCreateDescriptionEvent,
+    mockCreateTransformationEvent
 };
