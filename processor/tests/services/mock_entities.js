@@ -11,7 +11,8 @@ const {
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
     CreateCompanyAction,
-    CreateOperatorAction
+    CreateOperatorAction,
+    CreateFieldAction
 } = require('../../services/proto');
 
 /**
@@ -221,12 +222,51 @@ const mockCreateCompany = async (
     await handler.apply(txn, context);
 };
 
+/**
+ * Execute a Create Field action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} cmpAdminPrivateKey The Company Admin public key.
+ * @param {String} id Field id.
+ * @param {String} description Field description.
+ * @param {String} product Field cultivable Product Type.
+ * @param {float} productQuantity Field predicted production quantity.
+ * @param {Object} location Field location coordinates.
+ */
+const mockCreateField = async (
+    context,
+    handler,
+    cmpAdminPrivateKey,
+    id,
+    description,
+    product,
+    productQuantity,
+    location
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_FIELD,
+            timestamp: Date.now(),
+            createField: CreateFieldAction.create({
+                id: id,
+                description: description,
+                product: product,
+                quantity: productQuantity,
+                location: location
+            })
+        }),
+        cmpAdminPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
 
 /**
  * Execute a Create Operator action.
  * @param {Context} context Current state context.
  * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} cmpAdminPrivateKey The Company Admin public key.
+ * @param {String} cmpAdminPrivateKey The Company Admin private key.
  * @param {String} optPublicKey Operator public key.
  * @param {String} task Task Type identifier for Operator task.
  */
@@ -322,6 +362,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         required: false
     });
 
+    // Description events.
     await mockCreateEventType(context, handler, sysAdminPrivateKey,
         "event1",
         EventType.EventTypology.DESCRIPTION,
@@ -329,7 +370,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc1",
         [param1, param2, param3],
         ["task1"],
-        ["prd1"],
+        ["prd3"],
         []
     );
 
@@ -340,7 +381,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc2",
         [param4, param5, param6],
         ["task1"],
-        ["prd1"],
+        ["prd3"],
         []
     );
 
@@ -368,13 +409,13 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
 
     await mockCreateEventType(context, handler, sysAdminPrivateKey,
         "event5",
-        EventType.EventTypology.TRANSFORMATION,
+        EventType.EventTypology.DESCRIPTION,
         "name5",
         "desc5",
-        [param1],
-        ["task2"],
-        ["prd2"],
-        ["prd1"]
+        [],
+        ["task1"],
+        ["prd3"],
+        []
     );
 
     await mockCreateEventType(context, handler, sysAdminPrivateKey,
@@ -382,23 +423,46 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         EventType.EventTypology.DESCRIPTION,
         "name6",
         "desc6",
-        [],
+        [param1, param4],
         ["task1"],
-        ["prd1"],
+        ["prd3"],
         []
     );
 
+    // Transformation events.
     await mockCreateEventType(context, handler, sysAdminPrivateKey,
         "event7",
-        EventType.EventTypology.DESCRIPTION,
+        EventType.EventTypology.TRANSFORMATION,
         "name7",
         "desc7",
-        [param1, param4],
+        [],
         ["task1"],
-        ["prd1"],
-        []
+        ["prd3"],
+        ["prd2"]
     );
-    // todo transformation events
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event8",
+        EventType.EventTypology.TRANSFORMATION,
+        "name8",
+        "desc8",
+        [],
+        ["task2"],
+        ["prd3"],
+        ["prd2"]
+    );
+
+    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+        "event9",
+        EventType.EventTypology.TRANSFORMATION,
+        "name9",
+        "desc9",
+        [],
+        ["task1"],
+        ["prd2"],
+        ["prd1"]
+    );
+
 };
 
 module.exports = {
@@ -408,5 +472,6 @@ module.exports = {
     mockCreateEventParameterType,
     mockCreateOperator,
     populateStateWithMockData,
-    mockCreateCompany
+    mockCreateCompany,
+    mockCreateField
 };
