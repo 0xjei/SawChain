@@ -663,8 +663,8 @@ Along the supply-chain different fundamentals activities are executed on the pro
 A description Event allow a Company Operator to record and certify information data of the activities performed on a Field or Batch held by a Company into the state.
 This type of Event does not deal with the quantity of a Field or a Batch.
 The Operator must specify an EventType identifier, one Batch or Field where to record the Event and an optional list of EventParameterValue.
-The EventType identifier is used to retrieve the information about the EventType to perform comparisons between with the incoming data.
-The transaction creates a new description Event for a Field or a Batch updating the Event list for the Field or the Batch.
+The EventType identifier is used to retrieve the information about the EventType to validate the input data.
+The transaction creates a new description Event updating the Event list for the provided input Field or the Batch.
 The Event is stored inside the Batch or Field itself because each Event belongs uniquely to a Batch or Field which simplify the backtracking process.
 
 ```protobuf
@@ -703,3 +703,59 @@ A Create Description Event transaction is invalid if one of the following condit
 * The provided string length is lower than the minimum length constraint.
 * The provided string length is greater than the maximum length constraint.
 * No correct value field is provided for required parameter of type bytes.
+
+## Create Transformation Event
+Production batches represent a quantity of a certain product which is produced, processed, stored and moved along the supply-chain.
+To avoid the creation of these batches from scratch it's used a transformation-events mechanism.
+A transformation Event allow a Company Operator to create and certify a production Batch for its company using Company Fields or Batches.
+The Operator must specify an EventType identifier, a list of input Batches or Fields, a list of product quantities to subtract from input resources (Batches/Fields) 
+the output product and a unique output Batch identifier.
+This type of Event deals with the quantity of the input Fields or Batches and doesn't need any parameter value. 
+The output Batch quantity will be converted using the correspondent conversion rate based on the given output product type and the input product type of Fields and Batches.
+The EventType identifier is used to retrieve the information about the EventType to validate the input data.
+The transaction creates a new transformation Event updating the Event list for each Field or Batch provided in input.
+The Event is stored inside each input Batch or Field itself because each Event belongs uniquely to a Batch or Field which simplify the backtracking process.
+
+```protobuf
+message CreateTransformationEvent {
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // A list of Company Batches to transform.
+    repeated string batches = 2;
+
+    // A list of Company Fields to transform.
+    repeated string fields = 3;
+
+    // An ordered list of quantities to subtract from input resources (Batch/Field).
+    repeated float quantities = 4;
+
+    // Output Batch Product Type.
+    string derivedProduct = 5;
+
+    // Output Batch identifier.
+    string outputBatchId = 6;
+}
+```
+
+A Create Transformation Event transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Event Type identifier is not set.
+* A list of Batch or a list of Field is not set.
+* A list of quantities not set.
+* Derived product is not set.
+* Output Batch identifier is not set.
+* Transaction signer is not an Operator for a Company.
+* Provided value for eventTypeId does not match with a valid Event Type.
+* At least one of the provided values for fields doesn't match a Company Field.
+* At least one of the provided values for batches doesn't match a Company Batch.
+* Provided Event Type doesn't match a valid transformation Event Type.
+* Operator's task doesn't match one of the enabled Task Types for the Event Type.
+* At least a provided field doesn't match other Field's Product Type.
+* At least a provided batch doesn't match other Batch's Product Type.
+* Field Product Type doesn't match one of the enabled Product Types for the Event Type.
+* Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
+* Derived product doesn't match one of the derived Product Types for the Event Type.
+* At least one of the given quantities is less or equal to zero.
+* The quantity to be subtracted cannot be greater than the current quantity of the Batch or Field.
+* The provided output batch identifier is already used for another Company Batch.
