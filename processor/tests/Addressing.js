@@ -13,12 +13,14 @@ const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
+    getCertificationAuthorityAddress,
     getTaskTypeAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
     getCompanyAddress,
     getFieldAddress,
+    getBatchAddress,
     isValidAddress
 } = require('../services/addressing');
 
@@ -87,6 +89,28 @@ describe('Addressing Service', function () {
                 NAMESPACE +
                 PREFIXES.USERS +
                 USER_PREFIXES.OPERATOR +
+                dataHash
+            )
+        })
+    });
+
+    describe('Certification Authority Address', function () {
+        before(function () {
+            data = randomBytes(32).toString('hex');
+            address = getCertificationAuthorityAddress(data);
+            dataHash = getSHA512(data, 60);
+        });
+
+        it('Should return a hexadecimal string', function () {
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
+        });
+
+        it('Should return a valid Operator address', function () {
+            expect(address).to.equal(
+                NAMESPACE +
+                PREFIXES.USERS +
+                USER_PREFIXES.CERTIFICATION_AUTHORITY +
                 dataHash
             )
         })
@@ -216,10 +240,34 @@ describe('Addressing Service', function () {
             expect(isValidAddress(address)).to.be.true;
         });
 
-        it('Should return a valid Company address', function () {
+        it('Should return a valid Field address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.FIELD +
+                dataHash
+            )
+        })
+    });
+
+    describe('Batch Address', function () {
+        let company = null;
+
+        before(function () {
+            data = "mock-batch-id";
+            company = "mock-company-id";
+            address = getBatchAddress(data, company);
+            dataHash = getSHA512(data, 42) + getSHA512(company, 20);
+        });
+
+        it('Should return a hexadecimal string', function () {
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
+        });
+
+        it('Should return a valid Batch address', function () {
+            expect(address).to.equal(
+                NAMESPACE +
+                PREFIXES.BATCH +
                 dataHash
             )
         })
