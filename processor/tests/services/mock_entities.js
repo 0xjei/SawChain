@@ -13,6 +13,8 @@ const {
     CreateCompanyAction,
     CreateOperatorAction,
     CreateCertificationAuthorityAction,
+    CreateDescriptionEvent,
+    CreateTransformationEvent,
     CreateFieldAction
 } = require('../../services/proto');
 
