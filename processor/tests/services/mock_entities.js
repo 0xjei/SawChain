@@ -12,6 +12,7 @@ const {
     CreateEventTypeAction,
     CreateCompanyAction,
     CreateOperatorAction,
+    CreateCertificationAuthorityAction,
     CreateFieldAction
 } = require('../../services/proto');
 
@@ -261,7 +262,6 @@ const mockCreateField = async (
     await handler.apply(txn, context);
 };
 
-
 /**
  * Execute a Create Operator action.
  * @param {Context} context Current state context.
@@ -287,6 +287,39 @@ const mockCreateOperator = async (
             })
         }),
         cmpAdminPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
+/**
+ * Execute a Create Certification Authority action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} sysAdminPrivateKey System Admin private key.
+ * @param {Object} publicKey The Certification Authority public key.
+ * @param {String} name The Certification Authority name.
+ * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
+ */
+const mockCreateCertificationAuthority = async (
+    context,
+    handler,
+    sysAdminPrivateKey,
+    publicKey,
+    name,
+    products
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+            timestamp: Date.now(),
+            createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                publicKey: caKeyPair.publicKey,
+                name: name,
+                products: products
+            })
+        }),
+        sysAdminPrivateKey
     );
 
     await handler.apply(txn, context);
@@ -550,6 +583,7 @@ module.exports = {
     mockCreateProductType,
     mockCreateEventParameterType,
     mockCreateOperator,
+    mockCreateCertificationAuthority,
     populateStateWithMockData,
     mockCreateCompany,
     mockCreateField,

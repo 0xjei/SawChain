@@ -434,6 +434,7 @@ describe('Users Actions', function () {
 
     describe('Create Certification Authority Action', async function () {
         const caName = "ca1";
+        const products = ["prd1", "prd2"];
 
         let caKeyPair = null;
         let caAddress = null;
@@ -499,6 +500,23 @@ describe('Users Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
+        it('Should reject if no products are given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey,
+                        name: caName
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
         it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
             txn = new Txn(
                 SCPayload.create({
@@ -506,7 +524,8 @@ describe('Users Actions', function () {
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey.slice(0, 60),
-                        name: caName
+                        name: caName,
+                        products: products
                     })
                 })
             );
@@ -523,7 +542,8 @@ describe('Users Actions', function () {
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: sysAdminKeyPair.publicKey,
-                        name: caName
+                        name: caName,
+                        products: products
                     })
                 })
             );
@@ -540,7 +560,8 @@ describe('Users Actions', function () {
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName
+                        name: caName,
+                        products: products
                     })
                 }),
                 caKeyPair.privateKey
@@ -551,6 +572,24 @@ describe('Users Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
+        it('Should reject if at least one of the provided values for products doesn\'t match a valid Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey,
+                        name: caName,
+                        products: ["no-prod"]
+                    })
+                }),
+                sysAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
         it('Should create the Certification Authority', async function () {
             const timestamp = Date.now();
 
@@ -560,7 +599,8 @@ describe('Users Actions', function () {
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName
+                        name: caName,
+                        products: products
                     })
                 }),
                 sysAdminKeyPair.privateKey
@@ -573,6 +613,7 @@ describe('Users Actions', function () {
             expect(state).to.not.be.null;
             expect(CertificationAuthority.decode(state).publicKey).to.equal(caKeyPair.publicKey);
             expect(CertificationAuthority.decode(state).name).to.equal(caName);
+            expect(CertificationAuthority.decode(state).products.length).to.equal(products.length);
             expect(parseInt(CertificationAuthority.decode(state).timestamp)).to.equal(timestamp);
         });
     });
