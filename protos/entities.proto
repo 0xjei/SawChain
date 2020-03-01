@@ -91,6 +91,21 @@ message Event {
 }
 
 message Batch {
+    // Certificate issued by a recorded Certification Authority.
+    message Certificate {
+        // Certification Authority public key.
+        string authority = 1;
+
+        // Certificate external link.
+        string link = 2;
+
+        // Certificate file hash.
+        string hash = 3;
+
+        // Date and time when certificate is issued.
+        uint64 timestamp = 4;
+    }
+
     // Batch unique identifier.
     string id = 1;
 
@@ -109,9 +124,12 @@ message Batch {
     // List of recorded Events.
     repeated Event events = 6;
 
-    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
-    bool finalized = 7;
+    // Batch certification.
+    Certificate certificate = 7;
 
-    uint64 timestamp = 8;
+    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
+    bool finalized = 8;
+
+    uint64 timestamp = 9;
 }
 

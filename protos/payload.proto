@@ -112,6 +112,9 @@ message CreateCertificationAuthorityAction {
 
     // CertificationAuthority name.
     string name = 2;
+
+    // List of enabled Product Types for certification.
+    repeated string products = 3;
 }
 
 message CreateCompanyAction {

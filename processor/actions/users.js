@@ -5,6 +5,7 @@ const {
     CompanyAdmin,
     Operator,
     CertificationAuthority,
+    ProductType,
     Company
 } = require('../services/proto');
 const {
@@ -17,6 +18,7 @@ const {
     getOperatorAddress,
     getCertificationAuthorityAddress,
     getTaskTypeAddress,
+    getProductTypeAddress,
     getCompanyAddress
 } = require('../services/addressing');
 
@@ -127,7 +129,12 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
  * @param {String} publicKey Operator public key.
  * @param {String} task Task Type identifier for Operator task.
  */
-async function createOperator(context, signerPublicKey, timestamp, {publicKey, task}) {
+async function createOperator(
+    context,
+    signerPublicKey,
+    timestamp,
+    {publicKey, task}
+    ) {
     // Validation: Public key is not set.
     if (!publicKey)
         reject(`Public key is not set!`);
@@ -210,8 +217,14 @@ async function createOperator(context, signerPublicKey, timestamp, {publicKey, t
  * @param {Object} timestamp Date and time when transaction is sent.
  * @param {Object} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
+ * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
  */
-async function createCertificationAuthority(context, signerPublicKey, timestamp, {publicKey, name}) {
+async function createCertificationAuthority(
+    context,
+    signerPublicKey,
+    timestamp,
+    {publicKey, name, products}
+    ) {
     // Validation: Public key is not set.
     if (!publicKey)
         reject(`Public key is not set!`);
@@ -219,6 +232,10 @@ async function createCertificationAuthority(context, signerPublicKey, timestamp,
     // Validation: Name is not set.
     if (!name)
         reject(`Name is not set!`);
+
+    // Validation: Products is not set.
+    if (!products.length > 0)
+        reject(`Products is not set`);
 
     // Validation: Public key field doesn't contain a valid public key.
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
@@ -262,12 +279,25 @@ async function createCertificationAuthority(context, signerPublicKey, timestamp,
     if (systemAdminState.publicKey !== signerPublicKey)
         reject(`Transaction signer is not the System Admin!`);
 
+    // Validation: at least one of the provided values for products doesn't match a valid Product Type.
+    for (const product of products) {
+        let productTypeAddress = getProductTypeAddress(product);
+
+        let state = await context.getState([
+            productTypeAddress
+        ]);
+
+        if (!state[productTypeAddress].length > 0)
+            reject(`The provided Product Type ${product} doesn't match with a valid Product Type!`);
+    }
+
     // State update.
     const updates = {};
 
     updates[certificationAuthorityAddress] = CertificationAuthority.encode({
         publicKey: publicKey,
         name: name,
+        products: products,
         timestamp: timestamp
     }).finish();
 
