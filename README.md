@@ -24,8 +24,9 @@ The application is based on [Hyperledger Sawtooth](https://www.hyperledger.org/p
 SawChain takes advantage from the core features of Sawtooth providing a generic customizable infrastructure for users, types, products and events.
 After system bootstrap and configuration from an external peer who acts as a system administrator, every authorized operator is 
 enabled to create/read data over batches of products.
-Each data record has to pass through time and quantity constraint made possible exploiting the smart contract power and customization, 
+Each data record has to pass through time and quantity constraints making possible the exploiting of the smart contract capabilities, 
 mitigating the introduction of un-tracked products and decreasing errors from users. 
+Certification and control authorities are enabled to record hash, link and timestamp for their certificates increasing the reliability and integrity of the state data.
 The huge volume of data and sensor transactions is satisfied by the high-scalability of Sawtooth.
 
 # Architecture 

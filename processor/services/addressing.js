@@ -13,8 +13,7 @@ const PREFIXES = {
     TYPES: '01',
     COMPANY: '02',
     FIELD: '03',
-    BATCH: '04',
-    EVENT: '05'
+    BATCH: '04'
 };
 const USER_PREFIXES = {
     SYSTEM_ADMIN: '10',

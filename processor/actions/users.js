@@ -284,7 +284,7 @@ async function createCertificationAuthority(
     if (systemAdminState.publicKey !== signerPublicKey)
         reject(`Transaction signer is not the System Admin!`);
 
-    // Validation: at least one of the provided values for products doesn't match a valid Product Type.
+    // Validation: At least one of the provided values for products doesn't match a valid Product Type.
     for (const product of products) {
         let productTypeAddress = getProductTypeAddress(product);
 

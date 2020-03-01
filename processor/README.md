@@ -38,7 +38,7 @@ Any individual is able to read information from ledger state to reconstruct the 
 Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
 Protocol Buffers are language-neutral, platform-neutral, extensible mechanism for serializing structured data.
 To improve the understanding of the relationships between objects they have been categorized as follows:
-- **Users**: *System Admin*, *Company Admin*, *Operator*.
+- **Users**: *System Admin*, *Company Admin*, *Operator*, *Certification Authority*.
 - **Types**: *Task Type*, *Product Type*, *Event Parameter Type*, *Event Type*.
 - **Entities**: *Company*, *Field*, *Batch*, *Event*.
 
@@ -50,10 +50,10 @@ properties like temperature and location for production batches. All users must 
 Each agent is uniquely identified by his/her own public key.
 
 #### System Admin
-The System Admin is a special kind of external user from supply-chain participants identified as trustworthy from the consortium.
-He is responsible for system start up by recording companies and their administrators, and the entire set of types, according to supply-chain rules and agreements. 
-Referencing an external agent is possible to avoid tampering or internal advantages by the participants themselves.
-There can be only one system administrator for each release.
+The System Admin is a special kind of external user from supply-chain participants identified as trustworthy inside the consortium.
+He is responsible for system bootstrap by recording companies and their administrators, and the entire set of types, according to supply-chain rules and agreements. 
+Referencing an external agent from the consortium, it is possible to avoid tampering or internal advantages by the participants themselves.
+There can be only one System Admin for each SawChain release.
 
 ```protobuf
 message Users {
@@ -67,7 +67,7 @@ message Users {
 
 ### Company Admin
 Each company is managed by a Company Administrator who is enabled to issue credentials and
-assign tasks to Operators. If the company covers the primary production phase, the company administrator can also record the company production fields.
+assign tasks to Operators. If the company covers the primary production phase, the Company Administrator can also record the company production fields.
 
 ```protobuf
 message CompanyAdmin {
@@ -82,8 +82,8 @@ message CompanyAdmin {
 ```
 
 ### Operator
-An Operator is an authorized user enabled to record data about production batches and events within the company who works for.
-The assigned task allows dynamic filtering during registration of data which decreases error occurrences.
+An Operator is an authorized user enabled to record data about production batches and events which happened within the company who works for.
+The task field allows dynamic filtering during registration of data which decreases occurrences of errors.
 
 ```protobuf
 message Operator {
@@ -100,6 +100,30 @@ message Operator {
 }
 ```
 
+### Certification Authority
+A Certification Authority represent a real-world external authority who verifies production batches qualities, product and status along the supply-chain.
+Each authority is represented with a unique public key, a name and website reference and a list of products where can certify their analysis.
+They can work over each production batch of every company because they are recognized as verification entity by the entire consortium.
+
+```protobuf
+message CertificationAuthority {
+    // The CertificationAuthority's public key.
+    string publicKey = 1;
+
+    // The CertificationAuthority name.
+    string name = 2;
+
+    // The CertificationAuthority website.
+    string website = 3;
+
+    // List of enabled Product Types for certification.
+    repeated string products = 4;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp
+    uint64 timestamp = 5;
+}
+```
+
 ## Types
 Each Type is a template structure which users can defined to match their design.
 In order to validate incoming data, each entity (like events, batches, etc.) is assigned to a particular Type at creation. 
@@ -107,7 +131,7 @@ Types are recorded into the state to avoid subsequent changes or misunderstandin
 As the supply chain needs to evolve, different Types can be recorded into the state.
  
 #### Task Type
-Operators are binded to a specified role inside a company which describes their responsibilities. 
+Operators are bound to a specified role inside a company which describes their responsibilities. 
 This information can be used to filter different types of products and events that the operator can interact. 
 Task type is used to define a particular task/role for operators. 
 
@@ -175,8 +199,6 @@ message EventParameterType {
         NUMBER = 0;
         STRING = 1;
         BYTES = 2;
-        ENUM = 3;
-        BOOL = 4;
     }
 
     // Unique identifier.
@@ -196,7 +218,7 @@ The same event can be recorded in different kind of products from operators assi
 
 Relevant events are made up through a list of previously defined Event Parameters Types.
 Each parameter can be enriched with some fields depends on his type (required, min/max value and length) that needs to be satisfied to record it correctly.
-For example, a parameter *Notes* can have a *required* property set to *true* and a *maxValue* property set to *80*.
+For example, a parameter *Notes* can have a *required* property set to *true* and a *maxLength* property set to *80*.
 A value must not be assigned to 'values' fields, it's going to be assigned during Event recording step.
 Exclusively only one values field will be validated based on parameter type.
 As in the previous example, *Notes* must have the *stringValue* field filled with a string having a number of characters greater than 0 and less than 80.
@@ -224,12 +246,11 @@ message EventType {
         int32 minLength = 5;
         int32 maxLength = 6;
 
-        // Values fields.
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
         float floatValue = 7;
         string stringValue = 8;
         bytes bytesValue = 9;
-        int32 enumValue = 10;
-        bool boolValue = 11;
     }
 
     // Unique identifier.
@@ -329,6 +350,96 @@ message Field {
 }
 ```
 
+### Event
+Different activities and transformations of production batches can be made during the supply-chain phases. The Event state object
+represent the unique source of information about these activities executed over fields and batches.
+Each Event refers to a recorded EventType to get the information about parameters, list for filtering purposes and typology, avoiding saving redundant data.
+Only the Operators can record an Event over fields e/o batches for the company for which they are authorized.
+If the given EventType identifier refers to an EventType that has a parameter list with at least one required parameter, a list of ParameterValue must be provided.
+For transformation typology events, the quantity used for the transformation activity must be provided and stored in the Event itself.
+
+```protobuf
+message Event {
+    // Event Parameter value.
+    message EventParameterValue {
+        // Event Parameter identifier.
+        string parameterTypeId = 1;
+
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
+        float floatValue = 2;
+        string stringValue = 3;
+        bytes bytesValue = 4;
+    }
+
+    // Event Type identifier.
+    string eventTypeId = 1;
+
+    // Public key of the transaction sender (Operator).
+    string reporter = 2;
+
+    // Unique identifiers of different EventParameterValues.
+    repeated EventParameterValue values = 3;
+
+    // Used transformation quantity.
+    float quantity = 4;
+
+    uint64 timestamp = 5;
+}
+```
+
+### Batch
+A production Batch represent an identified quantity of a certain product which is produced, processed, stored and moved along the supply-chain by a Company.
+A Batch is uniquely identified by a specific identifier inside the production Company. The quantity represents the unit, kilos or litre of product that are contained inside the Batch.
+The parent references is used to backtracking the history of the Batch, passing through its events and those of the parents.
+A Certification Authority can issue a certificate on a particular date, specifying links and hashes of the external document.
+The boolean value is used to end the possibility of Event recording over the Batch.
+
+```protobuf
+message Batch {
+    // Certificate issued by a recorded Certification Authority.
+    message Certificate {
+        // Certification Authority public key.
+        string authority = 1;
+
+        // Certificate external link.
+        string link = 2;
+
+        // Certificate file hash.
+        string hash = 3;
+
+        // Date and time when certificate is issued.
+        uint64 timestamp = 4;
+    }
+
+    // Batch unique identifier.
+    string id = 1;
+
+    // Product Type identifier.
+    string product = 2;
+
+    // Batch quantity.
+    float quantity = 3;
+
+    // List of parent fields where Batch is transformed.
+    repeated string parentFields = 4;
+
+    // List of parent batches where Batch is transformed.
+    repeated string parentBatches = 5;
+
+    // List of recorded Events.
+    repeated Event events = 6;
+
+    // Batch certification.
+    Certificate certificate = 7;
+
+    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
+    bool finalized = 8;
+
+    uint64 timestamp = 9;
+}
+```
+
 ## Addressing
 SawChain state objects are stored under the namespace obtained by taking the first six characters of the SHA-512 hash of the string SawChain (**87f67d**).
 The addressing flexibility in Sawtooth permits to use each hexadecimal character after the namespace as you wish in order to make more easy to retrieve information stored in the state
@@ -357,6 +468,9 @@ For Users and Types, the subsequent two hexadecimal characters are useful to gro
 * Operator
     - The two hexadecimal characters `12`,
     - The first 60 characters of the SHA-512 of its public key.
+* Certification Authority
+    - The two hexadecimal characters `13`,
+    - The first 60 characters of the SHA-512 of its public key.
 
 * Task Type
     - The two hexadecimal characters `20`,
@@ -374,17 +488,21 @@ For Users and Types, the subsequent two hexadecimal characters are useful to gro
 * Company
     - The two hexadecimal characters `02`,
     - The first 60 characters of the SHA-512 of its identifier.
-* Company
+* Field
     - The two hexadecimal characters `03`,
-    - The first 36 characters of the SHA-512 of its identifier.
-    - The first 24 characters of the SHA-512 of company identifier.
+    - The first 42 characters of the SHA-512 of its identifier.
+    - The first 20 characters of the SHA-512 of company identifier.
+* Batch
+    - The two hexadecimal characters `04`,
+    - The first 42 characters of the SHA-512 of its identifier.
+    - The first 20 characters of the SHA-512 of company identifier.
 
 ## Transactions
 ### Transaction Payload
 All SawChain transactions are wrapped in a tagged payload object to allow the transaction dispatching to the appropriate handling logic.
 
 ```protobuf
-message ACPayload {
+message SCPayload {
     enum Action {
         CREATE_SYSADMIN = 0;
         UPDATE_SYSADMIN = 1;
@@ -392,9 +510,12 @@ message ACPayload {
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
-        CREATE_COMPANY = 6;
-        CREATE_FIELD = 7;
-        CREATE_OPERATOR = 8;
+        CREATE_CERTIFICATION_AUTHORITY = 6;
+        CREATE_COMPANY = 7;
+        CREATE_FIELD = 8;
+        CREATE_OPERATOR = 9;
+        CREATE_DESCRIPTION_EVENT = 10;
+        CREATE_TRANSFORMATION_EVENT = 11;
     }
 
     Action action = 1;
@@ -407,9 +528,12 @@ message ACPayload {
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterTypeAction createEventParameterType = 6;
     CreateEventTypeAction createEventType = 7;
-    CreateCompanyAction createCompany = 8;
-    CreateFieldAction createField = 9;
-    CreateOperatorAction createOperator = 10;
+    CreateCertificationAuthorityAction createCertificationAuthority = 8;
+    CreateCompanyAction createCompany = 9;
+    CreateFieldAction createField = 10;
+    CreateOperatorAction createOperator = 11;
+    CreateDescriptionEvent createDescriptionEvent = 12;
+    CreateTransformationEvent createTransformationEvent = 13;
 }
 ```
 
@@ -550,6 +674,7 @@ message CreateEventTypeAction {
     repeated string derivedProductTypes = 8;
 }
 ```
+
 A Create Event Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * Identifier is not set.
@@ -565,6 +690,39 @@ A Create Event Type transaction is invalid if one of the following conditions oc
 * Derived products are given for description event.
 * At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
 * At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
+
+### Create Certification Authority
+The System Admin can create a Certification Authority enabled to record certificates over every Company batch. 
+The System Admin needs to specify the Certification Authority public key, the name and website reference, and the list of products who can certify. 
+The transaction creates a new Certification Authority into the state.
+
+```protobuf
+message CreateCertificationAuthorityAction {
+    // CertificationAuthority public key.
+    string publicKey = 1;
+
+    // CertificationAuthority name.
+    string name = 2;
+
+    // CertificationAuthority website.
+    string website = 3;
+
+    // List of enabled Product Types for certification.
+    repeated string products = 4;
+}
+```
+
+A Create Certification Authority transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Public key is not set.
+* Name is not set.
+* Website is not set.
+* Products is not set.
+* Public key field doesn't contain a valid public key.
+* The System Admin is not recorded.
+* There is a user already associated to given public key.
+* Transaction signer is not the System Admin.
+* At least one of the provided Product Type values for products doesn't match a valid Product Type.
 
 ### Create Company
 To create a Company, the System Admin needs to provide some information: a name, a description, a website reference and the public key of the Company Admin.
