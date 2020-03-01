@@ -332,7 +332,7 @@ async function createEventType(
         }
 
         // Validation: At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
-        for (const enableProductType of enabledProductTypes) {
+        for (const enableProductType of enabledProductTypes) {
             let productTypeAddress = getProductTypeAddress(enableProductType);
 
             let state = await context.getState([

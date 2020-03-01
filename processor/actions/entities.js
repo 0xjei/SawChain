@@ -311,11 +311,11 @@ async function createDescriptionEvent(
     const batchState = Batch.decode(state[batchAddress]);
 
     // Validation: Provided value for field does not match with a Company Field.
-    if(field && companyState.fields.indexOf(field) === -1)
+    if (field && companyState.fields.indexOf(field) === -1)
         reject(`The provided field ${field} is not a Company Field!`);
 
     // Validation: Provided value for batch does not match with a Company Batch.
-    if(batch && companyState.batches.indexOf(batch) === -1)
+    if (batch && companyState.batches.indexOf(batch) === -1)
         reject(`The provided batch ${batch} is not a Company Batch!`);
 
     // Validation: Provided value for eventTypeId does not match with a valid Event Type.
@@ -460,7 +460,7 @@ async function createTransformationEvent(
     // Validation: At least one of the provided values for fields doesn't match a Company Field.
     for (const field of fields) {
         // Validation: Provided value for field does not match with a Company Field.
-        if(companyState.fields.indexOf(field) === -1)
+        if (companyState.fields.indexOf(field) === -1)
             reject(`The provided field ${field} is not a Company Field!`);
 
         // Fields decoding.
@@ -476,11 +476,11 @@ async function createTransformationEvent(
     // Validation: At least one of the provided values for batches doesn't match a Company Batch.
     for (const batch of batches) {
         // Validation: Provided value for batch does not match with a Company Batch.
-        if(companyState.batches.indexOf(batch) === -1)
+        if (companyState.batches.indexOf(batch) === -1)
             reject(`The provided batch ${batch} is not a Company Batch!`);
 
         // Batches decoding.
-        const companyBatchAddress = getFieldAddress(batch, operatorState.company);
+        const companyBatchAddress = getBatchAddress(batch, operatorState.company);
 
         state = await context.getState([
             companyBatchAddress
@@ -600,7 +600,9 @@ async function createTransformationEvent(
     updates[outputBatchAddress] = Batch.encode({
         id: outputBatchId,
         product: outputProduct,
-        quantity: quantities.reduce((tot, sum) => { return tot + sum }) * conversionRate,
+        quantity: quantities.reduce((tot, sum) => {
+            return tot + sum
+        }) * conversionRate,
         parentFields: fields,
         parentBatches: batches,
         events: [],

@@ -134,7 +134,7 @@ async function createOperator(
     signerPublicKey,
     timestamp,
     {publicKey, task}
-    ) {
+) {
     // Validation: Public key is not set.
     if (!publicKey)
         reject(`Public key is not set!`);
@@ -225,7 +225,7 @@ async function createCertificationAuthority(
     signerPublicKey,
     timestamp,
     {publicKey, name, website, products}
-    ) {
+) {
     // Validation: Public key is not set.
     if (!publicKey)
         reject(`Public key is not set!`);
@@ -285,7 +285,7 @@ async function createCertificationAuthority(
         reject(`Transaction signer is not the System Admin!`);
 
     // Validation: At least one of the provided values for products doesn't match a valid Product Type.
-    for (const product of products) {
+    for (const product of products) {
         let productTypeAddress = getProductTypeAddress(product);
 
         let state = await context.getState([
