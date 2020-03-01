@@ -217,13 +217,14 @@ async function createOperator(
  * @param {Object} timestamp Date and time when transaction is sent.
  * @param {Object} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
+ * @param {String} website The Certification Authority website.
  * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
  */
 async function createCertificationAuthority(
     context,
     signerPublicKey,
     timestamp,
-    {publicKey, name, products}
+    {publicKey, name, website, products}
     ) {
     // Validation: Public key is not set.
     if (!publicKey)
@@ -232,6 +233,10 @@ async function createCertificationAuthority(
     // Validation: Name is not set.
     if (!name)
         reject(`Name is not set!`);
+
+    // Validation: Website is not set.
+    if (!website)
+        reject(`Website is not set!`);
 
     // Validation: Products is not set.
     if (!products.length > 0)
@@ -297,6 +302,7 @@ async function createCertificationAuthority(
     updates[certificationAuthorityAddress] = CertificationAuthority.encode({
         publicKey: publicKey,
         name: name,
+        website: website,
         products: products,
         timestamp: timestamp
     }).finish();

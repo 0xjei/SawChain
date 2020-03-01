@@ -434,6 +434,7 @@ describe('Users Actions', function () {
 
     describe('Create Certification Authority Action', async function () {
         const caName = "ca1";
+        const caWebsite = "website1";
         const products = ["prd1", "prd2"];
 
         let caKeyPair = null;
@@ -500,7 +501,7 @@ describe('Users Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if no products are given', async function () {
+        it('Should reject if no website is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
@@ -508,6 +509,24 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
                         name: caName
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no products are given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+                    timestamp: Date.now(),
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey,
+                        name: caName,
+                        website: caWebsite
                     })
                 })
             );
@@ -525,6 +544,7 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey.slice(0, 60),
                         name: caName,
+                        website: caWebsite,
                         products: products
                     })
                 })
@@ -543,6 +563,7 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: sysAdminKeyPair.publicKey,
                         name: caName,
+                        website: caWebsite,
                         products: products
                     })
                 })
@@ -561,6 +582,7 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
                         name: caName,
+                        website: caWebsite,
                         products: products
                     })
                 }),
@@ -580,6 +602,7 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
                         name: caName,
+                        website: caWebsite,
                         products: ["no-prod"]
                     })
                 }),
@@ -596,10 +619,11 @@ describe('Users Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
-                    timestamp: Date.now(),
+                    timestamp: timestamp,
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
                         name: caName,
+                        website: caWebsite,
                         products: products
                     })
                 }),
@@ -613,6 +637,7 @@ describe('Users Actions', function () {
             expect(state).to.not.be.null;
             expect(CertificationAuthority.decode(state).publicKey).to.equal(caKeyPair.publicKey);
             expect(CertificationAuthority.decode(state).name).to.equal(caName);
+            expect(CertificationAuthority.decode(state).website).to.equal(caWebsite);
             expect(CertificationAuthority.decode(state).products.length).to.equal(products.length);
             expect(parseInt(CertificationAuthority.decode(state).timestamp)).to.equal(timestamp);
         });

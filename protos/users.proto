@@ -42,9 +42,12 @@ message CertificationAuthority {
     // The CertificationAuthority name.
     string name = 2;
 
+    // The CertificationAuthority website.
+    string website = 3;
+
     // List of enabled Product Types for certification.
-    repeated string products = 3;
+    repeated string products = 4;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
-    uint64 timestamp = 4;
+    uint64 timestamp = 5;
 }
