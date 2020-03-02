@@ -10,6 +10,7 @@ const {
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
+    CreatePropertyTypeAction,
     CreateCompanyAction,
     CreateOperatorAction,
     CreateCertificationAuthorityAction,
@@ -188,6 +189,46 @@ const mockCreateEventType = async (
 
     await handler.apply(txn, context);
 };
+
+/**
+ * Execute a Create Property Type action.
+ * @param {Context} context Current state context.
+ * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} sysAdminPrivateKey System Admin private key.
+ * @param {String} id Property Type unique identifier.
+ * @param {String} name Property name.
+ * @param {Number} measure Property unit of measure from enumeration of possible values.
+ * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
+ */
+const mockCreatePropertyType = async (
+    context,
+    handler,
+    sysAdminPrivateKey,
+    id,
+    name,
+    measure,
+    enabledTaskTypes,
+    enabledProductTypes
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+            timestamp: Date.now(),
+            createPropertyType: CreatePropertyTypeAction.create({
+                id: id,
+                name: name,
+                measure: measure,
+                enabledTaskTypes: enabledTaskTypes,
+                enabledProductTypes: enabledProductTypes
+            })
+        }),
+        sysAdminPrivateKey
+    );
+
+    await handler.apply(txn, context);
+};
+
 
 /**
  * Execute a Create Company action.
@@ -580,6 +621,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         ["prd1"]
     );
 
+    // Property Types.
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property1", "name1", 0, ["task1"], ["prd2"]);
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property2", "name2", 1, ["task1"], ["prd2"]);
 };
 
 module.exports = {
@@ -587,6 +631,8 @@ module.exports = {
     mockCreateTaskType,
     mockCreateProductType,
     mockCreateEventParameterType,
+    mockCreateEventType,
+    mockCreatePropertyType,
     mockCreateOperator,
     mockCreateCertificationAuthority,
     populateStateWithMockData,

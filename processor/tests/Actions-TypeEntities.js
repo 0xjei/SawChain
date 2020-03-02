@@ -13,16 +13,19 @@ const {
     ProductType,
     EventParameterType,
     EventType,
+    PropertyType,
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
+    CreatePropertyTypeAction
 } = require('../services/proto');
 const {
     getTaskTypeAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,
-    getEventTypeAddress
+    getEventTypeAddress,
+    getPropertyTypeAddress
 } = require('../services/addressing');
 
 describe('Types Creation', function () {
@@ -671,7 +674,7 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if transaction signer is not the System Admin', async function () {
+        it('Should reject if an empty enabled task types list is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_TYPE,
@@ -681,6 +684,47 @@ describe('Types Creation', function () {
                         typology: firstEventTypology,
                         name: firstEventTypeName,
                         description: firstEventTypeDescription
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if an empty enabled product types list is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
+                        enabledTaskTypes: enabledTaskTypes
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if transaction signer is not the System Admin', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_EVENT_TYPE,
+                    timestamp: Date.now(),
+                    createEventType: CreateEventTypeAction.create({
+                        id: firstEventTypeId,
+                        typology: firstEventTypology,
+                        name: firstEventTypeName,
+                        description: firstEventTypeDescription,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
                     })
                 })
             );
@@ -734,7 +778,8 @@ describe('Types Creation', function () {
                         parameters: eventTypeParameters,
                         enabledTaskTypes: [
                             "mock-taskType-id100"
-                        ]
+                        ],
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 sysAdminKeys.privateKey
@@ -756,6 +801,7 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: [
                             "mock-productType-id100"
                         ]
@@ -780,6 +826,7 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: []
                     })
@@ -803,6 +850,7 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: [
                             "mock-productType-id"
@@ -828,6 +876,7 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes,
                         derivedProductTypes: [
                             "mock-productType-id100"
@@ -853,6 +902,7 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription,
                         parameters: eventTypeParameters,
+                        enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: ["mock-productType-id2"],
                         derivedProductTypes: ["mock-productType-id2"]
                     })
@@ -935,7 +985,9 @@ describe('Types Creation', function () {
                         id: firstEventTypeId,
                         typology: firstEventTypology,
                         name: firstEventTypeName,
-                        description: firstEventTypeDescription
+                        description: firstEventTypeDescription,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 sysAdminKeys.privateKey
@@ -946,4 +998,238 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
     });
+
+    describe('Create Property Type', function () {
+        const propertyTypeId = "mock-propertyType-id";
+        const propertyTypeName = "mock-propertyType-name";
+        const propertyTypeMeasure = PropertyType.UnitOfMeasure.CELSIUS;
+        const enabledTaskTypes = ["mock-taskType-id"];
+        const enabledProductTypes = ["mock-productType-id"];
+
+        const propertyTypeAddress = getPropertyTypeAddress(propertyTypeId);
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no id is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no name is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided value for measure doesn\'t match one of the possible values', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: -1
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if an empty enabled task types list is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if an empty enabled product types list is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: enabledTaskTypes
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if transaction signer is not the System Admin', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if at least one of the provided values for enable task types doesn\'t match a valid Task Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: ["mock-taskType-id0"],
+                        enabledProductTypes: enabledProductTypes
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if at least one of the provided values for enable product types doesn\'t match a valid Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: ["mock-productType-id0"]
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should create the Property Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            state = context._state[propertyTypeAddress];
+
+            expect(state).to.not.be.null;
+            expect(PropertyType.decode(state).id).to.equal(propertyTypeId);
+            expect(PropertyType.decode(state).name).to.equal(propertyTypeName);
+            expect(PropertyType.decode(state).measure).to.equal(propertyTypeMeasure);
+            expect(PropertyType.decode(state).enabledTaskTypes.length).to.be.equal(1);
+            expect(PropertyType.decode(state).enabledProductTypes.length).to.be.equal(1);
+        });
+
+        it('Should reject if there is a Property Type already associated to given id', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+                    timestamp: Date.now(),
+                    createPropertyType: CreatePropertyTypeAction.create({
+                        id: propertyTypeId,
+                        name: propertyTypeName,
+                        measure: propertyTypeMeasure,
+                        enabledTaskTypes: enabledTaskTypes,
+                        enabledProductTypes: enabledProductTypes
+                    })
+                }),
+                sysAdminKeys.privateKey
+            );
+
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+    });
+
 });

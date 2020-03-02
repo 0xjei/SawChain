@@ -18,6 +18,7 @@ const {
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
+    getPropertyTypeAddress,
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
@@ -199,6 +200,28 @@ describe('Addressing Service', function () {
                 NAMESPACE +
                 PREFIXES.TYPES +
                 TYPE_PREFIXES.EVENT_TYPE +
+                dataHash
+            )
+        })
+    });
+
+    describe('Property Type Address', function () {
+        before(function () {
+            data = "mock-propertyType-id";
+            address = getPropertyTypeAddress(data);
+            dataHash = getSHA512(data, 60);
+        });
+
+        it('Should return a hexadecimal string', function () {
+            expect(address).to.be.a.hexString;
+            expect(isValidAddress(address)).to.be.true;
+        });
+
+        it('Should return a valid Event Type address', function () {
+            expect(address).to.equal(
+                NAMESPACE +
+                PREFIXES.TYPES +
+                TYPE_PREFIXES.PROPERTY_TYPE +
                 dataHash
             )
         })
