@@ -125,7 +125,7 @@ message Batch {
     repeated Event events = 6;
 
     // Batch certification.
-    Certificate certificate = 7;
+    repeated Certificate certificates = 7;
 
     // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
     bool finalized = 8;

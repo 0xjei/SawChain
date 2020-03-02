@@ -19,6 +19,7 @@ message SCPayload {
         CREATE_OPERATOR = 9;
         CREATE_DESCRIPTION_EVENT = 10;
         CREATE_TRANSFORMATION_EVENT = 11;
+        ADD_CERTIFICATE_TO_BATCH = 12;
     }
 
     Action action = 1;
@@ -35,8 +36,9 @@ message SCPayload {
     CreateCompanyAction createCompany = 9;
     CreateFieldAction createField = 10;
     CreateOperatorAction createOperator = 11;
-    CreateDescriptionEvent createDescriptionEvent = 12;
-    CreateTransformationEvent createTransformationEvent = 13;
+    CreateDescriptionEventAction createDescriptionEvent = 12;
+    CreateTransformationEventAction createTransformationEvent = 13;
+    AddCertificateToBatchAction addCertificateToBatch = 14;
 }
 
 message UpdateSystemAdminAction {
@@ -159,7 +161,7 @@ message CreateOperatorAction {
     string task = 2;
 }
 
-message CreateDescriptionEvent {
+message CreateDescriptionEventAction {
     // Event Type identifier.
     string eventTypeId = 1;
 
@@ -173,7 +175,7 @@ message CreateDescriptionEvent {
     repeated Event.EventParameterValue values = 4;
 }
 
-message CreateTransformationEvent {
+message CreateTransformationEventAction {
     // Event Type identifier.
     string eventTypeId = 1;
 
@@ -191,4 +193,18 @@ message CreateTransformationEvent {
 
     // Output Batch identifier.
     string outputBatchId = 6;
+}
+
+message AddCertificateToBatchAction {
+    // Batch identifier.
+    string batch = 1;
+
+    // Company identifier.
+    string company = 2;
+
+    // Certificate external link.
+    string link = 3;
+
+    // Certificate file hash.
+    string hash = 4;
 }
