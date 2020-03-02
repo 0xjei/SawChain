@@ -4,6 +4,7 @@ const {
     SystemAdmin,
     CompanyAdmin,
     Operator,
+    CertificationAuthority,
     ProductType,
     EventParameterType,
     EventType,
@@ -25,7 +26,8 @@ const {
     getProductTypeAddress,
     getCompanyAddress,
     getFieldAddress,
-    getBatchAddress
+    getBatchAddress,
+    getCertificationAuthorityAddress
 } = require('../services/addressing');
 
 /**
@@ -538,14 +540,14 @@ async function createTransformationEvent(
 
     // Retrieve conversion rate for derived product from Batch or Field product.
     let productTypeAddress;
-    let outputProduct;
+    let inputProduct;
 
     if (fields.length > 0) {
-        outputProduct = fieldsState[fieldsState.length - 1].product;
-        productTypeAddress = getProductTypeAddress(outputProduct);
+        inputProduct = fieldsState[fieldsState.length - 1].product;
+        productTypeAddress = getProductTypeAddress(inputProduct);
     } else {
-        outputProduct = batchesState[batchesState.length - 1].product;
-        productTypeAddress = getProductTypeAddress(outputProduct);
+        inputProduct = batchesState[batchesState.length - 1].product;
+        productTypeAddress = getProductTypeAddress(inputProduct);
     }
 
     state = await context.getState([
@@ -599,7 +601,7 @@ async function createTransformationEvent(
     // Create output Batch.
     updates[outputBatchAddress] = Batch.encode({
         id: outputBatchId,
-        product: outputProduct,
+        product: derivedProduct,
         quantity: quantities.reduce((tot, sum) => {
             return tot + sum
         }) * conversionRate,

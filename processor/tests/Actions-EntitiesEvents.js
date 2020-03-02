@@ -21,8 +21,8 @@ const {
     Event,
     Batch,
     Location,
-    CreateDescriptionEvent,
-    CreateTransformationEvent
+    CreateDescriptionEventAction,
+    CreateTransformationEventAction
 } = require('../services/proto');
 const {
     getOperatorAddress,
@@ -169,7 +169,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({})
+                        createDescriptionEvent: CreateDescriptionEventAction.create({})
                     })
                 );
 
@@ -183,7 +183,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams
                         })
                     })
@@ -199,7 +199,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             batch: "batch"
@@ -217,7 +217,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId
                         })
@@ -234,7 +234,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: "no-event-type-id",
                             field: fieldId
                         })
@@ -252,7 +252,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdTransfEvent,
                             field: fieldId
                         })
@@ -270,7 +270,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: "event4",
                             field: fieldId
                         })
@@ -288,7 +288,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId
                         })
@@ -306,7 +306,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -330,7 +330,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -354,7 +354,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -378,7 +378,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -406,7 +406,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -434,7 +434,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -462,7 +462,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
-                        createDescriptionEvent: CreateDescriptionEvent.create({
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId,
                             values: [
@@ -495,7 +495,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqParams,
                                 field: "no-field"
                             })
@@ -513,7 +513,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: "event3",
                                 field: fieldId
                             })
@@ -533,7 +533,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdNoParams,
                                 field: fieldId
                             })
@@ -565,7 +565,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqParams,
                                 field: fieldId,
                                 values: valuesReqParams
@@ -598,7 +598,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdNoReqParams,
                                 field: fieldId,
                                 values: valuesNoReqParams
@@ -631,7 +631,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqAndNoReqParams,
                                 field: fieldId,
                                 values: valuesReqAndNoReqParams
@@ -664,7 +664,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqParams,
                                 batch: "no-batch"
                             })
@@ -682,7 +682,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: "event3",
                                 batch: batchId
                             })
@@ -702,7 +702,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdNoParams,
                                 batch: batchId
                             })
@@ -734,7 +734,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqParams,
                                 batch: batchId,
                                 values: valuesReqParams
@@ -767,7 +767,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdNoReqParams,
                                 batch: batchId,
                                 values: valuesNoReqParams
@@ -800,7 +800,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                             timestamp: timestamp,
-                            createDescriptionEvent: CreateDescriptionEvent.create({
+                            createDescriptionEvent: CreateDescriptionEventAction.create({
                                 eventTypeId: eventTypeIdReqAndNoReqParams,
                                 batch: batchId,
                                 values: valuesReqAndNoReqParams
@@ -889,7 +889,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({})
+                        createTransformationEvent: CreateTransformationEventAction.create({})
                     })
                 );
 
@@ -903,7 +903,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId
                         })
                     })
@@ -919,7 +919,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             batches: ["no-batch"]
@@ -937,7 +937,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields
                         })
@@ -954,7 +954,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             quantities: quantities
@@ -972,7 +972,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             quantities: quantities,
@@ -991,7 +991,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: "no-event",
                             fields: fields,
                             quantities: quantities,
@@ -1013,7 +1013,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeIdDesc,
                             fields: fields,
                             quantities: quantities,
@@ -1034,7 +1034,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: "event8",
                             fields: fields,
                             quantities: quantities,
@@ -1055,7 +1055,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             quantities: quantities,
@@ -1076,7 +1076,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             quantities: [1, 2, 3, 0, 4, 5],
@@ -1097,7 +1097,7 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
-                        createTransformationEvent: CreateTransformationEvent.create({
+                        createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId,
                             fields: fields,
                             quantities: [1000000],
@@ -1119,7 +1119,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 fields: ["no-field"],
                                 quantities: quantities,
@@ -1140,7 +1140,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 fields: [fieldId, "field2"],
                                 quantities: quantities,
@@ -1161,7 +1161,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: "event9",
                                 fields: fields,
                                 quantities: quantities,
@@ -1183,7 +1183,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: timestamp,
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 fields: fields,
                                 quantities: quantities,
@@ -1237,7 +1237,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 fields: fields,
                                 quantities: quantities,
@@ -1255,10 +1255,12 @@ describe('Entities Events Actions', function () {
             });
 
             describe('Create Transformation Event on Batch', async function () {
-                const eventTypeId = "event7";
+                const eventTypeId = "event9";
                 const newBatchId = "batch4";
                 const newQuantities = [20];
                 const batches = ["batch1"];
+                const derivedProduct = "prd1";
+                const conversionRate = 0.8;
 
                 before(async function () {
                     // Create a Batch with a different Product Type.
@@ -1283,7 +1285,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 batches: ["no-batch"],
                                 quantities: newQuantities,
@@ -1304,7 +1306,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 batches: [batchId, "batch10"],
                                 quantities: newQuantities,
@@ -1325,7 +1327,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: "event9",
                                 batches: batches,
                                 quantities: newQuantities,
@@ -1347,7 +1349,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: timestamp,
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 batches: batches,
                                 quantities: newQuantities,
@@ -1401,7 +1403,7 @@ describe('Entities Events Actions', function () {
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                             timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
+                            createTransformationEvent: CreateTransformationEventAction.create({
                                 eventTypeId: eventTypeId,
                                 batches: batches,
                                 quantities: newQuantities,

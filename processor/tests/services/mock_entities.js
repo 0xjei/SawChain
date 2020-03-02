@@ -13,8 +13,8 @@ const {
     CreateCompanyAction,
     CreateOperatorAction,
     CreateCertificationAuthorityAction,
-    CreateDescriptionEvent,
-    CreateTransformationEvent,
+    CreateDescriptionEventAction,
+    CreateTransformationEventAction,
     CreateFieldAction
 } = require('../../services/proto');
 
@@ -301,6 +301,7 @@ const mockCreateOperator = async (
  * @param {String} sysAdminPrivateKey System Admin private key.
  * @param {Object} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
+ * @param {String} website The Certification Authority website.
  * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
  */
 const mockCreateCertificationAuthority = async (
@@ -309,6 +310,7 @@ const mockCreateCertificationAuthority = async (
     sysAdminPrivateKey,
     publicKey,
     name,
+    website,
     products
 ) => {
     const txn = new Txn(
@@ -316,8 +318,9 @@ const mockCreateCertificationAuthority = async (
             action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
             timestamp: Date.now(),
             createCertificationAuthority: CreateCertificationAuthorityAction.create({
-                publicKey: caKeyPair.publicKey,
+                publicKey: publicKey,
                 name: name,
+                website: website,
                 products: products
             })
         }),
@@ -350,7 +353,7 @@ const mockCreateDescriptionEvent = async (
         SCPayload.create({
             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
             timestamp: Date.now(),
-            createDescriptionEvent: CreateDescriptionEvent.create({
+            createDescriptionEvent: CreateDescriptionEventAction.create({
                 eventTypeId: eventTypeId,
                 field: field,
                 batch: batch,
@@ -391,7 +394,7 @@ const mockCreateTransformationEvent = async (
         SCPayload.create({
             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
             timestamp: Date.now(),
-            createTransformationEvent: CreateTransformationEvent.create({
+            createTransformationEvent: CreateTransformationEventAction.create({
                 eventTypeId: eventTypeId,
                 fields: fields,
                 batches: batches,
@@ -484,7 +487,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc1",
         [param1, param2, param3],
         ["task1"],
-        ["prd3"],
+        ["prd3", "prd2"],
         []
     );
 
@@ -495,7 +498,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc2",
         [param4, param5, param6],
         ["task1"],
-        ["prd3"],
+        ["prd3", "prd2"],
         []
     );
 
@@ -528,7 +531,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc5",
         [],
         ["task1"],
-        ["prd3"],
+        ["prd3", "prd2"],
         []
     );
 
@@ -539,7 +542,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         "desc6",
         [param1, param4],
         ["task1"],
-        ["prd3"],
+        ["prd3", "prd2"],
         []
     );
 
