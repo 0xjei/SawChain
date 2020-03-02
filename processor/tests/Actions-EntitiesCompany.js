@@ -7,8 +7,6 @@ const Context = require('./services/mock_context');
 const SawChainHandler = require('./services/handler_wrapper');
 const {
     mockCreateSystemAdmin,
-    mockCreateOperator,
-    mockCreateField,
     populateStateWithMockData
 } = require('./services/mock_entities');
 const {
@@ -17,20 +15,14 @@ const {
     CompanyAdmin,
     Company,
     Field,
-    Event,
-    Batch,
     Location,
     CreateCompanyAction,
-    CreateFieldAction,
-    CreateDescriptionEvent,
-    CreateTransformationEvent
+    CreateFieldAction
 } = require('../services/proto');
 const {
     getCompanyAdminAddress,
-    getOperatorAddress,
     getCompanyAddress,
     getFieldAddress,
-    getBatchAddress
 } = require('../services/addressing');
 const {
     getSHA512,
