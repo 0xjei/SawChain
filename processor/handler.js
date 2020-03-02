@@ -30,7 +30,7 @@ const {
     createField,
     createDescriptionEvent,
     createTransformationEvent,
-    addCertificateToBatch
+    addBatchCertificate
 } = require('./actions/entities');
 
 /**
@@ -176,12 +176,12 @@ class SawChainHandler extends TransactionHandler {
                 );
                 break;
 
-            case SCPayloadActions.ADD_CERTIFICATE_TO_BATCH:
-                await addCertificateToBatch(
+            case SCPayloadActions.ADD_BATCH_CERTIFICATE:
+                await addBatchCertificate(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.addCertificateToBatch.name)
+                    getActionFieldFromPayload(payload, SCPayloadFields.addBatchCertificate.name)
                 );
                 break;
 

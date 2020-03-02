@@ -17,12 +17,9 @@ const {
 const {
     SCPayload,
     SCPayloadActions,
-    Company,
-    Field,
-    Event,
     Batch,
     Location,
-    AddCertificateToBatchAction
+    AddBatchCertificateAction
 } = require('../services/proto');
 const {
     getOperatorAddress,
@@ -121,7 +118,7 @@ describe('Batch Actions', function () {
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE
                 })
             );
 
@@ -133,7 +130,7 @@ describe('Batch Actions', function () {
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now()
                 })
             );
@@ -146,9 +143,9 @@ describe('Batch Actions', function () {
         it('Should reject if no batch is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({})
+                    addBatchCertificate: AddBatchCertificateAction.create({})
                 })
             );
 
@@ -160,9 +157,9 @@ describe('Batch Actions', function () {
         it('Should reject if no company is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId
                     })
                 })
@@ -176,9 +173,9 @@ describe('Batch Actions', function () {
         it('Should reject if no link is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addCertificateToBatch: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId
                     })
@@ -193,9 +190,9 @@ describe('Batch Actions', function () {
         it('Should reject if no hash is given', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link
@@ -211,9 +208,9 @@ describe('Batch Actions', function () {
         it('Should reject if provided hash is not a valid SHA-512 value', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link,
@@ -230,9 +227,9 @@ describe('Batch Actions', function () {
         it('Should reject if the signer is not a Certification Authority', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link,
@@ -251,7 +248,7 @@ describe('Batch Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link,
@@ -268,9 +265,9 @@ describe('Batch Actions', function () {
         it('Should reject if provided value for batch doesn\'t match with a company Batch', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: "no-company",
                         link: link,
@@ -288,9 +285,9 @@ describe('Batch Actions', function () {
         it('Should reject if provided value for batch doesn\'t match with a company Batch', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: "no-batch",
                         company: companyId,
                         link: link,
@@ -308,9 +305,9 @@ describe('Batch Actions', function () {
         it('Should reject if Certification Authority\'s products list doesn\'t contains one the Product Type of the Batch', async function () {
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link,
@@ -330,9 +327,9 @@ describe('Batch Actions', function () {
 
             txn = new Txn(
                 SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: timestamp,
-                    addCertificateToBatch: AddCertificateToBatchAction.create({
+                    addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId,
                         company: companyId,
                         link: link,

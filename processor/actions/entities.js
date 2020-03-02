@@ -630,7 +630,7 @@ async function createTransformationEvent(
  * @param {String} link External reference to certification document.
  * @param {String} hash Bytes string of SHA-512 of the external certification document.
  */
-async function addCertificateToBatch(
+async function addBatchCertificate(
     context,
     signerPublicKey,
     timestamp,
@@ -709,5 +709,5 @@ module.exports = {
     createField,
     createDescriptionEvent,
     createTransformationEvent,
-    addCertificateToBatch
+    addBatchCertificate
 };

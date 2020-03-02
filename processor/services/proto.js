@@ -57,7 +57,7 @@ const CreateFieldAction = root.lookup('CreateFieldAction');
 const CreateOperatorAction = root.lookup('CreateOperatorAction');
 const CreateDescriptionEventAction = root.lookup('CreateDescriptionEventAction');
 const CreateTransformationEventAction = root.lookup('CreateTransformationEventAction');
-const AddCertificateToBatchAction = root.lookup('AddCertificateToBatchAction');
+const AddBatchCertificateAction = root.lookup('AddBatchCertificateAction');
 
 // Other protobuf messages lookup.
 const Location = root.lookup('Location');
@@ -92,6 +92,6 @@ module.exports = {
     CreateOperatorAction,
     CreateDescriptionEventAction,
     CreateTransformationEventAction,
-    AddCertificateToBatchAction,
+    AddBatchCertificateAction,
     Location
 };

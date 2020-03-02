@@ -20,7 +20,8 @@ message SCPayload {
         CREATE_OPERATOR = 10;
         CREATE_DESCRIPTION_EVENT = 11;
         CREATE_TRANSFORMATION_EVENT = 12;
-        ADD_CERTIFICATE_TO_BATCH = 13;
+        ADD_BATCH_CERTIFICATE = 13;
+        RECORD_BATCH_PROPERTY = 14;
     }
 
     Action action = 1;
@@ -40,7 +41,7 @@ message SCPayload {
     CreateOperatorAction createOperator = 12;
     CreateDescriptionEventAction createDescriptionEvent = 13;
     CreateTransformationEventAction createTransformationEvent = 14;
-    AddCertificateToBatchAction addCertificateToBatch = 15;
+    AddBatchCertificateAction addBatchCertificate = 15;
 }
 
 message UpdateSystemAdminAction {
@@ -214,7 +215,7 @@ message CreateTransformationEventAction {
     string outputBatchId = 6;
 }
 
-message AddCertificateToBatchAction {
+message AddBatchCertificateAction {
     // Batch identifier.
     string batch = 1;
 
