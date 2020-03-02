@@ -25,7 +25,8 @@ const TYPE_PREFIXES = {
     TASK_TYPE: '20',
     PRODUCT_TYPE: '21',
     EVENT_PARAMETER_TYPE: '22',
-    EVENT_TYPE: '23'
+    EVENT_TYPE: '23',
+    PROPERTY_TYPE: '24'
 };
 
 /**
@@ -117,6 +118,14 @@ const getEventTypeAddress = id => {
 };
 
 /**
+ * Return a Property Type state address.
+ * @param {String} id The Event Type unique identifier.
+ */
+const getPropertyTypeAddress = id => {
+    return makeTypeAddress(id, TYPE_PREFIXES.PROPERTY_TYPE)
+};
+
+/**
  * Return a Company state address.
  * @param {String} id The Company unique identifier.
  */
@@ -169,6 +178,7 @@ module.exports = {
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
+    getPropertyTypeAddress,
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,

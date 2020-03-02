@@ -13,13 +13,14 @@ message SCPayload {
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
-        CREATE_CERTIFICATION_AUTHORITY = 6;
-        CREATE_COMPANY = 7;
-        CREATE_FIELD = 8;
-        CREATE_OPERATOR = 9;
-        CREATE_DESCRIPTION_EVENT = 10;
-        CREATE_TRANSFORMATION_EVENT = 11;
-        ADD_CERTIFICATE_TO_BATCH = 12;
+        CREATE_PROPERTY_TYPE = 6;
+        CREATE_CERTIFICATION_AUTHORITY = 7;
+        CREATE_COMPANY = 8;
+        CREATE_FIELD = 9;
+        CREATE_OPERATOR = 10;
+        CREATE_DESCRIPTION_EVENT = 11;
+        CREATE_TRANSFORMATION_EVENT = 12;
+        ADD_CERTIFICATE_TO_BATCH = 13;
     }
 
     Action action = 1;
@@ -32,13 +33,14 @@ message SCPayload {
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterTypeAction createEventParameterType = 6;
     CreateEventTypeAction createEventType = 7;
-    CreateCertificationAuthorityAction createCertificationAuthority = 8;
-    CreateCompanyAction createCompany = 9;
-    CreateFieldAction createField = 10;
-    CreateOperatorAction createOperator = 11;
-    CreateDescriptionEventAction createDescriptionEvent = 12;
-    CreateTransformationEventAction createTransformationEvent = 13;
-    AddCertificateToBatchAction addCertificateToBatch = 14;
+    CreatePropertyTypeAction createPropertyType = 8;
+    CreateCertificationAuthorityAction createCertificationAuthority = 9;
+    CreateCompanyAction createCompany = 10;
+    CreateFieldAction createField = 11;
+    CreateOperatorAction createOperator = 12;
+    CreateDescriptionEventAction createDescriptionEvent = 13;
+    CreateTransformationEventAction createTransformationEvent = 14;
+    AddCertificateToBatchAction addCertificateToBatch = 15;
 }
 
 message UpdateSystemAdminAction {
@@ -106,6 +108,23 @@ message CreateEventTypeAction {
 
     // List of derived Product Types (for transformations typology only)
     repeated string derivedProductTypes = 8;
+}
+
+message CreatePropertyTypeAction {
+    // Property Type unique identifier.
+    string id = 1;
+
+    // Property Type name.
+    string name = 2;
+
+    // Property Type unit of measure.
+    PropertyType.UnitOfMeasure measure = 3;
+
+    // List of Task Type identifiers.
+    repeated string enabledTaskTypes = 4;
+
+    // List of enabled Product Types.
+    repeated string enabledProductTypes = 5;
 }
 
 message CreateCertificationAuthorityAction {

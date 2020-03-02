@@ -5,7 +5,8 @@ const {
     TaskType,
     ProductType,
     EventParameterType,
-    EventType
+    EventType,
+    PropertyType
 } = require('../services/proto');
 const {
     reject
@@ -15,7 +16,8 @@ const {
     getSystemAdminAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,
-    getEventTypeAddress
+    getEventTypeAddress,
+    getPropertyTypeAddress
 } = require('../services/addressing');
 
 /**
@@ -254,6 +256,14 @@ async function createEventType(
     if (!description)
         reject(`Description is not set!`);
 
+    // Validation: Enabled task types list is not set.
+    if (!enabledTaskTypes.length)
+        reject(`Enabled task types list is not set!`);
+
+    // Validation: Enabled product types list is not set.
+    if (!enabledProductTypes.length)
+        reject(`Enabled product types list is not set!`);
+
     const systemAdminAddress = getSystemAdminAddress();
     const eventTypeAddress = getEventTypeAddress(id);
 
@@ -363,9 +373,111 @@ async function createEventType(
     await context.setState(updates)
 }
 
+/**
+ * Handle a Property Type transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The System Admin public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} id Property Type unique identifier.
+ * @param {String} name Property name.
+ * @param {Number} measure Property unit of measure from enumeration of possible values.
+ * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
+ */
+async function createPropertyType(
+    context,
+    signerPublicKey,
+    timestamp,
+    {
+        id,
+        name,
+        measure,
+        enabledTaskTypes,
+        enabledProductTypes
+    }
+) {
+    // Validation: Id is not set.
+    if (!id)
+        reject(`Id is not set!`);
+
+    // Validation: Name is not set.
+    if (!name)
+        reject(`Name is not set!`);
+
+    // Validation: Provided value for measure doesn't match the types specified in the PropertyType's UnitOfMeasure.
+    if (!Object.values(PropertyType.UnitOfMeasure).some((value) => value === measure))
+        reject(`Provided value for measure doesn't match any possible value!`);
+
+    // Validation: Enabled task types list is not set.
+    if (!enabledTaskTypes.length)
+        reject(`Enabled task types list is not set!`);
+
+    // Validation: Enabled product types list is not set.
+    if (!enabledProductTypes.length)
+        reject(`Enabled product types list is not set!`);
+
+    const systemAdminAddress = getSystemAdminAddress();
+    const propertyTypeAddress = getPropertyTypeAddress(id);
+
+    const state = await context.getState([
+        systemAdminAddress,
+        propertyTypeAddress
+    ]);
+
+    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+
+    // Validation: Transaction signer is not the System Admin.
+    if (adminState.publicKey !== signerPublicKey)
+        reject(`Transaction signer is not the System Admin!`);
+
+    // Validation: There is a Property Type already associated to given id.
+    if (state[propertyTypeAddress].length > 0)
+        reject(`There is an Property Type already associated to given id!`);
+
+    // Validation: At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
+    for (const taskTypeId of enabledTaskTypes) {
+        let taskTypeAddress = getTaskTypeAddress(taskTypeId);
+
+        let taskTypeState = await context.getState([
+            taskTypeAddress
+        ]);
+
+        if (!taskTypeState[taskTypeAddress].length) {
+            reject(`The provided Task Type ${taskTypeId} doesn't match a valid Task Type!`);
+        }
+    }
+
+    // Validation: At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
+    for (const productTypeId of enabledProductTypes) {
+        let productTypeAddress = getProductTypeAddress(productTypeId);
+
+        let productTypeState = await context.getState([
+            productTypeAddress
+        ]);
+
+        if (!productTypeState[productTypeAddress].length) {
+            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
+        }
+    }
+
+    // State update.
+    const updates = {};
+
+    updates[propertyTypeAddress] = PropertyType.encode({
+        id: id,
+        name: name,
+        measure: measure,
+        enabledTaskTypes: enabledTaskTypes,
+        enabledProductTypes: enabledProductTypes
+    }).finish();
+
+    await context.setState(updates)
+}
+
 module.exports = {
     createTaskType,
     createProductType,
     createEventParameterType,
-    createEventType
+    createEventType,
+    createPropertyType
 };

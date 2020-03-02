@@ -42,6 +42,7 @@ const TaskType = root.lookup('TaskType');
 const ProductType = root.lookup('ProductType');
 const EventParameterType = root.lookup('EventParameterType');
 const EventType = root.lookup('EventType');
+const PropertyType = root.lookup('PropertyType');
 
 // Actions lookup.
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction');
@@ -49,6 +50,7 @@ const CreateTaskTypeAction = root.lookup('CreateTaskTypeAction');
 const CreateProductTypeAction = root.lookup('CreateProductTypeAction');
 const CreateEventParameterTypeAction = root.lookup('CreateEventParameterTypeAction');
 const CreateEventTypeAction = root.lookup('CreateEventTypeAction');
+const CreatePropertyTypeAction = root.lookup('CreatePropertyTypeAction');
 const CreateCertificationAuthorityAction = root.lookup('CreateCertificationAuthorityAction');
 const CreateCompanyAction = root.lookup('CreateCompanyAction');
 const CreateFieldAction = root.lookup('CreateFieldAction');
@@ -73,6 +75,7 @@ module.exports = {
     ProductType,
     EventParameterType,
     EventType,
+    PropertyType,
     Company,
     Field,
     Event,
@@ -82,6 +85,7 @@ module.exports = {
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
+    CreatePropertyTypeAction,
     CreateCertificationAuthorityAction,
     CreateCompanyAction,
     CreateFieldAction,

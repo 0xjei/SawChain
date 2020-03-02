@@ -22,7 +22,8 @@ const {
     createTaskType,
     createProductType,
     createEventParameterType,
-    createEventType
+    createEventType,
+    createPropertyType
 } = require('./actions/typeEntities');
 const {
     createCompany,
@@ -109,6 +110,15 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createEventType.name)
+                );
+                break;
+
+            case SCPayloadActions.CREATE_PROPERTY_TYPE:
+                await createPropertyType(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getActionFieldFromPayload(payload, SCPayloadFields.createPropertyType.name)
                 );
                 break;
 

@@ -79,12 +79,6 @@ message EventType {
         int32 maxValue = 4;
         int32 minLength = 5;
         int32 maxLength = 6;
-
-        // Values fields. Only one of these fields should be used,
-        // and it should match the type specified Type in EventParameterType.
-        float floatValue = 7;
-        string stringValue = 8;
-        bytes bytesValue = 9;
     }
 
     // Unique identifier.
@@ -110,4 +104,27 @@ message EventType {
 
     // List of Derived Product Type identifiers (for TRANSFORMATION typology only).
     repeated string derivedProductTypes = 8;
+}
+
+message PropertyType {
+    // Possible values for unit of measure.
+    enum UnitOfMeasure {
+        CELSIUS = 0;
+        LOCATION = 1;
+    }
+
+    // Unique identifier.
+    string id = 1;
+
+    // Property name.
+    string name = 2;
+
+    // Property unit of measure.
+    UnitOfMeasure measure = 3;
+
+    // List of Task Type identifiers.
+    repeated string enabledTaskTypes = 4;
+
+    // List of Product Type identifiers.
+    repeated string enabledProductTypes = 5;
 }
