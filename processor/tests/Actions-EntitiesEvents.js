@@ -1385,6 +1385,7 @@ describe('Entities Events Actions', function () {
 
                     expect(state).not.to.be.null;
                     expect(Batch.decode(state).id).to.equal(newBatchId);
+                    expect(Batch.decode(state).company).to.equal(companyId);
                     expect(Batch.decode(state).quantity).to.equal(newQuantities[0] * conversionRate);
                     expect(Batch.decode(state).parentFields).to.be.empty;
                     expect(Batch.decode(state).parentBatches.length).to.equal(1);

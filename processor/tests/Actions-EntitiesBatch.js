@@ -349,6 +349,7 @@ describe('Batch Actions', function () {
 
             expect(state).to.not.be.null;
             expect(Batch.decode(state).id).to.equal(batchId);
+            expect(Batch.decode(state).company).to.equal(companyId);
             expect(Batch.decode(state).certificates.length).to.equal(1);
             expect(Batch.decode(state).certificates[0].authority).to.equal(caKeyPair.publicKey);
             expect(Batch.decode(state).certificates[0].link).to.equal(link);

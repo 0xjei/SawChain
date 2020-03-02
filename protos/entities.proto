@@ -109,27 +109,30 @@ message Batch {
     // Batch unique identifier.
     string id = 1;
 
+    // Company unique identifier.
+    string company = 2;
+
     // Product Type identifier.
-    string product = 2;
+    string product = 3;
 
     // Batch quantity.
-    float quantity = 3;
+    float quantity = 4;
 
     // List of parent fields where Batch is transformed.
-    repeated string parentFields = 4;
+    repeated string parentFields = 5;
 
     // List of parent batches where Batch is transformed.
-    repeated string parentBatches = 5;
+    repeated string parentBatches = 6;
 
     // List of recorded Events.
-    repeated Event events = 6;
+    repeated Event events = 7;
 
     // Batch certification.
-    repeated Certificate certificates = 7;
+    repeated Certificate certificates = 8;
 
     // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
-    bool finalized = 8;
+    bool finalized = 9;
 
-    uint64 timestamp = 9;
+    uint64 timestamp = 10;
 }
 
