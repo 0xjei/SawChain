@@ -16,19 +16,15 @@ const {
 const {
     SCPayload,
     SCPayloadActions,
-    CompanyAdmin,
     Company,
     Field,
     Event,
     Batch,
     Location,
-    CreateCompanyAction,
-    CreateFieldAction,
     CreateDescriptionEvent,
     CreateTransformationEvent
 } = require('../services/proto');
 const {
-    getCompanyAdminAddress,
     getOperatorAddress,
     getCompanyAddress,
     getFieldAddress,
@@ -38,7 +34,6 @@ const {
     getSHA512,
     getNewKeyPair
 } = require('../services/utils');
-
 
 describe('Entities Events Actions', function () {
     let handler = null;
@@ -144,97 +139,357 @@ describe('Entities Events Actions', function () {
                 })
             ];
 
+            it('Should reject if no timestamp is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction);
+            });
+
+            it('Should reject if no action data field is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now()
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if no Event Type id is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({})
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if Batch or Field is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if both Batch and Field are given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            batch: "batch"
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if transaction signer is not an Operator for a Company', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: "no-event-type-id",
+                            field: fieldId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided Event Type identifier doesn\'t match a description Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdTransfEvent,
+                            field: fieldId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: "event4",
+                            field: fieldId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the Event Type has at least one EventParameter required but no values are given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if no correct value field is provided for a required parameter of type number', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    stringValue: "wrong-type-value"
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided number value is lower than the minimum value constraint for a parameter of type number', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 1
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided number value is greater than the maximum value constraint for a parameter of type number', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 101
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if no correct value field is provided for a required parameter of type string', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 99
+                                }),
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param2",
+                                    floatValue: 1
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided string value is lower than the minimum length constraint for a parameter of type string', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 99
+                                }),
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param2",
+                                    stringValue: "aa"
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided string value is greater than the maximum length constraint for a parameter of type string', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 99
+                                }),
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param2",
+                                    stringValue: "aaaaaaaaaaa"
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if no correct value field is provided for a required parameter of type bytes', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEvent.create({
+                            eventTypeId: eventTypeIdReqParams,
+                            field: fieldId,
+                            values: [
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param1",
+                                    floatValue: 99
+                                }),
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param2",
+                                    stringValue: "aaaaaaaaa"
+                                }),
+                                Event.EventParameterValue.create({
+                                    parameterTypeId: "param3",
+                                    stringValue: ""
+                                })
+                            ]
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
             describe('Create Description Event on Field', async function () {
-                it('Should reject if no timestamp is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction);
-                });
-
-                it('Should reject if no action data field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now()
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no Event Type id is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({})
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if Batch or Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if both Batch and Field are given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                batch: "batch"
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if transaction signer is not an Operator for a Company', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
                 it('Should reject if provided field is not a Company Field', async function () {
                     txn = new Txn(
                         SCPayload.create({
@@ -253,60 +508,6 @@ describe('Entities Events Actions', function () {
                     return expect(submission).to.be.rejectedWith(InvalidTransaction)
                 });
 
-                it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: "no-event-type-id",
-                                field: fieldId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided Event Type identifier doesn\'t match a description Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdTransfEvent,
-                                field: fieldId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: "event4",
-                                field: fieldId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
                 it('Should reject if the field Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
                     txn = new Txn(
                         SCPayload.create({
@@ -315,212 +516,6 @@ describe('Entities Events Actions', function () {
                             createDescriptionEvent: CreateDescriptionEvent.create({
                                 eventTypeId: "event3",
                                 field: fieldId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Event Type has at least one EventParameter required but no values are given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        stringValue: "wrong-type-value"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided number value is lower than the minimum value constraint for a parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 1
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided number value is greater than the maximum value constraint for a parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 101
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        floatValue: 1
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided string value is lower than the minimum length constraint for a parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aa"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided string value is greater than the maximum length constraint for a parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aaaaaaaaaaa"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type bytes', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aaaaaaaaa"
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param3",
-                                        stringValue: ""
-                                    })
-                                ]
                             })
                         }),
                         optKeyPair.privateKey
@@ -664,96 +659,6 @@ describe('Entities Events Actions', function () {
             });
 
             describe('Create Description Event on Batch', async function () {
-                it('Should reject if no timestamp is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction);
-                });
-
-                it('Should reject if no action data field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now()
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no Event Type id is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({})
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if Batch or Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if both Batch and Field are given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                field: fieldId,
-                                batch: batchId
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if transaction signer is not an Operator for a Company', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
                 it('Should reject if provided batch is not a Company Batch', async function () {
                     txn = new Txn(
                         SCPayload.create({
@@ -772,61 +677,7 @@ describe('Entities Events Actions', function () {
                     return expect(submission).to.be.rejectedWith(InvalidTransaction)
                 });
 
-                it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: "no-event-type-id",
-                                batch: batchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided Event Type identifier doesn\'t match a description Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdTransfEvent,
-                                batch: batchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: "event4",
-                                batch: batchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the field Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
+                it('Should reject if the batch Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
                     txn = new Txn(
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
@@ -834,212 +685,6 @@ describe('Entities Events Actions', function () {
                             createDescriptionEvent: CreateDescriptionEvent.create({
                                 eventTypeId: "event3",
                                 batch: batchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Event Type has at least one EventParameter required but no values are given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        stringValue: "wrong-type-value"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided number value is lower than the minimum value constraint for a parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 1
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided number value is greater than the maximum value constraint for a parameter of type number', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 101
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        floatValue: 1
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided string value is lower than the minimum length constraint for a parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aa"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided string value is greater than the maximum length constraint for a parameter of type string', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aaaaaaaaaaa"
-                                    })
-                                ]
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no correct value field is provided for a required parameter of type bytes', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
-                            timestamp: Date.now(),
-                            createDescriptionEvent: CreateDescriptionEvent.create({
-                                eventTypeId: eventTypeIdReqParams,
-                                batch: batchId,
-                                values: [
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param1",
-                                        floatValue: 99
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param2",
-                                        stringValue: "aaaaaaaaa"
-                                    }),
-                                    Event.EventParameterValue.create({
-                                        parameterTypeId: "param3",
-                                        stringValue: ""
-                                    })
-                                ]
                             })
                         }),
                         optKeyPair.privateKey
@@ -1214,134 +859,261 @@ describe('Entities Events Actions', function () {
                 outputBatchAddress = getBatchAddress(outputBatchId, companyId);
             });
 
+            it('Should reject if no timestamp is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction);
+            });
+
+            it('Should reject if no action data field is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now()
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if no Event Type id is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({})
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if a list of Batch or a list of Field is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if both a list of Batch or a list of Field is given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            batches: ["no-batch"]
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if a list of quantities is not given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if derived product is not given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: quantities
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if output batch identifier is not given', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: derivedProduct
+                        })
+                    })
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: "no-event",
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: derivedProduct,
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the provided Event Type identifier doesn\'t match a transformation Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeIdDesc,
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: derivedProduct,
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: "event8",
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: derivedProduct,
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if derived product doesn\'t match one of the derived Product Types for the Event Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: "prd1",
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if at least one of the given quantities less or equal to zero', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: [1, 2, 3, 0, 4, 5],
+                            derivedProduct: derivedProduct,
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if at least one of the given quantities is greater than current quantity of the Batch or Field to be subtracted', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEvent.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: [1000000],
+                            derivedProduct: derivedProduct,
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
             describe('Create Transformation Event on Field', async function () {
-                it('Should reject if no timestamp is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction);
-                });
-
-                it('Should reject if no action data field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now()
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no Event Type id is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({})
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if a list of Batch or a list of Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if both a list of Batch or a list of Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                batches: ["no-batch"]
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if a list of quantities is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if derived product is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                quantities: quantities
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if output batch identifier is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                quantities: quantities,
-                                derivedProduct: derivedProduct
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
                 it('Should reject if at least one of the provided values for fields doesn\'t match a Company Field', async function () {
                     txn = new Txn(
                         SCPayload.create({
@@ -1350,70 +1122,6 @@ describe('Entities Events Actions', function () {
                             createTransformationEvent: CreateTransformationEvent.create({
                                 eventTypeId: eventTypeId,
                                 fields: ["no-field"],
-                                quantities: quantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: outputBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: "no-event",
-                                fields: fields,
-                                quantities: quantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: outputBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided Event Type identifier doesn\'t match a transformation Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeIdDesc,
-                                fields: fields,
-                                quantities: quantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: outputBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: "event8",
-                                fields: fields,
                                 quantities: quantities,
                                 derivedProduct: derivedProduct,
                                 outputBatchId: outputBatchId
@@ -1458,69 +1166,6 @@ describe('Entities Events Actions', function () {
                                 fields: fields,
                                 quantities: quantities,
                                 derivedProduct: derivedProduct
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if derived product doesn\'t match one of the derived Product Types for the Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                quantities: quantities,
-                                derivedProduct: "prd1",
-                                outputBatchId: outputBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if at least one of the given quantities less or equal to zero', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                quantities: [1, 2, 3, 0, 4, 5],
-                                derivedProduct: derivedProduct,
-                                outputBatchId: outputBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if at least one of the given quantities is greater than current quantity of the Batch or Field to be subtracted', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                quantities: [1000000],
-                                derivedProduct: derivedProduct,
-                                outputBatchId: outputBatchId
                             })
                         }),
                         optKeyPair.privateKey
@@ -1633,133 +1278,6 @@ describe('Entities Events Actions', function () {
                     outputBatchAddress = getBatchAddress(newBatchId, companyId);
                 });
 
-                it('Should reject if no timestamp is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction);
-                });
-
-                it('Should reject if no action data field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now()
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if no Event Type id is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({})
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if a list of Batch or a list of Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if both a list of Batch or a list of Field is given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                batches: ["no-batch"]
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if a list of quantities is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                batches: batches
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if derived product is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                fields: fields,
-                                batches: batches
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if output batch identifier is not given', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                batches: batches,
-                                quantities: newQuantities,
-                                derivedProduct: derivedProduct
-                            })
-                        })
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
                 it('Should reject if at least one of the provided values for batches doesn\'t match a Company Batch', async function () {
                     txn = new Txn(
                         SCPayload.create({
@@ -1768,69 +1286,6 @@ describe('Entities Events Actions', function () {
                             createTransformationEvent: CreateTransformationEvent.create({
                                 eventTypeId: eventTypeId,
                                 batches: ["no-batch"],
-                                quantities: newQuantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: newBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided value for eventTypeId doesn\'t match a valid Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: "no-event",
-                                batches: batches,
-                                quantities: newQuantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: newBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the provided Event Type identifier doesn\'t match a transformation Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeIdDesc,
-                                batches: batches,
-                                quantities: newQuantities,
-                                derivedProduct: derivedProduct,
-                                outputBatchId: newBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if the Operator\'s task is not a valid enabled Task Type for the provided Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: "event8",
-                                batches: batches,
                                 quantities: newQuantities,
                                 derivedProduct: derivedProduct,
                                 outputBatchId: newBatchId
@@ -1865,7 +1320,7 @@ describe('Entities Events Actions', function () {
                     return expect(submission).to.be.rejectedWith(InvalidTransaction)
                 });
 
-                it('Should reject if the fields Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
+                it('Should reject if the batches Product Type doesn\'t match one of the enabled Product Types for the Event Type', async function () {
                     txn = new Txn(
                         SCPayload.create({
                             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
@@ -1875,69 +1330,6 @@ describe('Entities Events Actions', function () {
                                 batches: batches,
                                 quantities: newQuantities,
                                 derivedProduct: derivedProduct
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if derived product doesn\'t match one of the derived Product Types for the Event Type', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                batches: batches,
-                                quantities: newQuantities,
-                                derivedProduct: "prd1",
-                                outputBatchId: newBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if at least one of the given quantities less or equal to zero', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                batches: batches,
-                                quantities: [1, 2, 3, 0, 4, 5],
-                                derivedProduct: derivedProduct,
-                                outputBatchId: newBatchId
-                            })
-                        }),
-                        optKeyPair.privateKey
-                    );
-
-                    const submission = handler.apply(txn, context);
-
-                    return expect(submission).to.be.rejectedWith(InvalidTransaction)
-                });
-
-                it('Should reject if at least one of the given quantities is greater than current quantity of the Batch or Field to be subtracted', async function () {
-                    txn = new Txn(
-                        SCPayload.create({
-                            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
-                            timestamp: Date.now(),
-                            createTransformationEvent: CreateTransformationEvent.create({
-                                eventTypeId: eventTypeId,
-                                batches: batches,
-                                quantities: [1000000],
-                                derivedProduct: derivedProduct,
-                                outputBatchId: newBatchId
                             })
                         }),
                         optKeyPair.privateKey
@@ -2025,7 +1417,6 @@ describe('Entities Events Actions', function () {
                     return expect(submission).to.be.rejectedWith(InvalidTransaction)
                 });
             });
-
         });
     });
 });
