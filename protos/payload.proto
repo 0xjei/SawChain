@@ -23,6 +23,7 @@ message SCPayload {
         ADD_BATCH_CERTIFICATE = 13;
         RECORD_BATCH_PROPERTY = 14;
         CREATE_PROPOSAL = 15;
+        ANSWER_PROPOSAL = 16;
     }
 
     Action action = 1;
@@ -45,6 +46,7 @@ message SCPayload {
     AddBatchCertificateAction addBatchCertificate = 15;
     RecordBatchPropertyAction recordBatchProperty = 16;
     CreateProposalAction createProposal = 17;
+    AnswerProposalAction answerProposal = 18;
 }
 
 message UpdateSystemAdminAction {
@@ -249,4 +251,17 @@ message CreateProposalAction {
     string receiverCompany = 2;
 
     string notes = 3;
+}
+
+message AnswerProposalAction {
+    // Batch identifier.
+    string batch = 1;
+
+    string senderCompany = 2;
+
+    string receiverCompany = 3;
+
+    Batch.Proposal.Status response = 4;
+
+    string motivation = 5;
 }
