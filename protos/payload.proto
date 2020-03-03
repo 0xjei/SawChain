@@ -22,6 +22,7 @@ message SCPayload {
         CREATE_TRANSFORMATION_EVENT = 12;
         ADD_BATCH_CERTIFICATE = 13;
         RECORD_BATCH_PROPERTY = 14;
+        CREATE_PROPOSAL = 15;
     }
 
     Action action = 1;
@@ -43,6 +44,7 @@ message SCPayload {
     CreateTransformationEventAction createTransformationEvent = 14;
     AddBatchCertificateAction addBatchCertificate = 15;
     RecordBatchPropertyAction recordBatchProperty = 16;
+    CreateProposalAction createProposal = 17;
 }
 
 message UpdateSystemAdminAction {
@@ -238,4 +240,13 @@ message RecordBatchPropertyAction {
 
     // A Property Value to update the Property.
     Batch.PropertyValue propertyValue = 3;
+}
+
+message CreateProposalAction {
+    // Batch identifier.
+    string batch = 1;
+
+    string receiverCompany = 2;
+
+    string notes = 3;
 }

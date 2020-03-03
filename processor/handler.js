@@ -31,7 +31,8 @@ const {
     createDescriptionEvent,
     createTransformationEvent,
     addBatchCertificate,
-    recordBatchProperty
+    recordBatchProperty,
+    createProposal
 } = require('./actions/entities');
 
 /**
@@ -192,6 +193,15 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.recordBatchProperty.name)
+                );
+                break;
+
+            case SCPayloadActions.CREATE_PROPOSAL:
+                await createProposal(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getActionFieldFromPayload(payload, SCPayloadFields.createProposal.name)
                 );
                 break;
 

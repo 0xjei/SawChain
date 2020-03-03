@@ -13,6 +13,7 @@ const {
     Field,
     Batch,
     Event,
+    Proposal,
     TypeData
 } = require('../services/proto');
 const {
@@ -30,6 +31,7 @@ const {
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
+    getProposalAddress,
     getCertificationAuthorityAddress
 } = require('../services/addressing');
 
@@ -834,6 +836,89 @@ async function recordBatchProperty(
     await context.setState(updates)
 }
 
+/**
+ * Handle Create Proposal transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The Operator public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} batch Batch identifier.
+ * @param {String} receiverCompany Receiver Company identifier.
+ * @param {String} notes An optional text.
+ */
+
+async function createProposal(
+    context,
+    signerPublicKey,
+    timestamp,
+    {batch, receiverCompany, notes}
+) {
+    // Validation: Batch is not set.
+    if (!batch)
+        reject(`Batch is not set!`);
+
+    // Validation: Receiver Company is not set.
+    if (!receiverCompany)
+        reject(`Receiver company is not set!`);
+
+    const operatorAddress = getOperatorAddress(signerPublicKey);
+
+    let state = await context.getState([
+        operatorAddress
+    ]);
+
+    const operatorState = Operator.decode(state[operatorAddress]);
+
+    // Validation: Transaction signer is not an Operator for a Company.
+    if (!state[operatorAddress].length)
+        reject(`You must be an Operator for a Company!`);
+
+    const senderCompanyAddress = getCompanyAddress(operatorState.company);
+    const receiverCompanyAddress = getCompanyAddress(receiverCompany);
+    const batchAddress = getBatchAddress(batch, operatorState.company);
+
+    state = await context.getState([
+        senderCompanyAddress,
+        receiverCompanyAddress,
+        batchAddress
+    ]);
+
+    const senderCompanyState = Company.decode(state[senderCompanyAddress]);
+    const receiverCompanyState = Company.decode(state[receiverCompanyAddress]);
+    const batchState = Batch.decode(state[batchAddress]);
+
+    // Validation: Provided value for batch does not match with a Company Batch.
+    if (senderCompanyState.batches.indexOf(batch) === -1)
+        reject(`The provided batch ${batch} is not a Company Batch!`);
+
+    // Validation: Provided value for receiverCompany does not match with a valid Company.
+    if (!state[receiverCompanyAddress].length > 0)
+        reject(`The provided company ${receiverCompany} is not a Company!`);
+
+    // todo after company filters
+    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the receiver Company.
+    // if (receiverCompanyState.enabledProductTypes.indexOf(batchState.product) === -1)
+    //     reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`);
+
+    // Validation: Provided batch already has a issued Proposal.
+    if (batchState.proposals.some(proposal => proposal.status === Batch.Proposal.Status.ISSUED))
+        reject(`The provided batch ${batch} already has an issued Proposal!`);
+
+    // State update.
+    const updates = {};
+
+    batchState.proposals.push(Batch.Proposal.create({
+        senderCompany: operatorState.company,
+        receiverCompany: receiverCompany,
+        status: Batch.Proposal.Status.ISSUED,
+        notes: notes,
+        timestamp: timestamp
+    }));
+
+    // Update Batch.
+    updates[batchAddress] = Batch.encode(batchState).finish();
+
+    await context.setState(updates)
+}
 
 
 module.exports = {
@@ -842,5 +927,6 @@ module.exports = {
     createDescriptionEvent,
     createTransformationEvent,
     addBatchCertificate,
-    recordBatchProperty
+    recordBatchProperty,
+    createProposal
 };
