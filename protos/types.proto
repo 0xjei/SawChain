@@ -19,14 +19,6 @@ message ProductType {
         float conversionRate = 2;
     }
 
-    // Possible values for unit of measure.
-    enum UnitOfMeasure {
-        KILOS = 0;
-        LITRE = 1;
-        METRE = 2;
-        UNIT = 3;
-    }
-
     // Unique identifier.
     string id = 1;
 
@@ -37,20 +29,13 @@ message ProductType {
     string description = 3;
 
     // Product quantity unit of measure.
-    UnitOfMeasure measure = 4;
+    TypeData.UnitOfMeasure measure = 4;
 
     // List of derived products.
     repeated DerivedProduct derivedProducts = 5;
 }
 
 message EventParameterType {
-    // Event Parameter values for type.
-    enum Type {
-        NUMBER = 0;
-        STRING = 1;
-        BYTES = 2;
-    }
-
     // Unique identifier.
     string id = 1;
 
@@ -58,7 +43,7 @@ message EventParameterType {
     string name = 2;
 
     // Event Parameter type.
-    Type type = 3;
+    TypeData.Type type = 3;
 }
 
 message EventType {
@@ -107,24 +92,35 @@ message EventType {
 }
 
 message PropertyType {
-    // Possible values for unit of measure.
-    enum UnitOfMeasure {
-        CELSIUS = 0;
-        LOCATION = 1;
-    }
-
     // Unique identifier.
     string id = 1;
 
     // Property name.
     string name = 2;
 
-    // Property unit of measure.
-    UnitOfMeasure measure = 3;
+    // Property type.
+    TypeData.Type type = 3;
 
     // List of Task Type identifiers.
     repeated string enabledTaskTypes = 4;
 
     // List of Product Type identifiers.
     repeated string enabledProductTypes = 5;
+}
+
+message TypeData {
+    // Possible values for unit of measure.
+    enum UnitOfMeasure {
+        KILOS = 0;
+        LITRE = 1;
+        METRE = 2;
+        UNIT = 3;
+    }
+
+    enum Type {
+        NUMBER = 0;
+        STRING = 1;
+        BYTES = 2;
+        LOCATION = 3;
+    }
 }

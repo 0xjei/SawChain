@@ -91,6 +91,27 @@ message Event {
 }
 
 message Batch {
+    // A list of value for a PropertyType recorded on Batch.
+    message Property {
+        // Property Type identifier.
+        string propertyTypeId = 1;
+
+        // List of PropertyValue for a PropertyType.
+        repeated PropertyValue values = 2;
+    }
+
+    // Property Type value.
+    message PropertyValue {
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
+        float floatValue = 2;
+        string stringValue = 3;
+        bytes bytesValue = 4;
+        Location locationValue = 5;
+
+        uint64 timestamp = 6;
+    }
+
     // Certificate issued by a recorded Certification Authority.
     message Certificate {
         // Certification Authority public key.
@@ -130,9 +151,12 @@ message Batch {
     // Batch certification.
     repeated Certificate certificates = 8;
 
-    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
-    bool finalized = 9;
+    // Batch properties.
+    repeated Property properties = 9;
 
-    uint64 timestamp = 10;
+    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
+    bool finalized = 10;
+
+    uint64 timestamp = 11;
 }
 

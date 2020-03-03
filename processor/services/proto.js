@@ -58,8 +58,10 @@ const CreateOperatorAction = root.lookup('CreateOperatorAction');
 const CreateDescriptionEventAction = root.lookup('CreateDescriptionEventAction');
 const CreateTransformationEventAction = root.lookup('CreateTransformationEventAction');
 const AddBatchCertificateAction = root.lookup('AddBatchCertificateAction');
+const RecordBatchPropertyAction = root.lookup('RecordBatchPropertyAction');
 
 // Other protobuf messages lookup.
+const TypeData = root.lookup('TypeData');
 const Location = root.lookup('Location');
 
 module.exports = {
@@ -93,5 +95,7 @@ module.exports = {
     CreateDescriptionEventAction,
     CreateTransformationEventAction,
     AddBatchCertificateAction,
+    RecordBatchPropertyAction,
+    TypeData,
     Location
 };

@@ -8,10 +8,12 @@ const {
     ProductType,
     EventParameterType,
     EventType,
+    PropertyType,
     Company,
     Field,
     Batch,
-    Event
+    Event,
+    TypeData
 } = require('../services/proto');
 const {
     reject,
@@ -24,6 +26,7 @@ const {
     getEventParameterTypeAddress,
     getEventTypeAddress,
     getProductTypeAddress,
+    getPropertyTypeAddress,
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
@@ -39,11 +42,7 @@ const {
 const checkParameterValue = (parameter, parameterValue, parameterType) => {
     switch (parameterType) {
         // Number Event Parameter Type.
-        case EventParameterType.Type.NUMBER:
-            // Validation: No correct value field is provided for required parameter of type number.
-            if (parameter.required && parameterValue.floatValue === 0.0)
-                reject(`No correct value field is provided for ${parameter.parameterTypeId} required parameter of type number!`);
-
+        case TypeData.Type.NUMBER:
             // Validation: The provided number is lower than the minimum value constraint.
             if (parameterValue.floatValue !== 0.0 && parameterValue.floatValue < parameter.minValue)
                 reject(`Provided value ${parameterValue.floatValue} is lower than the minimum value constraint ${parameter.minValue}!`);
@@ -55,11 +54,7 @@ const checkParameterValue = (parameter, parameterValue, parameterType) => {
             break;
 
         // String Event Parameter Type.
-        case EventParameterType.Type.STRING:
-            // Validation: No correct value field is provided for required parameter of type string.
-            if (parameter.required && parameterValue.stringValue === "")
-                reject(`No correct value field is provided for ${parameter.parameterTypeId} required parameter of type string!`);
-
+        case TypeData.Type.STRING:
             // Validation: The provided string length is lower than the minimum length constraint.
             if (parameterValue.stringValue !== "" && parameterValue.stringValue.length < parameter.minLength)
                 reject(`Provided value length ${parameterValue.stringValue.length} is lower than the minimum length constraint ${parameter.minLength}!`);
@@ -69,16 +64,50 @@ const checkParameterValue = (parameter, parameterValue, parameterType) => {
                 reject(`Provided value length ${parameterValue.stringValue.length} is greater than the maximum length constraint ${parameter.maxLength}!`);
 
             break;
+    }
+};
 
-        // Bytes Event Parameter Type.
-        case EventParameterType.Type.BYTES:
-            // Validation: No correct value field is provided for required parameter of type bytes.
-            if (parameter.required && !parameterValue.bytesValue.length > 0)
-                reject(`No correct value field is provided for ${parameter.parameterTypeId} required parameter of type bytes!`);
+/**
+ * Check if a value for a property is valid.
+ * @param {Object} value PropertyValue object provided by the Operator.
+ * @param {Object} type PropertyType type (Temperature, Location).
+ */
+const checkField = (value, type) => {
+    switch (type) {
+        // Number Property.
+        case TypeData.Type.NUMBER:
+            // Validation: No correct value field is provided for temperature type property.
+            if (value.floatValue === 0.0)
+                reject(`No correct value field is provided for property of type ${type}!`);
+
+            break;
+
+        // String Property.
+        case TypeData.Type.STRING:
+            // Validation: No correct value field is provided for location type property.
+            if (value.stringValue.length === 0)
+                reject(`No correct value field is provided for property of type ${type}!`);
+
+            break;
+
+        // String Property.
+        case TypeData.Type.BYTES:
+            // Validation: No correct value field is provided for location type property.
+            if (!value.bytesValue.length > 0)
+                reject(`No correct value field is provided for property of type ${type}!`);
+
+            break;
+
+        // String Property.
+        case TypeData.Type.LOCATION:
+            // Validation: No correct value field is provided for location type property.
+            if (!value.locationValue)
+                reject(`No correct value field is provided for property of type ${type}!`);
 
             break;
     }
 };
+
 
 /**
  * Handle a create Company transaction action.
@@ -356,9 +385,13 @@ async function createDescriptionEvent(
 
         for (const paramValue of values) {
             // Check if a value is provided for a parameter.
-            if (param.parameterTypeId === paramValue.parameterTypeId)
+            if (param.parameterTypeId === paramValue.parameterTypeId) {
+                if (param.required)
+                    checkField(paramValue, parameterTypeState.type);
+
                 // ParameterValue validation.
-                checkParameterValue(param, paramValue, parameterTypeState.type)
+                checkParameterValue(param, paramValue, parameterTypeState.type);
+            }
         }
     }
 
@@ -609,6 +642,8 @@ async function createTransformationEvent(
         parentFields: fields,
         parentBatches: batches,
         events: [],
+        certificates: [],
+        properties: [],
         finalized: false,
         timestamp: timestamp
     }).finish();
@@ -704,10 +739,108 @@ async function addBatchCertificate(
     await context.setState(updates)
 }
 
+
+/**
+ * Handle Record of a Batch Property transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The Operator public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} batch Batch identifier.
+ * @param {String} property PropertyType identifier.
+ * @param {Object} propertyValue A PropertyValue used to update the Property list of values.
+ */
+async function recordBatchProperty(
+    context,
+    signerPublicKey,
+    timestamp,
+    {batch, property, propertyValue}
+) {
+    // Validation: Batch is not set.
+    if (!batch)
+        reject(`Batch is not set!`);
+
+    // Validation: Property is not set.
+    if (!property)
+        reject(`Property is not set!`);
+
+    // Validation: PropertyValue is not set.
+    if (!propertyValue)
+        reject(`Property Value is not set!`);
+
+    const operatorAddress = getOperatorAddress(signerPublicKey);
+
+    let state = await context.getState([
+        operatorAddress
+    ]);
+
+    const operatorState = Operator.decode(state[operatorAddress]);
+
+    // Validation: Transaction signer is not an Operator for a Company.
+    if (!state[operatorAddress].length)
+        reject(`You must be an Operator for a Company!`);
+
+    const companyAddress = getCompanyAddress(operatorState.company);
+    const batchAddress = getBatchAddress(batch, operatorState.company);
+    const propertyTypeAddress = getPropertyTypeAddress(property);
+
+    state = await context.getState([
+        propertyTypeAddress,
+        companyAddress,
+        batchAddress
+    ]);
+
+    const propertyTypeState = PropertyType.decode(state[propertyTypeAddress]);
+    const companyState = Company.decode(state[companyAddress]);
+    const batchState = Batch.decode(state[batchAddress]);
+
+    // Validation: Provided value for batch does not match with a Company Batch.
+    if (companyState.batches.indexOf(batch) === -1)
+        reject(`The provided batch ${batch} is not a Company Batch!`);
+
+    // Validation: Provided value for property type id in property value doesn't match with a valid Property Type.
+    if (!state[propertyTypeAddress].length > 0)
+        reject(`Provided Property Type id ${property} doesn't match with a valid Property Type!`);
+
+    // Validation: Operator's task doesn't match one of the enabled Task Types for the Property Type.
+    if (!(propertyTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
+        reject(`You cannot record this Property with a ${operatorState.task} task!`);
+
+    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Property Type.
+    if (propertyTypeState.enabledProductTypes.indexOf(batchState.product) === -1)
+        reject(`You cannot record this Property on ${batch} Batch!`);
+
+    // Validation: Check property value.
+    checkField(propertyValue, propertyTypeState.type);
+
+    // State update.
+    const updates = {};
+
+    if (!batchState.properties.some(propertyObj => propertyObj.propertyTypeId === property))
+        batchState.properties.push(Batch.Property.create({
+            propertyTypeId: property,
+            values: [propertyValue]
+        }));
+    else {
+        for (const propertyList of batchState.properties) {
+            if ((propertyList).propertyTypeId === property) {
+                (propertyList).values.push(propertyValue)
+            }
+        }
+    }
+
+    // Update Batch.
+    updates[batchAddress] = Batch.encode(batchState).finish();
+
+    await context.setState(updates)
+}
+
+
+
 module.exports = {
     createCompany,
     createField,
     createDescriptionEvent,
     createTransformationEvent,
-    addBatchCertificate
+    addBatchCertificate,
+    recordBatchProperty
 };

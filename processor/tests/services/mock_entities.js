@@ -197,7 +197,7 @@ const mockCreateEventType = async (
  * @param {String} sysAdminPrivateKey System Admin private key.
  * @param {String} id Property Type unique identifier.
  * @param {String} name Property name.
- * @param {Number} measure Property unit of measure from enumeration of possible values.
+ * @param {Number} type Property type from enumeration of possible values.
  * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
  * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
  */
@@ -207,7 +207,7 @@ const mockCreatePropertyType = async (
     sysAdminPrivateKey,
     id,
     name,
-    measure,
+    type,
     enabledTaskTypes,
     enabledProductTypes
 ) => {
@@ -218,7 +218,7 @@ const mockCreatePropertyType = async (
             createPropertyType: CreatePropertyTypeAction.create({
                 id: id,
                 name: name,
-                measure: measure,
+                type: type,
                 enabledTaskTypes: enabledTaskTypes,
                 enabledProductTypes: enabledProductTypes
             })
@@ -624,6 +624,10 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
     // Property Types.
     await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property1", "name1", 0, ["task1"], ["prd2"]);
     await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property2", "name2", 1, ["task1"], ["prd2"]);
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property3", "name3", 2, ["task1"], ["prd2"]);
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property4", "name4", 3, ["task1"], ["prd2"]);
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property5", "name5", 0, ["task2"], ["prd2"]);
+    await mockCreatePropertyType(context, handler, sysAdminPrivateKey,"property6", "name6", 1, ["task1"], ["prd1"]);
 };
 
 module.exports = {

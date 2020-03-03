@@ -6,7 +6,8 @@ const {
     ProductType,
     EventParameterType,
     EventType,
-    PropertyType
+    PropertyType,
+    TypeData
 } = require('../services/proto');
 const {
     reject
@@ -101,7 +102,7 @@ async function createProductType(
         reject(`Description is not set!`);
 
     // Validation: Provided value for measure doesn't match the types specified in the ProductType's UnitOfMeasure.
-    if (!Object.values(ProductType.UnitOfMeasure).some((value) => value === measure))
+    if (!Object.values(TypeData.UnitOfMeasure).some((value) => value === measure))
         reject(`Provided value for measure doesn't match any possible value!`);
 
     const systemAdminAddress = getSystemAdminAddress();
@@ -178,7 +179,7 @@ async function createEventParameterType(
         reject(`Name is not set!`);
 
     // Validation: Provided value for type doesn't match the types specified in the EventParameter's EventParameterType.
-    if (!Object.values(EventParameterType.Type).some((value) => value === type))
+    if (!Object.values(TypeData.Type).some((value) => value === type))
         reject(`Provided value for type doesn't match any possible value!`);
 
     const systemAdminAddress = getSystemAdminAddress();
@@ -380,7 +381,7 @@ async function createEventType(
  * @param {Object} timestamp Date and time when transaction is sent.
  * @param {String} id Property Type unique identifier.
  * @param {String} name Property name.
- * @param {Number} measure Property unit of measure from enumeration of possible values.
+ * @param {Number} type Property type from enumeration of possible values.
  * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
  * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
  */
@@ -391,7 +392,7 @@ async function createPropertyType(
     {
         id,
         name,
-        measure,
+        type,
         enabledTaskTypes,
         enabledProductTypes
     }
@@ -404,9 +405,9 @@ async function createPropertyType(
     if (!name)
         reject(`Name is not set!`);
 
-    // Validation: Provided value for measure doesn't match the types specified in the PropertyType's UnitOfMeasure.
-    if (!Object.values(PropertyType.UnitOfMeasure).some((value) => value === measure))
-        reject(`Provided value for measure doesn't match any possible value!`);
+    // Validation: Provided value for type doesn't match the types specified in the PropertyType's Type.
+    if (!Object.values(TypeData.Type).some((value) => value === type))
+        reject(`Provided value for type doesn't match any possible value!`);
 
     // Validation: Enabled task types list is not set.
     if (!enabledTaskTypes.length)
@@ -466,7 +467,7 @@ async function createPropertyType(
     updates[propertyTypeAddress] = PropertyType.encode({
         id: id,
         name: name,
-        measure: measure,
+        type: type,
         enabledTaskTypes: enabledTaskTypes,
         enabledProductTypes: enabledProductTypes
     }).finish();
