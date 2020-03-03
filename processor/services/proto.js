@@ -61,6 +61,7 @@ const AddBatchCertificateAction = root.lookup('AddBatchCertificateAction');
 const RecordBatchPropertyAction = root.lookup('RecordBatchPropertyAction');
 const CreateProposalAction = root.lookup('CreateProposalAction');
 const AnswerProposalAction = root.lookup('AnswerProposalAction');
+const FinalizeBatchAction = root.lookup('FinalizeBatchAction');
 
 // Other protobuf messages lookup.
 const TypeData = root.lookup('TypeData');
@@ -101,6 +102,7 @@ module.exports = {
     RecordBatchPropertyAction,
     CreateProposalAction,
     AnswerProposalAction,
+    FinalizeBatchAction,
     TypeData,
     Location,
     Proposal

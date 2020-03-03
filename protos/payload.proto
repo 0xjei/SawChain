@@ -24,6 +24,7 @@ message SCPayload {
         RECORD_BATCH_PROPERTY = 14;
         CREATE_PROPOSAL = 15;
         ANSWER_PROPOSAL = 16;
+        FINALIZE_BATCH = 17;
     }
 
     Action action = 1;
@@ -47,6 +48,7 @@ message SCPayload {
     RecordBatchPropertyAction recordBatchProperty = 16;
     CreateProposalAction createProposal = 17;
     AnswerProposalAction answerProposal = 18;
+    FinalizeBatchAction finalizeBatch = 19;
 }
 
 message UpdateSystemAdminAction {
@@ -264,4 +266,13 @@ message AnswerProposalAction {
     Batch.Proposal.Status response = 4;
 
     string motivation = 5;
+}
+
+message FinalizeBatchAction {
+    // Batch identifier.
+    string batch = 1;
+
+    Batch.Finalization.Reason reason = 2;
+
+    string explanation = 3;
 }

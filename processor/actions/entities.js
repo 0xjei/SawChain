@@ -646,7 +646,6 @@ async function createTransformationEvent(
         events: [],
         certificates: [],
         properties: [],
-        finalized: false,
         timestamp: timestamp
     }).finish();
 
@@ -1041,6 +1040,71 @@ async function answerProposal(
     await context.setState(updates)
 }
 
+/**
+ * Handle Create Proposal transaction action.
+ * @param {Context} context Current state context.
+ * @param {String} signerPublicKey The Operator public key.
+ * @param {Object} timestamp Date and time when transaction is sent.
+ * @param {String} batch Batch identifier.
+ * @param {Number} reason Reason.
+ * @param {String} explanation explanation string.
+ */
+
+async function finalizeBatch(
+    context,
+    signerPublicKey,
+    timestamp,
+    {batch, reason, explanation}
+) {
+    // Validation: Batch is not set.
+    if (!batch)
+        reject(`Batch is not set!`);
+
+    // Validation: Provided value for reason doesn't match the types specified in the Finalization's Reason.
+    if (!Object.values(Batch.Finalization.Reason).some((value) => value === reason))
+        reject(`Provided value for reason doesn't match any possible value!`);
+
+    const operatorAddress = getOperatorAddress(signerPublicKey);
+
+    let state = await context.getState([
+        operatorAddress
+    ]);
+
+    const operatorState = Operator.decode(state[operatorAddress]);
+
+    // Validation: Transaction signer is not an Operator for a Company.
+    if (!state[operatorAddress].length)
+        reject(`You must be an Operator for a Company!`);
+
+    const companyAddress = getCompanyAddress(operatorState.company);
+    const batchAddress = getBatchAddress(batch, operatorState.company);
+
+    state = await context.getState([
+        companyAddress,
+        batchAddress
+    ]);
+
+    const companyState = Company.decode(state[companyAddress]);
+    const batchState = Batch.decode(state[batchAddress]);
+
+    // Validation: Provided value for batch does not match with a sender Company Batch.
+    if (companyState.batches.indexOf(batch) === -1)
+        reject(`The provided batch ${batch} is not a Company Batch!`);
+
+    // State update.
+    const updates = {};
+
+    batchState.finalization = Batch.Finalization.create({
+        reason: reason,
+        reporter: signerPublicKey,
+        explanation: explanation
+    });
+
+    // Update Batch.
+    updates[batchAddress] = Batch.encode(batchState).finish();
+
+    await context.setState(updates)
+}
 
 module.exports = {
     createCompany,
@@ -1050,5 +1114,6 @@ module.exports = {
     addBatchCertificate,
     recordBatchProperty,
     createProposal,
-    answerProposal
+    answerProposal,
+    finalizeBatch
 };

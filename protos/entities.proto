@@ -93,6 +93,20 @@ message Event {
 }
 
 message Batch {
+    message Finalization {
+        enum Reason {
+            WITHDRAWN = 0;
+            SOLD = 1;
+            EXPIRED = 2;
+        }
+
+        Reason reason = 1;
+
+        string reporter = 2;
+
+        string explanation = 3;
+    }
+
     // Change batch ownership proposal.
     message Proposal {
         enum Status {
@@ -181,8 +195,7 @@ message Batch {
     // Batch proposals.
     repeated Proposal proposals = 10;
 
-    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
-    bool finalized = 11;
+    Finalization finalization = 11;
 
     uint64 timestamp = 12;
 }

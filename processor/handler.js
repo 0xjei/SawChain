@@ -33,7 +33,8 @@ const {
     addBatchCertificate,
     recordBatchProperty,
     createProposal,
-    answerProposal
+    answerProposal,
+    finalizeBatch
 } = require('./actions/entities');
 
 /**
@@ -212,6 +213,15 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.answerProposal.name)
+                );
+                break;
+
+            case SCPayloadActions.FINALIZE_BATCH:
+                await finalizeBatch(
+                    context,
+                    signerPublicKey,
+                    timestamp,
+                    getActionFieldFromPayload(payload, SCPayloadFields.finalizeBatch.name)
                 );
                 break;
 
