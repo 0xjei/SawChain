@@ -1397,6 +1397,7 @@ describe('Entities Events Actions', function () {
                     state = context._state[companyAddress];
                     expect(state).not.to.be.null;
                     expect(Company.decode(state).batches.length).to.equal(4);
+
                 });
 
                 it('Should reject if there is a Batch already associated to given output batch identifier into the Company', async function () {

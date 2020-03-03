@@ -17,13 +17,17 @@ const {
 const {
     SCPayload,
     SCPayloadActions,
+    Operator,
+    PropertyType,
     Batch,
     Location,
-    AddBatchCertificateAction
+    AddBatchCertificateAction,
+    RecordBatchPropertyAction
 } = require('../services/proto');
 const {
     getOperatorAddress,
     getCertificationAuthorityAddress,
+    getPropertyTypeAddress,
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress
@@ -115,6 +119,7 @@ describe('Batch Actions', function () {
             ca2Address = getCertificationAuthorityAddress(ca2KeyPair.publicKey);
             await mockCreateCertificationAuthority(context, handler, sysAdminKeyPair.privateKey, ca2KeyPair.publicKey, "ca2", "web2", ["prd1"]);
         });
+
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
                 SCPayload.create({
@@ -243,25 +248,6 @@ describe('Batch Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if the signer is not a Certification Authority', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.ADD_CERTIFICATE_TO_BATCH,
-                    timestamp: Date.now(),
-                    addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
-                        link: link,
-                        hash: hash
-                    })
-                })
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
         it('Should reject if provided value for batch doesn\'t match with a company Batch', async function () {
             txn = new Txn(
                 SCPayload.create({
@@ -353,5 +339,391 @@ describe('Batch Actions', function () {
             expect(Batch.decode(state).certificates[0].hash).to.equal(hash);
             expect(parseInt(Batch.decode(state).certificates[0].timestamp)).to.equal(timestamp);
         });
+    });
+
+    describe('Record Batch Property Action', function () {
+        const propertyTypeId1 = "property1";
+        const propertyTypeValue1 = "10";
+
+        const propertyTypeId2 = "property2";
+        const propertyTypeValue2 = "value2";
+
+        const propertyTypeId3 = "property3";
+        const propertyTypeValue3 = ["bytes"];
+
+        const propertyTypeId4 = "property4";
+        const propertyTypeValue4 = Location.create({
+            latitude: 39.23054,
+            longitude: 9.11917
+        });
+
+        const timestamp = Date.now();
+
+        const propertyValueTemp = Batch.PropertyValue.create({
+            floatValue: propertyTypeValue1,
+            timestamp: timestamp
+        });
+
+        const propertyValueLoc = Batch.PropertyValue.create({
+            stringValue: propertyTypeValue2,
+            timestamp: timestamp
+        });
+
+        const propertyValueBytes = Batch.PropertyValue.create({
+            bytesValue: propertyTypeValue3,
+            timestamp: timestamp
+        });
+
+        const propertyValueLocation = Batch.PropertyValue.create({
+            locationValue: propertyTypeValue4,
+            timestamp: timestamp
+        });
+
+        let propertyAddress1 = null;
+        let propertyAddress2 = null;
+
+        before(async function () {
+            // Get PropertyType addresses.
+            propertyAddress1 = getPropertyTypeAddress(propertyTypeId1);
+            propertyAddress2 = getPropertyTypeAddress(propertyTypeId2);
+        });
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no batch is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no property is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no property value is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId1
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the signer is not an Operator', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId1,
+                        propertyValue: propertyValueTemp
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided value for batch does not match with a Company Batch', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: "no-batch",
+                        property: propertyTypeId1,
+                        propertyValue: propertyValueTemp
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided value for property type id in property value doesn\'t match with a valid Property Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: "noproperty",
+                        propertyValue: propertyValueTemp
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if Operator\'s task doesn\'t match one of the enabled Task Types for the Property Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: "property5",
+                        propertyValue: propertyValueTemp
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if Batch Product Type doesn\'t match one of the enabled Product Types for the Property Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: "property6",
+                        propertyValue: propertyValueTemp
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a property of type number', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId1,
+                        propertyValue: Batch.PropertyValue.create({
+                            stringValue: "novalidtype",
+                            timestamp: Date.now()
+                        })
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a property of type string', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId2,
+                        propertyValue: Batch.PropertyValue.create({
+                            floatValue: 10,
+                            timestamp: Date.now()
+                        })
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a property of type bytes', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId3,
+                        propertyValue: Batch.PropertyValue.create({
+                            floatValue: 10,
+                            timestamp: Date.now()
+                        })
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no correct value field is provided for a property of type location', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId4,
+                        propertyValue: Batch.PropertyValue.create({
+                            floatValue: 10,
+                            timestamp: Date.now()
+                        })
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should record for first time a Property value of type number on provided Batch', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId1,
+                        propertyValue: propertyValueTemp
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Batch.
+            state = context._state[batchAddress];
+
+            expect(state).to.not.be.null;
+            expect(Batch.decode(state).id).to.equal(batchId);
+            expect(Batch.decode(state).properties[0].propertyTypeId).to.equal(propertyTypeId1);
+            expect(Batch.decode(state).properties[0].values.length).to.equal(1);
+            expect(parseInt(Batch.decode(state).properties[0].values[0].timestamp)).to.equal(timestamp);
+        });
+
+        it('Should record another Property value of type number on provided Batch', async function () {
+            const timestamp = Date.now();
+
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: timestamp,
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId1,
+                        propertyValue: Batch.PropertyValue.create({
+                            floatValue: propertyTypeValue1,
+                            timestamp: timestamp
+                        })
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Batch.
+            state = context._state[batchAddress];
+
+            expect(state).to.not.be.null;
+            expect(Batch.decode(state).id).to.equal(batchId);
+            expect(Batch.decode(state).properties[0].propertyTypeId).to.equal(propertyTypeId1);
+            expect(Batch.decode(state).properties[0].values.length).to.equal(2);
+            expect(parseInt(Batch.decode(state).properties[0].values[1].timestamp)).to.equal(timestamp);
+        });
+
+        it('Should record for first time a Property value of type location on provided Batch', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: batchId,
+                        property: propertyTypeId4,
+                        propertyValue: propertyValueLocation
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Batch.
+            state = context._state[batchAddress];
+
+            expect(state).to.not.be.null;
+            expect(Batch.decode(state).id).to.equal(batchId);
+            expect(Batch.decode(state).properties[1].propertyTypeId).to.equal(propertyTypeId4);
+            expect(Batch.decode(state).properties[1].values.length).to.equal(1);
+            expect(parseInt(Batch.decode(state).properties[1].values[0].timestamp)).to.equal(timestamp);
+        });
+
     });
 });

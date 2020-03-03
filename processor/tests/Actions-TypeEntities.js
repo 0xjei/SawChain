@@ -18,7 +18,8 @@ const {
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
-    CreatePropertyTypeAction
+    CreatePropertyTypeAction,
+    TypeData
 } = require('../services/proto');
 const {
     getTaskTypeAddress,
@@ -166,12 +167,12 @@ describe('Types Creation', function () {
         const firstProductTypeId = "mock-productType-id";
         const firstProductTypeName = "mock-productType-name";
         const firstProductTypeDescription = "mock-productType-description";
-        const firstProductTypeUnitOfMeasure = ProductType.UnitOfMeasure.KILOS;
+        const firstProductTypeUnitOfMeasure = TypeData.UnitOfMeasure.KILOS;
 
         const secondProductTypeId = "mock-productType-id2";
         const secondProductTypeName2 = "mock-productType-name2";
         const secondProductTypeDescription2 = "mock-productType-description2";
-        const secondProductTypeUnitOfMeasure2 = ProductType.UnitOfMeasure.LITRE;
+        const secondProductTypeUnitOfMeasure2 = TypeData.UnitOfMeasure.LITRE;
         const derivedProducts = [
             ProductType.DerivedProduct.create({
                 derivedProductType: "mock-productType-id",
@@ -418,7 +419,7 @@ describe('Types Creation', function () {
     describe('Create Event Parameter Type', function () {
         const eventParameterTypeId = "mock-eventParameterType-id";
         const eventParameterTypeName = "mock-eventParameterType-name";
-        const eventParameterType = EventParameterType.Type.STRING;
+        const eventParameterType = TypeData.Type.STRING;
 
         const eventParameterTypeAddress = getEventParameterTypeAddress(eventParameterTypeId);
 
@@ -1002,7 +1003,7 @@ describe('Types Creation', function () {
     describe('Create Property Type', function () {
         const propertyTypeId = "mock-propertyType-id";
         const propertyTypeName = "mock-propertyType-name";
-        const propertyTypeMeasure = PropertyType.UnitOfMeasure.CELSIUS;
+        const propertyTypeType = TypeData.Type.LOCATION;
         const enabledTaskTypes = ["mock-taskType-id"];
         const enabledProductTypes = ["mock-productType-id"];
 
@@ -1063,7 +1064,7 @@ describe('Types Creation', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if provided value for measure doesn\'t match one of the possible values', async function () {
+        it('Should reject if provided value for type doesn\'t match one of the possible values', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PROPERTY_TYPE,
@@ -1071,7 +1072,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: -1
+                        type: -1
                     })
                 })
             );
@@ -1089,7 +1090,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure
+                        type: propertyTypeType
                     })
                 })
             );
@@ -1107,7 +1108,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes
                     })
                 })
@@ -1126,7 +1127,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
@@ -1146,7 +1147,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: ["mock-taskType-id0"],
                         enabledProductTypes: enabledProductTypes
                     })
@@ -1167,7 +1168,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: ["mock-productType-id0"]
                     })
@@ -1188,7 +1189,7 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
@@ -1203,7 +1204,7 @@ describe('Types Creation', function () {
             expect(state).to.not.be.null;
             expect(PropertyType.decode(state).id).to.equal(propertyTypeId);
             expect(PropertyType.decode(state).name).to.equal(propertyTypeName);
-            expect(PropertyType.decode(state).measure).to.equal(propertyTypeMeasure);
+            expect(PropertyType.decode(state).type).to.equal(propertyTypeType);
             expect(PropertyType.decode(state).enabledTaskTypes.length).to.be.equal(1);
             expect(PropertyType.decode(state).enabledProductTypes.length).to.be.equal(1);
         });
@@ -1216,14 +1217,13 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId,
                         name: propertyTypeName,
-                        measure: propertyTypeMeasure,
+                        type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
                 }),
                 sysAdminKeys.privateKey
             );
-
 
             const submission = handler.apply(txn, context);
 
