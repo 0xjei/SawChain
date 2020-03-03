@@ -1223,7 +1223,6 @@ describe('Entities Events Actions', function () {
                     expect(Batch.decode(state).parentFields.length).to.equal(1);
                     expect(Batch.decode(state).parentBatches).to.be.empty;
                     expect(Batch.decode(state).events).to.be.empty;
-                    expect(Batch.decode(state).finalized).to.equal(false);
                     expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
 
                     // Company.
@@ -1390,7 +1389,6 @@ describe('Entities Events Actions', function () {
                     expect(Batch.decode(state).parentFields).to.be.empty;
                     expect(Batch.decode(state).parentBatches.length).to.equal(1);
                     expect(Batch.decode(state).events).to.be.empty;
-                    expect(Batch.decode(state).finalized).to.equal(false);
                     expect(parseInt(event.timestamp)).to.equal(parseInt(timestamp));
 
                     // Company.

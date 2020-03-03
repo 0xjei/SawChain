@@ -26,7 +26,8 @@ const {
     AddBatchCertificateAction,
     RecordBatchPropertyAction,
     CreateProposalAction,
-    AnswerProposalAction
+    AnswerProposalAction,
+    FinalizeBatchAction
 } = require('../services/proto');
 const {
     getOperatorAddress,
@@ -1197,6 +1198,134 @@ describe('Batch Actions', function () {
             });
 
             /// todo add tests for cancelled and rejected
+        });
+    });
+
+    describe('Finalize Batch Action', function() {
+        const batch = "batch2";
+        let batchAddress2 = null;
+
+        const reason = Batch.Finalization.Reason.WITHDRAWN;
+
+        before(async function () {
+            batchAddress2 = getBatchAddress(batch, companyId)
+        });
+
+        it('Should reject if no timestamp is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction);
+        });
+
+        it('Should reject if no action data field is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: Date.now()
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if no batch is given', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: Date.now(),
+                    finalizeBatch: FinalizeBatchAction.create({})
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided value for reason doesn\'t contain a valid reason', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: Date.now(),
+                    finalizeBatch: FinalizeBatchAction.create({
+                        batch: batch,
+                        reason: -1
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if the signer is not an Operator', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: Date.now(),
+                    finalizeBatch: FinalizeBatchAction.create({
+                        batch: batch,
+                        reason: reason
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if provided value for batch does not match with a sender Company Batch', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: Date.now(),
+                    finalizeBatch: FinalizeBatchAction.create({
+                        batch: "no-batch",
+                        reason: reason
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should finalize the batch', async function () {
+            const timestamp = Date.now();
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.FINALIZE_BATCH,
+                    timestamp: timestamp,
+                    finalizeBatch: FinalizeBatchAction.create({
+                        batch: batch,
+                        reason: reason
+                    })
+                }),
+                optKeyPair.privateKey
+            );
+
+            await handler.apply(txn, context);
+
+            // Batch.
+            state = context._state[batchAddress2];
+
+            expect(state).to.not.be.null;
+            expect(Batch.decode(state).id).to.equal(batch);
+            expect(Batch.decode(state).finalization.reporter).to.equal(optKeyPair.publicKey);
+            expect(Batch.decode(state).finalization.reason).to.equal(reason);
+            expect(Batch.decode(state).finalization.explanation).to.be.empty;
         });
     });
 });
