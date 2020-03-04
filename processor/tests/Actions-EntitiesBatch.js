@@ -101,7 +101,7 @@ describe('Batch Actions', function () {
         await mockCreateField(context, handler, cmpAdminKeyPair.privateKey, fieldId, "desc1", fieldProduct, productQuantity, location);
 
         // Create Batch.
-        batchAddress = getBatchAddress(batchId, companyId);
+        batchAddress = getBatchAddress(batchId);
         await mockCreateTransformationEvent(context, handler, optKeyPair.privateKey, "event7", [], [fieldId], [100], "prd2", batchId);
     });
 
@@ -1208,7 +1208,7 @@ describe('Batch Actions', function () {
         const reason = Batch.Finalization.Reason.WITHDRAWN;
 
         before(async function () {
-            batchAddress2 = getBatchAddress(batch, companyId)
+            batchAddress2 = getBatchAddress(batch)
         });
 
         it('Should reject if no timestamp is given', async function () {

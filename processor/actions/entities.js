@@ -328,7 +328,7 @@ async function createDescriptionEvent(
     const companyAddress = getCompanyAddress(operatorState.company);
     const eventTypeAddress = getEventTypeAddress(eventTypeId);
     const fieldAddress = getFieldAddress(field, operatorState.company);
-    const batchAddress = getBatchAddress(batch, operatorState.company);
+    const batchAddress = getBatchAddress(batch);
 
     state = await context.getState([
         operatorAddress,
@@ -476,7 +476,7 @@ async function createTransformationEvent(
 
     const companyAddress = getCompanyAddress(operatorState.company);
     const eventTypeAddress = getEventTypeAddress(eventTypeId);
-    const outputBatchAddress = getBatchAddress(outputBatchId, operatorState.company);
+    const outputBatchAddress = getBatchAddress(outputBatchId);
 
     state = await context.getState([
         companyAddress,
@@ -517,7 +517,7 @@ async function createTransformationEvent(
             reject(`The provided batch ${batch} is not a Company Batch!`);
 
         // Batches decoding.
-        const companyBatchAddress = getBatchAddress(batch, operatorState.company);
+        const companyBatchAddress = getBatchAddress(batch);
 
         state = await context.getState([
             companyBatchAddress
@@ -618,7 +618,7 @@ async function createTransformationEvent(
     // Record Event on each input Batch.
     if (batches.length > 0) {
         for (let i = 0; i < batchesState.length; i++) {
-            const batchAddress = getBatchAddress(batchesState[i].id, operatorState.company);
+            const batchAddress = getBatchAddress(batchesState[i].id);
 
             batchesState[i].events.push(Event.create({
                 eventTypeId: eventTypeId,
@@ -695,7 +695,7 @@ async function addBatchCertificate(
 
     const certificationAuthorityAddress = getCertificationAuthorityAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(company);
-    const batchAddress = getBatchAddress(batch, company);
+    const batchAddress = getBatchAddress(batch);
 
     const state = await context.getState([
         certificationAuthorityAddress,
@@ -781,7 +781,7 @@ async function recordBatchProperty(
         reject(`You must be an Operator for a Company!`);
 
     const companyAddress = getCompanyAddress(operatorState.company);
-    const batchAddress = getBatchAddress(batch, operatorState.company);
+    const batchAddress = getBatchAddress(batch);
     const propertyTypeAddress = getPropertyTypeAddress(property);
 
     state = await context.getState([
@@ -873,7 +873,7 @@ async function createProposal(
 
     const senderCompanyAddress = getCompanyAddress(operatorState.company);
     const receiverCompanyAddress = getCompanyAddress(receiverCompany);
-    const batchAddress = getBatchAddress(batch, operatorState.company);
+    const batchAddress = getBatchAddress(batch);
 
     state = await context.getState([
         senderCompanyAddress,
@@ -967,7 +967,7 @@ async function answerProposal(
 
     const senderCompanyAddress = getCompanyAddress(senderCompany);
     const receiverCompanyAddress = getCompanyAddress(receiverCompany);
-    const batchAddress = getBatchAddress(batch, senderCompany);
+    const batchAddress = getBatchAddress(batch);
 
     state = await context.getState([
         senderCompanyAddress,
@@ -1077,7 +1077,7 @@ async function finalizeBatch(
         reject(`You must be an Operator for a Company!`);
 
     const companyAddress = getCompanyAddress(operatorState.company);
-    const batchAddress = getBatchAddress(batch, operatorState.company);
+    const batchAddress = getBatchAddress(batch);
 
     state = await context.getState([
         companyAddress,

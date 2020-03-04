@@ -144,11 +144,10 @@ const getFieldAddress = (id, company) => {
 
 /**
  * Return a Batch state address.
- * @param {String} id The Field unique identifier.
- * @param {String} company The Company unique identifier.
+ * @param {String} id The Batch unique identifier.
  */
-const getBatchAddress = (id, company) => {
-    return FULL_PREFIXES.BATCH + getSHA512(id, 42) + getSHA512(company, 20)
+const getBatchAddress = (id) => {
+    return FULL_PREFIXES.BATCH + getSHA512(id, 62)
 };
 
 /**

@@ -277,9 +277,8 @@ describe('Addressing Service', function () {
 
         before(function () {
             data = "mock-batch-id";
-            company = "mock-company-id";
-            address = getBatchAddress(data, company);
-            dataHash = getSHA512(data, 42) + getSHA512(company, 20);
+            address = getBatchAddress(data);
+            dataHash = getSHA512(data, 62)
         });
 
         it('Should return a hexadecimal string', function () {

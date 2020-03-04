@@ -93,7 +93,7 @@ describe('Entities Events Actions', function () {
         await mockCreateField(context, handler, cmpAdminKeyPair.privateKey, fieldId, "desc1", fieldProduct, productQuantity, location);
 
         // Create Batch.
-        batchAddress = getBatchAddress(batchId, companyId);
+        batchAddress = getBatchAddress(batchId);
         await mockCreateTransformationEvent(context, handler, optKeyPair.privateKey, "event7", [], [fieldId], [100], "prd2", batchId);
     });
 
@@ -856,7 +856,7 @@ describe('Entities Events Actions', function () {
                 );
 
                 // Batch Address.
-                outputBatchAddress = getBatchAddress(outputBatchId, companyId);
+                outputBatchAddress = getBatchAddress(outputBatchId);
             });
 
             it('Should reject if no timestamp is given', async function () {
@@ -1276,7 +1276,7 @@ describe('Entities Events Actions', function () {
                     );
 
                     // Output Batch Address.
-                    outputBatchAddress = getBatchAddress(newBatchId, companyId);
+                    outputBatchAddress = getBatchAddress(newBatchId);
                 });
 
                 it('Should reject if at least one of the provided values for batches doesn\'t match a Company Batch', async function () {
