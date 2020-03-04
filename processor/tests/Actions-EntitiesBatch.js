@@ -89,7 +89,7 @@ describe('Batch Actions', function () {
         companyAddress = getCompanyAddress(companyId);
 
         // Create Company.
-        await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey);
+        await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
         // Create Operator.
         optKeyPair = getNewKeyPair();
@@ -735,11 +735,14 @@ describe('Batch Actions', function () {
 
     describe('Change Batch Ownership Actions', function () {
         let cmpAdminKeyPair2 = null;
+        let cmpAdminKeyPair3 = null;
         let optKeyPair2 = null;
 
         let companyId2 = null;
+        let companyId3 = null;
 
         let companyAddress2 = null;
+        let companyAddress3 = null;
         let operatorAddress2 = null;
         let proposalAddress = null;
 
@@ -747,12 +750,16 @@ describe('Batch Actions', function () {
             // Create a new Company Admin.
             cmpAdminKeyPair2 = getNewKeyPair();
             companyId2 = getSHA512(cmpAdminKeyPair2.publicKey, 10);
+            cmpAdminKeyPair3 = getNewKeyPair();
+            companyId3 = getSHA512(cmpAdminKeyPair3.publicKey, 10);
 
             // Company address.
             companyAddress2 = getCompanyAddress(companyId2);
+            companyAddress3 = getCompanyAddress(companyId3);
 
             // Create Company.
-            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company2", "desc2", "web2", cmpAdminKeyPair2.publicKey);
+            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company2", "desc2", "web2", cmpAdminKeyPair2.publicKey, ["prd1", "prd2", "prd3"]);
+            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company3", "desc3", "web3", cmpAdminKeyPair3.publicKey, ["prd1", "prd3"]);
 
             // Create Operator.
             optKeyPair2 = getNewKeyPair();
@@ -859,6 +866,24 @@ describe('Batch Actions', function () {
                         createProposal: CreateProposalAction.create({
                             batch: "no-batch",
                             receiverCompany: companyId2
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject if provided value for batch does not match with a Company Batch', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_PROPOSAL,
+                        timestamp: Date.now(),
+                        createProposal: CreateProposalAction.create({
+                            batch: batchId,
+                            receiverCompany: companyId3
                         })
                     }),
                     optKeyPair.privateKey

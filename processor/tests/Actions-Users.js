@@ -247,7 +247,7 @@ describe('Users Actions', function () {
             companyAddress = getCompanyAddress(companyId);
 
             // Populate the state with a Company.
-            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, companyName, companyDescription, companyWebsite, cmpAdminKeyPair.publicKey);
+            await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, companyName, companyDescription, companyWebsite, cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
             // Operator key pair.
             optKeyPair = getNewKeyPair();

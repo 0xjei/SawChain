@@ -81,7 +81,7 @@ describe('Entities Events Actions', function () {
         companyAddress = getCompanyAddress(getSHA512(cmpAdminKeyPair.publicKey, 10));
 
         // Create Company.
-        await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey);
+        await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
         // Create Operator.
         optKeyPair = getNewKeyPair();
@@ -1060,6 +1060,27 @@ describe('Entities Events Actions', function () {
                             fields: fields,
                             quantities: quantities,
                             derivedProduct: "prd1",
+                            outputBatchId: outputBatchId
+                        })
+                    }),
+                    optKeyPair.privateKey
+                );
+
+                const submission = handler.apply(txn, context);
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            });
+
+            it('Should reject the provided Product Type value for product doesn\'t match an enabled Company Product Type', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEventAction.create({
+                            eventTypeId: eventTypeId,
+                            fields: fields,
+                            quantities: quantities,
+                            derivedProduct: "prd4",
                             outputBatchId: outputBatchId
                         })
                     }),

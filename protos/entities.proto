@@ -21,18 +21,18 @@ message Company {
     // Company Admin public key.
     string adminPublicKey = 6;
 
+    // List of Product Type identifiers.
+    repeated string enabledProductTypes = 7;
+
     // List of Company Fields (only for production companies).
-    repeated string fields = 7;
+    repeated string fields = 8;
 
     // List of Company Operators.
-    repeated string operators = 8;
+    repeated string operators = 9;
 
     // List of Company Batches.
-    repeated string batches = 9;
-
-    // todo add filters.
+    repeated string batches = 10;
 }
-
 
 message Field {
     // Field identifier.

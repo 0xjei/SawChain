@@ -161,6 +161,8 @@ message CreateCompanyAction {
 
     // Company Admin public key.
     string admin = 4;
+
+    repeated string enabledProductTypes = 5;
 }
 
 message CreateFieldAction {

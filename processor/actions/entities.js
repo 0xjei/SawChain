@@ -121,12 +121,13 @@ const checkField = (value, type) => {
  * @param {String} description Company description.
  * @param {String} website Company website.
  * @param {String} admin Company Admin public key.
+ * @param {String[]} enabledProductTypes List of enabled product types.
  */
 async function createCompany(
     context,
     signerPublicKey,
     timestamp,
-    {name, description, website, admin}
+    {name, description, website, admin, enabledProductTypes}
 ) {
     // Validation: Name is not set.
     if (!name)
@@ -147,6 +148,10 @@ async function createCompany(
     // Validation: Admin public key doesn't contain a valid public key.
     if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(admin))
         reject(`Admin public key doesn't contain a valid public key!`);
+
+    // Validation: Enabled product types list is not set.
+    if (!enabledProductTypes.length)
+        reject(`Enabled product types list is not set!`);
 
     const id = getSHA512(admin, 10);
     const systemAdminAddress = getSystemAdminAddress();
@@ -177,6 +182,19 @@ async function createCompany(
     if (state[operatorAddress].length > 0)
         reject(`There is already an Operator with the signer's public key!`);
 
+    // Validation: At least one of the provided values for enabled product types doesn't match a Product Type.
+    for (const productType of enabledProductTypes) {
+        const productTypeAddress = getProductTypeAddress(productType);
+
+        const state = await context.getState([
+            productTypeAddress
+        ]);
+
+        if (!state[productTypeAddress].length) {
+            reject(`The provided Product Type ${productType} doesn't match a valid Product Type!`);
+        }
+    }
+
     // State update.
     const updates = {};
 
@@ -195,6 +213,7 @@ async function createCompany(
         website: website,
         timestamp: timestamp,
         adminPublicKey: admin,
+        enabledProductTypes: enabledProductTypes,
         fields: [],
         operators: [],
         batches: []
@@ -263,6 +282,10 @@ async function createField(
     // Validation: The provided Product Type value for product doesn't match a valid Product Type.
     if (!state[productAddress].length)
         reject(`The provided Product Type value for product doesn't match a valid Product Type!`);
+
+    // Validation: The provided Product Type value for product doesn't match an enabled Company Product Type.
+    if (companyState.enabledProductTypes.indexOf(product) === -1)
+        reject(`The provided Product Type value for product doesn't match an enabled Company Product Type!`);
 
     // Validation: Quantity is lower than or equal to zero.
     if (quantity <= 0)
@@ -552,6 +575,10 @@ async function createTransformationEvent(
 
     // Validation: Derived product doesn't match one of the derived Product Types for the Event Type.
     if (!(eventTypeState.derivedProductTypes.indexOf(derivedProduct) > -1))
+        reject(`You cannot transform with ${eventTypeId} event in order to create a Batch with ${derivedProduct} product!`);
+
+    // Validation: Derived product doesn't match one of the enabled Product Types for the Company.
+    if (!(companyState.enabledProductTypes.indexOf(derivedProduct) > -1))
         reject(`You cannot transform with ${eventTypeId} event in order to create a Batch with ${derivedProduct} product!`);
 
     /// Validation: At least one of the given quantities is less or equal to zero.
@@ -893,10 +920,9 @@ async function createProposal(
     if (!state[receiverCompanyAddress].length > 0)
         reject(`The provided company ${receiverCompany} is not a Company!`);
 
-    // todo after company filters
     // Validation: Batch Product Type doesn't match one of the enabled Product Types for the receiver Company.
-    // if (receiverCompanyState.enabledProductTypes.indexOf(batchState.product) === -1)
-    //     reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`);
+    if (!(receiverCompanyState.enabledProductTypes.indexOf(batchState.product) > -1))
+        reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`);
 
     // Validation: Provided batch already has a issued Proposal.
     if (batchState.proposals.some(proposal => proposal.status === Batch.Proposal.Status.ISSUED))

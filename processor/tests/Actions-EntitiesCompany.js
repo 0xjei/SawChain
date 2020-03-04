@@ -35,6 +35,8 @@ describe('Entities Company Actions', function () {
     let txn = null;
     let state = null;
 
+    const enabledProductTypes = ["prd1", "prd2", "prd3"];
+
     let sysAdminKeyPair = null;
     let cmpAdminKeyPair = null;
 
@@ -180,7 +182,7 @@ describe('Entities Company Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
-        it('Should reject if transaction signer is not the System Admin', async function () {
+        it('Should reject if no enabled product types list is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -199,6 +201,27 @@ describe('Entities Company Actions', function () {
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         });
 
+
+        it('Should reject if transaction signer is not the System Admin', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
+                    timestamp: Date.now(),
+                    createCompany: CreateCompanyAction.create({
+                        name: name,
+                        description: description,
+                        website: website,
+                        admin: cmpAdminKeyPair.publicKey,
+                        enabledProductTypes: enabledProductTypes
+                    })
+                })
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
         it('Should reject if given public key match with the System Admin one', async function () {
             txn = new Txn(
                 SCPayload.create({
@@ -208,7 +231,29 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: sysAdminKeyPair.publicKey
+                        admin: sysAdminKeyPair.publicKey,
+                        enabledProductTypes: enabledProductTypes
+                    })
+                }),
+                sysAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject if at least one of the provided Product Types values for enable product types doesn\'t match a valid Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_COMPANY,
+                    timestamp: Date.now(),
+                    createCompany: CreateCompanyAction.create({
+                        name: name,
+                        description: description,
+                        website: website,
+                        admin: cmpAdminKeyPair.publicKey,
+                        enabledProductTypes: ["prd0"]
                     })
                 }),
                 sysAdminKeyPair.privateKey
@@ -230,7 +275,8 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey
+                        admin: cmpAdminKeyPair.publicKey,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 sysAdminKeyPair.privateKey
@@ -248,6 +294,7 @@ describe('Entities Company Actions', function () {
             expect(Company.decode(state).website).to.equal(website);
             expect(parseInt(Company.decode(state).timestamp)).to.equal(timestamp);
             expect(Company.decode(state).adminPublicKey).to.equal(cmpAdminKeyPair.publicKey);
+            expect(Company.decode(state).enabledProductTypes.length).to.equal(enabledProductTypes.length);
             expect(Company.decode(state).operators).to.be.empty;
             expect(Company.decode(state).fields).to.be.empty;
             expect(Company.decode(state).batches).to.be.empty;
@@ -270,7 +317,8 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey
+                        admin: cmpAdminKeyPair.publicKey,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 sysAdminKeyPair.privateKey
@@ -419,6 +467,27 @@ describe('Entities Company Actions', function () {
                         id: id,
                         description: description,
                         product: "error",
+                        quantity: productQuantity,
+                        location: location
+                    })
+                }),
+                cmpAdminKeyPair.privateKey
+            );
+
+            const submission = handler.apply(txn, context);
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        });
+
+        it('Should reject the provided Product Type value for product doesn\'t match an enabled Company Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: id,
+                        description: description,
+                        product: "prd4",
                         quantity: productQuantity,
                         location: location
                     })

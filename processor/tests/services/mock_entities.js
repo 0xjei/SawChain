@@ -239,6 +239,7 @@ const mockCreatePropertyType = async (
  * @param {String} description Company description.
  * @param {String} website Company website.
  * @param {String} cmpAdminPublicKey Company Admin public key.
+ * @param {String[]} enabledProductTypes Enabled product types list.
  */
 const mockCreateCompany = async (
     context,
@@ -247,7 +248,8 @@ const mockCreateCompany = async (
     name,
     description,
     website,
-    cmpAdminPublicKey
+    cmpAdminPublicKey,
+    enabledProductTypes
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -257,7 +259,8 @@ const mockCreateCompany = async (
                 name: name,
                 description: description,
                 website: website,
-                admin: cmpAdminPublicKey
+                admin: cmpAdminPublicKey,
+                enabledProductTypes: enabledProductTypes
             })
         }),
         sysAdminPrivateKey
@@ -476,6 +479,7 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
     await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd1", "name1", "desc1", 3, []); // Bottles.
     await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd2", "name2", "desc2", 1, [derivedProd1]); // Olive oil.
     await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd3", "name3", "desc3", 0, [derivedProd2]); // Olives.
+    await mockCreateProductType(context, handler, sysAdminPrivateKey, "prd4", "name4", "desc4", 0, [derivedProd2]); // Olives.
 
     // Event Parameter Types.
     await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, "param1", "name1", 0);
