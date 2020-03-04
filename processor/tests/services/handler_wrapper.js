@@ -1,9 +1,9 @@
-'use strict';
+'use strict'
 
-const SawChainHandler = require('../../handler');
+const SawChainHandler = require('../../handler')
 
 /**
- * Wrapper class for SawChain Handler used to make TDD development more faster.
+ * Wrapper class for SawChain Handler in order to make TDD development more faster.
  */
 class SawChainHandlerWrapper {
 
@@ -21,4 +21,4 @@ class SawChainHandlerWrapper {
     }
 }
 
-module.exports = SawChainHandlerWrapper;
+module.exports = SawChainHandlerWrapper
