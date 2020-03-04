@@ -32,7 +32,7 @@ message SCPayload {
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 2;
 
-    UpdateSystemAdminAction updateSysAdmin = 3;
+    UpdateSystemAdminAction updateSystemAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterTypeAction createEventParameterType = 6;

@@ -1,8 +1,8 @@
-'use strict';
+'use strict'
 
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-const {createHash} = require('crypto');
-const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
+const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
+const {createHash} = require('crypto')
+const secp256k1 = require('sawtooth-sdk/signing/secp256k1')
 
 /**
  * A quick convenience function to throw a InvalidTransaction error with a joined message.
@@ -10,10 +10,10 @@ const secp256k1 = require('sawtooth-sdk/signing/secp256k1');
  */
 const reject = (...messages) => {
     throw new InvalidTransaction(messages.join(' '))
-};
+}
 
 /**
- * Return a hex-string (SHA-512 hash) sliced to a particular length.
+ * Return a SHA-512 hex-string. The string can be sliced to a particular length.
  * @param {String} str Input string.
  * @param {Number} length Number of characters for the output string.
  */
@@ -22,44 +22,44 @@ const getSHA512 = (str, length) => {
         .update(str)
         .digest('hex')
         .slice(0, length)
-};
+}
 
 /**
- * A useful method used to generate a new key-pair for recording a new user.
+ * Return a new key-pair using secp256k1 context generator.
  */
 const getNewKeyPair = () => {
     // Initialize a new context with a random seed.
-    const secp256k1Context = new secp256k1.Secp256k1Context();
+    const secp256k1Context = new secp256k1.Secp256k1Context()
 
     // Generate a new private key.
-    let privateKey = secp256k1Context.newRandomPrivateKey();
+    let privateKey = secp256k1Context.newRandomPrivateKey()
 
     // Get the public key from the private key
-    let publicKey = secp256k1Context.getPublicKey(privateKey);
+    let publicKey = secp256k1Context.getPublicKey(privateKey)
 
-    // Convert key-pair to hexadecimal strings.
-    privateKey = privateKey.asHex();
-    publicKey = publicKey.asHex();
+    // Convert keys to hexadecimal strings.
+    privateKey = privateKey.asHex()
+    publicKey = publicKey.asHex()
 
     return {privateKey, publicKey}
-};
+}
 
 /**
  * Return an object that contains the decoded payload action field.
  * @param {Object} payload The decoded payload.
- * @param {String} actionFieldName The expected action field name.
+ * @param {String} actionFieldName Expected action field name.
  */
 const getActionFieldFromPayload = (payload, actionFieldName) => {
-    // Check if the SCPayload object contains the expected action field.
+    // Check if the SCPayload object contains provided action field name.
     if (!payload[actionFieldName])
-        reject(`Action payload is missing for ${actionFieldName} action!`);
+        reject(`Action payload is missing for ${actionFieldName} action!`)
 
     return payload[actionFieldName]
-};
+}
 
 module.exports = {
     reject,
     getSHA512,
     getNewKeyPair,
     getActionFieldFromPayload
-};
+}

@@ -138,7 +138,7 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({})
+                        updateSystemAdmin: UpdateSystemAdminAction.create({})
                     })
                 );
                 const submission = handler.apply(txn, context);
@@ -151,7 +151,7 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({
+                        updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey.slice(0, 65)
                         })
                     })
@@ -167,7 +167,7 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({
+                        updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: sysAdminKeyPair.publicKey
                         })
                     })
@@ -183,7 +183,7 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
-                        updateSysAdmin: UpdateSystemAdminAction.create({
+                        updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey
                         })
                     }),
@@ -202,7 +202,7 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: timestamp,
-                        updateSysAdmin: UpdateSystemAdminAction.create({
+                        updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey
                         })
                     }),

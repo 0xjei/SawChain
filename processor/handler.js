@@ -1,30 +1,30 @@
-'use strict';
+'use strict'
 
-const {TransactionHandler} = require('sawtooth-sdk/processor/handler');
-const {TpProcessRequest} = require('sawtooth-sdk/protobuf');
-const {FAMILY_NAME, NAMESPACE, VERSION} = require('./services/addressing');
+const {TransactionHandler} = require('sawtooth-sdk/processor/handler')
+const {TpProcessRequest} = require('sawtooth-sdk/protobuf')
+const {FAMILY_NAME, NAMESPACE, VERSION} = require('./services/addressing')
 const {
     SCPayload,
     SCPayloadActions,
     SCPayloadFields
-} = require('./services/proto');
+} = require('./services/proto')
 const {
     reject,
     getActionFieldFromPayload
-} = require('./services/utils');
+} = require('./services/utils')
 const {
     createSystemAdmin,
     updateSystemAdmin,
     createOperator,
     createCertificationAuthority
-} = require('./actions/users');
+} = require('./actions/users')
 const {
     createTaskType,
     createProductType,
     createEventParameterType,
     createEventType,
     createPropertyType
-} = require('./actions/typeEntities');
+} = require('./actions/typeEntities')
 const {
     createCompany,
     createField,
@@ -35,15 +35,14 @@ const {
     createProposal,
     answerProposal,
     finalizeBatch
-} = require('./actions/entities');
+} = require('./actions/entities')
 
 /**
- * Extension of TransactionHandler class to implement the SawChain Transaction Processor logic.
+ * Extension of TransactionHandler class in order to implement the SawChain Transaction Processor logic.
  */
 class SawChainHandler extends TransactionHandler {
     /**
-     * TransactionHandler constructor registers itself with the
-     * validator, declaring which family name, versions, and
+     * TransactionHandler constructor registers itself with the validator, declaring which family name, versions, and
      * namespaces it expects to handle.
      */
     constructor() {
@@ -51,35 +50,35 @@ class SawChainHandler extends TransactionHandler {
     }
 
     /**
-     * Evaluate and execute every transaction, updating the state according to the action.
-     * @param {TpProcessRequest} txn Transaction process request.
-     * @param {Context} context Current state context.
+     * Evaluate and execute every transaction updating the state according to the action.
+     * @param {TpProcessRequest} txn Transaction that is requested to be process.
+     * @param {Context} context Object used to write/read in Sawtooth ledger state.
      */
     async apply(txn, context) {
-        // Retrieve SawChain Payload from transaction.
-        const payload = SCPayload.decode(txn.payload);
-        const action = payload.action;
-        const signerPublicKey = txn.header.signerPublicKey;
-        const timestamp = payload.timestamp;
+        // Retrieve SawChain payload object from txn.
+        const payload = SCPayload.decode(txn.payload)
+        const action = payload.action
+        const signerPublicKey = txn.header.signerPublicKey
+        const timestamp = payload.timestamp
 
-        // General Transaction Validation: Timestamp is not set.
+        // Validation: Payload timestamp is not set.
         if (!timestamp.low && !timestamp.high)
-            reject(`Timestamp is not set!`);
+            reject(`Payload timestamp is not set!`)
 
-        // Handling actions.
+        // Action handling.
         switch (action) {
             case SCPayloadActions.CREATE_SYSADMIN:
-                await createSystemAdmin(context, signerPublicKey, timestamp);
-                break;
+                await createSystemAdmin(context, signerPublicKey, timestamp)
+                break
 
             case SCPayloadActions.UPDATE_SYSADMIN:
                 await updateSystemAdmin(
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.updateSysAdmin.name)
-                );
-                break;
+                    getActionFieldFromPayload(payload, SCPayloadFields.updateSystemAdmin.name)
+                )
+                break
 
             case SCPayloadActions.CREATE_TASK_TYPE:
                 await createTaskType(
@@ -87,8 +86,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createTaskType.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_PRODUCT_TYPE:
                 await createProductType(
@@ -96,8 +95,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createProductType.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE:
                 await createEventParameterType(
@@ -105,8 +104,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createEventParameterType.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_EVENT_TYPE:
                 await createEventType(
@@ -114,8 +113,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createEventType.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_PROPERTY_TYPE:
                 await createPropertyType(
@@ -123,8 +122,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createPropertyType.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY:
                 await createCertificationAuthority(
@@ -132,8 +131,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createCertificationAuthority.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_COMPANY:
                 await createCompany(
@@ -141,8 +140,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createCompany.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_FIELD:
                 await createField(
@@ -150,8 +149,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createField.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_OPERATOR:
                 await createOperator(
@@ -159,8 +158,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createOperator.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_DESCRIPTION_EVENT:
                 await createDescriptionEvent(
@@ -168,8 +167,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createDescriptionEvent.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_TRANSFORMATION_EVENT:
                 await createTransformationEvent(
@@ -177,8 +176,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createTransformationEvent.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.ADD_BATCH_CERTIFICATE:
                 await addBatchCertificate(
@@ -186,8 +185,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.addBatchCertificate.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.RECORD_BATCH_PROPERTY:
                 await recordBatchProperty(
@@ -195,8 +194,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.recordBatchProperty.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.CREATE_PROPOSAL:
                 await createProposal(
@@ -204,8 +203,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.createProposal.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.ANSWER_PROPOSAL:
                 await answerProposal(
@@ -213,8 +212,8 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.answerProposal.name)
-                );
-                break;
+                )
+                break
 
             case SCPayloadActions.FINALIZE_BATCH:
                 await finalizeBatch(
@@ -222,13 +221,13 @@ class SawChainHandler extends TransactionHandler {
                     signerPublicKey,
                     timestamp,
                     getActionFieldFromPayload(payload, SCPayloadFields.finalizeBatch.name)
-                );
-                break;
+                )
+                break
 
             default:
-                reject(`Unknown action: ${action}`);
+                reject(`Unknown action: ${action}`)
         }
     }
 }
 
-module.exports = SawChainHandler;
+module.exports = SawChainHandler
