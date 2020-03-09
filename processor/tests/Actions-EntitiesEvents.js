@@ -68,7 +68,8 @@ describe('Entities Events Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = await mockCreateSystemAdmin(context, handler);
+        sysAdminKeyPair = getNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
@@ -143,7 +144,8 @@ describe('Entities Events Actions', function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -156,7 +158,8 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now()
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -170,7 +173,8 @@ describe('Entities Events Actions', function () {
                         action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
                         timestamp: Date.now(),
                         createDescriptionEvent: CreateDescriptionEventAction.create({})
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -186,7 +190,8 @@ describe('Entities Events Actions', function () {
                         createDescriptionEvent: CreateDescriptionEventAction.create({
                             eventTypeId: eventTypeIdReqParams
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -204,7 +209,8 @@ describe('Entities Events Actions', function () {
                             field: fieldId,
                             batch: "batch"
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -221,7 +227,8 @@ describe('Entities Events Actions', function () {
                             eventTypeId: eventTypeIdReqParams,
                             field: fieldId
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -863,7 +870,8 @@ describe('Entities Events Actions', function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -876,7 +884,8 @@ describe('Entities Events Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now()
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -890,7 +899,8 @@ describe('Entities Events Actions', function () {
                         action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
                         timestamp: Date.now(),
                         createTransformationEvent: CreateTransformationEventAction.create({})
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -906,7 +916,8 @@ describe('Entities Events Actions', function () {
                         createTransformationEvent: CreateTransformationEventAction.create({
                             eventTypeId: eventTypeId
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -924,7 +935,8 @@ describe('Entities Events Actions', function () {
                             fields: fields,
                             batches: ["no-batch"]
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -941,7 +953,8 @@ describe('Entities Events Actions', function () {
                             eventTypeId: eventTypeId,
                             fields: fields
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -959,7 +972,8 @@ describe('Entities Events Actions', function () {
                             fields: fields,
                             quantities: quantities
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -978,7 +992,8 @@ describe('Entities Events Actions', function () {
                             quantities: quantities,
                             derivedProduct: derivedProduct
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);

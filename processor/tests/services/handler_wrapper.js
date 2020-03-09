@@ -3,15 +3,19 @@
 const SawChainHandler = require('../../handler')
 
 /**
- * Wrapper class for SawChain Handler in order to make TDD development more faster.
+ * A wrapper class for SawChain Handler.
+ * (nb. the wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development)
  */
 class SawChainHandlerWrapper {
-
     constructor() {
         this.handler = new SawChainHandler()
     }
 
-    // Apply wrapper.
+    /**
+     * Wrapper method in order to reproduce the apply method.
+     * @param {TpProcessRequest} txn Transaction that is requested to be process.
+     * @param {Context} context Object used to write/read in Sawtooth ledger state.
+     */
     apply(txn, context) {
         try {
             return this.handler.apply(txn, context)

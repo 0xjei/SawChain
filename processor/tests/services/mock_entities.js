@@ -23,21 +23,18 @@ const {
  * Execute a Create System Admin action.
  * @param {Context} context Current state context.
  * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
+ * @param {String} sysAdminPrivateKey System Admin private key.
  */
-const mockCreateSystemAdmin = async (context, handler) => {
+const mockCreateSystemAdmin = async (context, handler, sysAdminPrivateKey) => {
     const txn = new Txn(
         SCPayload.create({
             action: SCPayloadActions.CREATE_SYSADMIN,
             timestamp: Date.now()
-        })
+        }),
+        sysAdminPrivateKey
     )
 
     await handler.apply(txn, context)
-
-    const privateKey = txn._privateKey
-    const publicKey = txn._publicKey
-
-    return {privateKey, publicKey}
 }
 
 /**

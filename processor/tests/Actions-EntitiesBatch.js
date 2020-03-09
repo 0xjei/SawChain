@@ -76,7 +76,8 @@ describe('Batch Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = await mockCreateSystemAdmin(context, handler);
+        sysAdminKeyPair = getNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
@@ -130,7 +131,8 @@ describe('Batch Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -143,7 +145,8 @@ describe('Batch Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now()
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -157,7 +160,8 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({})
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -173,7 +177,8 @@ describe('Batch Actions', function () {
                     addBatchCertificate: AddBatchCertificateAction.create({
                         batch: batchId
                     })
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -190,7 +195,8 @@ describe('Batch Actions', function () {
                         batch: batchId,
                         company: companyId
                     })
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -208,7 +214,8 @@ describe('Batch Actions', function () {
                         company: companyId,
                         link: link
                     })
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -227,7 +234,8 @@ describe('Batch Actions', function () {
                         link: link,
                         hash: hash.slice(0, 127)
                     })
-                })
+                }),
+                caKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -246,7 +254,8 @@ describe('Batch Actions', function () {
                         link: link,
                         hash: hash
                     })
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -398,7 +407,8 @@ describe('Batch Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.RECORD_BATCH_PROPERTY
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -411,7 +421,8 @@ describe('Batch Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.RECORD_BATCH_PROPERTY,
                     timestamp: Date.now()
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -425,7 +436,8 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.RECORD_BATCH_PROPERTY,
                     timestamp: Date.now(),
                     recordBatchProperty: RecordBatchPropertyAction.create({})
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -441,7 +453,8 @@ describe('Batch Actions', function () {
                     recordBatchProperty: RecordBatchPropertyAction.create({
                         batch: batchId
                     })
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -458,7 +471,8 @@ describe('Batch Actions', function () {
                         batch: batchId,
                         property: propertyTypeId1
                     })
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -476,7 +490,8 @@ describe('Batch Actions', function () {
                         property: propertyTypeId1,
                         propertyValue: propertyValueTemp
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -772,7 +787,8 @@ describe('Batch Actions', function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_PROPOSAL
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -785,7 +801,8 @@ describe('Batch Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_PROPOSAL,
                         timestamp: Date.now()
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -799,7 +816,8 @@ describe('Batch Actions', function () {
                         action: SCPayloadActions.CREATE_PROPOSAL,
                         timestamp: Date.now(),
                         createProposal: CreateProposalAction.create({})
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -815,7 +833,8 @@ describe('Batch Actions', function () {
                         createProposal: CreateProposalAction.create({
                             batch: batchId
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -832,7 +851,8 @@ describe('Batch Actions', function () {
                             batch: batchId,
                             receiverCompany: companyId2
                         })
-                    })
+                    }),
+                    cmpAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -955,7 +975,8 @@ describe('Batch Actions', function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -968,7 +989,8 @@ describe('Batch Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now()
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -982,7 +1004,8 @@ describe('Batch Actions', function () {
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({})
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -998,7 +1021,8 @@ describe('Batch Actions', function () {
                         answerProposal: AnswerProposalAction.create({
                             batch: batchId
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -1015,7 +1039,8 @@ describe('Batch Actions', function () {
                             batch: batchId,
                             senderCompany: companyId
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -1033,7 +1058,8 @@ describe('Batch Actions', function () {
                             senderCompany: companyId,
                             receiverCompany: companyId2
                         })
-                    })
+                    }),
+                    optKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -1052,7 +1078,8 @@ describe('Batch Actions', function () {
                             receiverCompany: companyId2,
                             response: cancelled
                         })
-                    })
+                    }),
+                    cmpAdminKeyPair.privateKey
                 );
                 const submission = handler.apply(txn, context);
 
@@ -1240,7 +1267,8 @@ describe('Batch Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.FINALIZE_BATCH
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1253,7 +1281,8 @@ describe('Batch Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.FINALIZE_BATCH,
                     timestamp: Date.now()
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1267,7 +1296,8 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.FINALIZE_BATCH,
                     timestamp: Date.now(),
                     finalizeBatch: FinalizeBatchAction.create({})
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1284,7 +1314,8 @@ describe('Batch Actions', function () {
                         batch: batch,
                         reason: -1
                     })
-                })
+                }),
+                optKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1301,7 +1332,8 @@ describe('Batch Actions', function () {
                         batch: batch,
                         reason: reason
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);

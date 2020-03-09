@@ -4,42 +4,46 @@ const {createHash} = require('crypto')
 const {TransactionHeader} = require('sawtooth-sdk/protobuf')
 const {NAMESPACE, FAMILY_NAME, VERSION} = require('../../services/addressing')
 const {SCPayload} = require('../../services/proto')
-const secp256k1 = require('sawtooth-sdk/signing/secp256k1')
+const {Secp256k1Context, Secp256k1PrivateKey} = require('sawtooth-sdk/signing/secp256k1')
 
 /**
- * Sawtooth Transaction object used for state updates in order to make TDD development more faster.
+ * A wrapper class for SawChain Transaction.
+ * (nb. the wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development)
  */
 class Txn {
+    /**
+     * Create a new transaction object.
+     * @param {Object} payload Action handling and updates for state.
+     * @param {String} privateKey The signer private key used to generate a sign for the transaction header.
+     */
+    constructor(payload, privateKey) {
+        // Instance of Secp256k1Context class.
+        const secp256k1Context = new Secp256k1Context()
+        // Convert the provided private key in bytes.
+        const privateKeyBytes = Secp256k1PrivateKey.fromHex(privateKey)
 
-    constructor(payload, privateKey = null) {
-        // New secp256k1 context initialization.
-        const context = new secp256k1.Secp256k1Context()
-
-        // Creates a new key pair if no private key is provided.
-        const privateKeyWrapper = privateKey === null ?
-            context.newRandomPrivateKey() :
-            secp256k1.Secp256k1PrivateKey.fromHex(privateKey)
-
-        // Sawtooth Transaction wrapper.
-        this._privateKey = privateKeyWrapper.asHex()
-        this._publicKey = context.getPublicKey(privateKeyWrapper).asHex()
+        this._privateKey = privateKey
+        this._publicKey = secp256k1Context.getPublicKey(privateKeyBytes).asHex()
+        // Nonce generator.
         this.contextId = (Math.random() * 10 ** 18).toString(36)
         this.payload = SCPayload.encode(payload).finish()
 
+        // Transaction header.
         this.header = TransactionHeader.create({
             signerPublicKey: this._publicKey,
             batcherPublicKey: this._publicKey,
             familyName: FAMILY_NAME,
             familyVersion: VERSION,
-            nonce: (Math.random() * 10 ** 18).toString(36),
+            nonce: this.contextId,
             inputs: [NAMESPACE],
             outputs: [NAMESPACE],
             payloadSha512: createHash('sha512')
                 .update(this.payload)
                 .digest('hex')
         })
+
         const encodedHeader = TransactionHeader.encode(this.header).finish()
-        this.signature = context.sign(encodedHeader, privateKeyWrapper)
+        this.signature = secp256k1Context.sign(encodedHeader, privateKeyBytes)
     }
 }
 

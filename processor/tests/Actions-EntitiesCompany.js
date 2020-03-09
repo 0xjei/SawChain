@@ -48,7 +48,8 @@ describe('Entities Company Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = await mockCreateSystemAdmin(context, handler);
+        sysAdminKeyPair = getNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
@@ -76,7 +77,8 @@ describe('Entities Company Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -89,7 +91,8 @@ describe('Entities Company Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -103,7 +106,8 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({})
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -120,7 +124,8 @@ describe('Entities Company Actions', function () {
                     createCompany: CreateCompanyAction.create({
                         name: name
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -137,7 +142,8 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -155,7 +161,8 @@ describe('Entities Company Actions', function () {
                         description: description,
                         website: website
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -174,7 +181,8 @@ describe('Entities Company Actions', function () {
                         website: website,
                         admin: cmpAdminKeyPair.publicKey.slice(0, 65)
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -193,7 +201,8 @@ describe('Entities Company Actions', function () {
                         website: website,
                         admin: cmpAdminKeyPair.publicKey
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -214,7 +223,8 @@ describe('Entities Company Actions', function () {
                         admin: cmpAdminKeyPair.publicKey,
                         enabledProductTypes: enabledProductTypes
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -351,7 +361,8 @@ describe('Entities Company Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_FIELD
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -364,7 +375,8 @@ describe('Entities Company Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now()
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -378,7 +390,8 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({})
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -394,7 +407,8 @@ describe('Entities Company Actions', function () {
                     createField: CreateFieldAction.create({
                         id: id
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -411,7 +425,8 @@ describe('Entities Company Actions', function () {
                         id: id,
                         description: description
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -430,7 +445,8 @@ describe('Entities Company Actions', function () {
                         product: product,
                         quantity: productQuantity
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -450,7 +466,8 @@ describe('Entities Company Actions', function () {
                         quantity: productQuantity,
                         location: location
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);

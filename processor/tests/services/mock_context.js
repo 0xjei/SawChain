@@ -1,18 +1,20 @@
 'use strict'
 
 /**
- * Wrapper class for current state object Context in order to make TDD development more faster.
+ * A wrapper class for SawChain Context.
+ * (nb. the wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development)
  */
 class Context {
-
-    // Initialize an empty state object.
+    /**
+     * The constructor initialize a new empty object which is going to be used as blockchain state.
+     */
     constructor() {
         this._state = {}
     }
 
     /**
-     * Retrieve state objects data from addresses.
-     * @param {String[]} addresses List of state addresses.
+     * Retrieve data from the state objects at specific addresses.
+     * @param {String[]} addresses A list of target state addresses.
      */
     getState(addresses) {
         return new Promise(resolve => {
@@ -24,8 +26,8 @@ class Context {
     }
 
     /**
-     * Write state objects data into addresses.
-     * @param {String[]} changes List of new state objects data.
+     * Write data into the state objects at specific addresses.
+     * @param {String[]} changes A list of address-update pairs.
      */
     setState(changes) {
         return new Promise(resolve => {

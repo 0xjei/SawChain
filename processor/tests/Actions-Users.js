@@ -49,12 +49,18 @@ describe('Users Actions', function () {
 
         const systemAdminAddress = getSystemAdminAddress();
 
+        before(function () {
+            // Generate System Admin key pair.
+            sysAdminKeyPair = getNewKeyPair()
+        });
+
         describe('Create System Admin', function () {
             it('Should reject if no timestamp is given', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_SYSADMIN
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -69,11 +75,9 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_SYSADMIN,
                         timestamp: timestamp
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
-                // Retrieve System Admin key pair.
-                sysAdminKeyPair = {privateKey: txn._privateKey, publicKey: txn._publicKey};
-
                 // Send and execute txn.
                 await handler.apply(txn, context);
 
@@ -91,7 +95,8 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.CREATE_SYSADMIN,
                         timestamp: Date.now()
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -112,7 +117,8 @@ describe('Users Actions', function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -125,7 +131,8 @@ describe('Users Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now()
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -139,7 +146,8 @@ describe('Users Actions', function () {
                         action: SCPayloadActions.UPDATE_SYSADMIN,
                         timestamp: Date.now(),
                         updateSystemAdmin: UpdateSystemAdminAction.create({})
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
                 const submission = handler.apply(txn, context);
 
@@ -154,7 +162,8 @@ describe('Users Actions', function () {
                         updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: newAdminKeys.publicKey.slice(0, 65)
                         })
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -170,7 +179,8 @@ describe('Users Actions', function () {
                         updateSystemAdmin: UpdateSystemAdminAction.create({
                             publicKey: sysAdminKeyPair.publicKey
                         })
-                    })
+                    }),
+                    sysAdminKeyPair.privateKey
                 );
 
                 const submission = handler.apply(txn, context);
@@ -259,7 +269,8 @@ describe('Users Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -272,7 +283,8 @@ describe('Users Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now()
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -286,7 +298,8 @@ describe('Users Actions', function () {
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now(),
                     createOperator: CreateOperatorAction.create({})
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -302,7 +315,8 @@ describe('Users Actions', function () {
                     createOperator: CreateOperatorAction.create({
                         publicKey: optKeyPair.publicKey
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -319,7 +333,8 @@ describe('Users Actions', function () {
                         publicKey: optKeyPair.publicKey.slice(0, 30),
                         task: task
                     })
-                })
+                }),
+                cmpAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -336,7 +351,8 @@ describe('Users Actions', function () {
                         publicKey: optKeyPair.publicKey,
                         task: task
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -450,7 +466,8 @@ describe('Users Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -463,7 +480,8 @@ describe('Users Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -477,7 +495,8 @@ describe('Users Actions', function () {
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({})
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -493,7 +512,8 @@ describe('Users Actions', function () {
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -510,7 +530,8 @@ describe('Users Actions', function () {
                         publicKey: caKeyPair.publicKey,
                         name: caName
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -528,7 +549,8 @@ describe('Users Actions', function () {
                         name: caName,
                         website: caWebsite
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -547,7 +569,8 @@ describe('Users Actions', function () {
                         website: caWebsite,
                         products: products
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -566,7 +589,8 @@ describe('Users Actions', function () {
                         website: caWebsite,
                         products: products
                     })
-                })
+                }),
+                sysAdminKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);

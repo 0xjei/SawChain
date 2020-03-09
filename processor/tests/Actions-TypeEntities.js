@@ -28,6 +28,7 @@ const {
     getEventTypeAddress,
     getPropertyTypeAddress
 } = require('../services/addressing');
+const {getNewKeyPair} = require('../services/utils');
 
 describe('Types Creation', function () {
     let handler = null;
@@ -36,13 +37,17 @@ describe('Types Creation', function () {
     let state = null;
 
     let sysAdminKeys = null;
+    let signerKeyPair = null;
 
     before(async function () {
         handler = new SawChainHandler();
         context = new Context();
 
+        signerKeyPair = getNewKeyPair()
+
         // Record the System Admin and get key pair.
-        sysAdminKeys = await mockCreateSystemAdmin(context, handler);
+        sysAdminKeys = getNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, sysAdminKeys.privateKey);
     });
 
     describe('Create Task Type', function () {
@@ -55,7 +60,8 @@ describe('Types Creation', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_TASK_TYPE
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -68,7 +74,8 @@ describe('Types Creation', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -82,7 +89,8 @@ describe('Types Creation', function () {
                     action: SCPayloadActions.CREATE_TASK_TYPE,
                     timestamp: Date.now(),
                     createTaskType: CreateTaskTypeAction.create({})
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -98,7 +106,8 @@ describe('Types Creation', function () {
                     createTaskType: CreateTaskTypeAction.create({
                         id: taskTypeId
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -115,7 +124,8 @@ describe('Types Creation', function () {
                         id: taskTypeId,
                         role: taskTypeRole
                     })
-                })
+                }),
+                signerKeyPair.privateKey
             );
             const submission = handler.apply(txn, context);
 
@@ -187,7 +197,8 @@ describe('Types Creation', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PRODUCT_TYPE
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -200,7 +211,8 @@ describe('Types Creation', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -214,7 +226,8 @@ describe('Types Creation', function () {
                     action: SCPayloadActions.CREATE_PRODUCT_TYPE,
                     timestamp: Date.now(),
                     createProductType: CreateProductTypeAction.create({})
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -230,7 +243,8 @@ describe('Types Creation', function () {
                     createProductType: CreateProductTypeAction.create({
                         id: firstProductTypeId
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -247,7 +261,8 @@ describe('Types Creation', function () {
                         id: firstProductTypeId,
                         name: firstProductTypeName
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -266,7 +281,8 @@ describe('Types Creation', function () {
                         description: firstProductTypeDescription,
                         measure: -1
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -285,7 +301,8 @@ describe('Types Creation', function () {
                         description: firstProductTypeDescription,
                         measure: firstProductTypeUnitOfMeasure
                     })
-                })
+                }),
+                signerKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -427,7 +444,8 @@ describe('Types Creation', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -440,7 +458,8 @@ describe('Types Creation', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -454,7 +473,8 @@ describe('Types Creation', function () {
                     action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
                     timestamp: Date.now(),
                     createEventParameterType: CreateEventParameterTypeAction.create({})
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -470,7 +490,8 @@ describe('Types Creation', function () {
                     createEventParameterType: CreateEventParameterTypeAction.create({
                         id: eventParameterTypeId
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -488,7 +509,8 @@ describe('Types Creation', function () {
                         name: eventParameterTypeName,
                         type: 10
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -506,7 +528,8 @@ describe('Types Creation', function () {
                         name: eventParameterTypeName,
                         type: eventParameterType
                     })
-                })
+                }),
+                signerKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -588,7 +611,8 @@ describe('Types Creation', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_TYPE
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -601,7 +625,8 @@ describe('Types Creation', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -615,7 +640,8 @@ describe('Types Creation', function () {
                     action: SCPayloadActions.CREATE_EVENT_TYPE,
                     timestamp: Date.now(),
                     createEventType: CreateEventTypeAction.create({})
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -632,7 +658,8 @@ describe('Types Creation', function () {
                         id: firstEventTypeId,
                         typology: -1
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -649,7 +676,8 @@ describe('Types Creation', function () {
                         id: firstEventTypeId,
                         typology: firstEventTypology
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -667,7 +695,8 @@ describe('Types Creation', function () {
                         typology: firstEventTypology,
                         name: firstEventTypeName
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -686,7 +715,8 @@ describe('Types Creation', function () {
                         name: firstEventTypeName,
                         description: firstEventTypeDescription
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -706,7 +736,8 @@ describe('Types Creation', function () {
                         description: firstEventTypeDescription,
                         enabledTaskTypes: enabledTaskTypes
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -727,7 +758,8 @@ describe('Types Creation', function () {
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
-                })
+                }),
+                signerKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1013,7 +1045,8 @@ describe('Types Creation', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PROPERTY_TYPE
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1026,7 +1059,8 @@ describe('Types Creation', function () {
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_PROPERTY_TYPE,
                     timestamp: Date.now()
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1040,7 +1074,8 @@ describe('Types Creation', function () {
                     action: SCPayloadActions.CREATE_PROPERTY_TYPE,
                     timestamp: Date.now(),
                     createPropertyType: CreatePropertyTypeAction.create({})
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1056,7 +1091,8 @@ describe('Types Creation', function () {
                     createPropertyType: CreatePropertyTypeAction.create({
                         id: propertyTypeId
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1074,7 +1110,8 @@ describe('Types Creation', function () {
                         name: propertyTypeName,
                         type: -1
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1092,7 +1129,8 @@ describe('Types Creation', function () {
                         name: propertyTypeName,
                         type: propertyTypeType
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1111,7 +1149,8 @@ describe('Types Creation', function () {
                         type: propertyTypeType,
                         enabledTaskTypes: enabledTaskTypes
                     })
-                })
+                }),
+                sysAdminKeys.privateKey
             );
 
             const submission = handler.apply(txn, context);
@@ -1131,7 +1170,8 @@ describe('Types Creation', function () {
                         enabledTaskTypes: enabledTaskTypes,
                         enabledProductTypes: enabledProductTypes
                     })
-                })
+                }),
+                signerKeyPair.privateKey
             );
 
             const submission = handler.apply(txn, context);
