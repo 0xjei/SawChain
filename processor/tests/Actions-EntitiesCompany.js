@@ -25,10 +25,9 @@ const {
     getFieldAddress,
 } = require('../services/addressing');
 const {
-    getSHA512,
-    getNewKeyPair
+    calculateHash
 } = require('../services/utils');
-
+const {createNewKeyPair} = require('./services/mock_utils')
 describe('Entities Company Actions', function () {
     let handler = null;
     let context = null;
@@ -48,18 +47,18 @@ describe('Entities Company Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = getNewKeyPair()
+        sysAdminKeyPair = createNewKeyPair()
         await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
 
         // Company Admin key pair.
-        cmpAdminKeyPair = getNewKeyPair();
-        companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+        cmpAdminKeyPair = createNewKeyPair();
+        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
 
         // Company address.
-        companyAddress = getCompanyAddress(getSHA512(cmpAdminKeyPair.publicKey, 10));
+        companyAddress = getCompanyAddress(calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10))
     });
 
     describe('Create Company', async function () {

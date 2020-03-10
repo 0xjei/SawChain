@@ -10,7 +10,7 @@ const {
 } = require('./services/proto')
 const {
     reject,
-    getActionFieldFromPayload
+    getActionField
 } = require('./services/utils')
 const {
     createSystemAdmin,
@@ -76,7 +76,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.updateSystemAdmin.name)
+                    getActionField(payload, SCPayloadFields.updateSystemAdmin.name)
                 )
                 break
 
@@ -85,7 +85,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createTaskType.name)
+                    getActionField(payload, SCPayloadFields.createTaskType.name)
                 )
                 break
 
@@ -94,7 +94,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createProductType.name)
+                    getActionField(payload, SCPayloadFields.createProductType.name)
                 )
                 break
 
@@ -103,7 +103,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createEventParameterType.name)
+                    getActionField(payload, SCPayloadFields.createEventParameterType.name)
                 )
                 break
 
@@ -112,7 +112,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createEventType.name)
+                    getActionField(payload, SCPayloadFields.createEventType.name)
                 )
                 break
 
@@ -121,7 +121,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createPropertyType.name)
+                    getActionField(payload, SCPayloadFields.createPropertyType.name)
                 )
                 break
 
@@ -130,7 +130,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createCertificationAuthority.name)
+                    getActionField(payload, SCPayloadFields.createCertificationAuthority.name)
                 )
                 break
 
@@ -139,7 +139,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createCompany.name)
+                    getActionField(payload, SCPayloadFields.createCompany.name)
                 )
                 break
 
@@ -148,7 +148,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createField.name)
+                    getActionField(payload, SCPayloadFields.createField.name)
                 )
                 break
 
@@ -157,7 +157,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createOperator.name)
+                    getActionField(payload, SCPayloadFields.createOperator.name)
                 )
                 break
 
@@ -166,7 +166,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createDescriptionEvent.name)
+                    getActionField(payload, SCPayloadFields.createDescriptionEvent.name)
                 )
                 break
 
@@ -175,7 +175,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createTransformationEvent.name)
+                    getActionField(payload, SCPayloadFields.createTransformationEvent.name)
                 )
                 break
 
@@ -184,7 +184,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.addBatchCertificate.name)
+                    getActionField(payload, SCPayloadFields.addBatchCertificate.name)
                 )
                 break
 
@@ -193,7 +193,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.recordBatchProperty.name)
+                    getActionField(payload, SCPayloadFields.recordBatchProperty.name)
                 )
                 break
 
@@ -202,7 +202,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.createProposal.name)
+                    getActionField(payload, SCPayloadFields.createProposal.name)
                 )
                 break
 
@@ -211,7 +211,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.answerProposal.name)
+                    getActionField(payload, SCPayloadFields.answerProposal.name)
                 )
                 break
 
@@ -220,7 +220,7 @@ class SawChainHandler extends TransactionHandler {
                     context,
                     signerPublicKey,
                     timestamp,
-                    getActionFieldFromPayload(payload, SCPayloadFields.finalizeBatch.name)
+                    getActionField(payload, SCPayloadFields.finalizeBatch.name)
                 )
                 break
 

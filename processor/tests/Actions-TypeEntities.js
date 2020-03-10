@@ -28,7 +28,7 @@ const {
     getEventTypeAddress,
     getPropertyTypeAddress
 } = require('../services/addressing');
-const {getNewKeyPair} = require('../services/utils');
+const {createNewKeyPair} = require('./services/mock_utils');
 
 describe('Types Creation', function () {
     let handler = null;
@@ -43,10 +43,10 @@ describe('Types Creation', function () {
         handler = new SawChainHandler();
         context = new Context();
 
-        signerKeyPair = getNewKeyPair()
+        signerKeyPair = createNewKeyPair()
 
         // Record the System Admin and get key pair.
-        sysAdminKeys = getNewKeyPair()
+        sysAdminKeys = createNewKeyPair()
         await mockCreateSystemAdmin(context, handler, sysAdminKeys.privateKey);
     });
 

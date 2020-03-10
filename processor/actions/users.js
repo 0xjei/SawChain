@@ -10,7 +10,7 @@ const {
 } = require('../services/proto');
 const {
     reject,
-    getSHA512
+    calculateHash
 } = require('../services/utils');
 const {
     getSystemAdminAddress,
@@ -148,7 +148,7 @@ async function createOperator(
         reject(`Public key field doesn't contain a valid public key!`);
 
     const systemAdminAddress = getSystemAdminAddress();
-    const companyId = getSHA512(signerPublicKey, 10);
+    const companyId = calculateHash(signerPublicKey).slice(0, 10)
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(companyId);
     const operatorAddress = getOperatorAddress(publicKey);

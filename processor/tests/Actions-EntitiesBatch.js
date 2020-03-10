@@ -39,9 +39,9 @@ const {
     getProposalAddress
 } = require('../services/addressing');
 const {
-    getSHA512,
-    getNewKeyPair
+    calculateHash
 } = require('../services/utils');
+const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Batch Actions', function () {
     let handler = null;
@@ -76,15 +76,15 @@ describe('Batch Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = getNewKeyPair()
+        sysAdminKeyPair = createNewKeyPair()
         await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
 
         // Company Admin key pair.
-        cmpAdminKeyPair = getNewKeyPair();
-        companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+        cmpAdminKeyPair = createNewKeyPair();
+        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
 
         // Company address.
         companyAddress = getCompanyAddress(companyId);
@@ -93,7 +93,7 @@ describe('Batch Actions', function () {
         await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
         // Create Operator.
-        optKeyPair = getNewKeyPair();
+        optKeyPair = createNewKeyPair();
         operatorAddress = getOperatorAddress(optKeyPair.publicKey);
         await mockCreateOperator(context, handler, cmpAdminKeyPair.privateKey, optKeyPair.publicKey, "task1");
 
@@ -108,7 +108,7 @@ describe('Batch Actions', function () {
 
     describe('Add Certificate To Batch Action', function () {
         const link = "link1";
-        const hash = getSHA512("CertificationDocument");
+        const hash = calculateHash("CertificationDocument");
 
         let caKeyPair = null;
         let ca2KeyPair = null;
@@ -118,11 +118,11 @@ describe('Batch Actions', function () {
 
         before(async function () {
             // Create two Certification Authorities.
-            caKeyPair = getNewKeyPair();
+            caKeyPair = createNewKeyPair();
             caAddress = getCertificationAuthorityAddress(caKeyPair.publicKey);
             await mockCreateCertificationAuthority(context, handler, sysAdminKeyPair.privateKey, caKeyPair.publicKey, "ca1", "web1", ["prd2"]);
 
-            ca2KeyPair = getNewKeyPair();
+            ca2KeyPair = createNewKeyPair();
             ca2Address = getCertificationAuthorityAddress(ca2KeyPair.publicKey);
             await mockCreateCertificationAuthority(context, handler, sysAdminKeyPair.privateKey, ca2KeyPair.publicKey, "ca2", "web2", ["prd1"]);
         });
@@ -763,10 +763,10 @@ describe('Batch Actions', function () {
 
         before(async function () {
             // Create a new Company Admin.
-            cmpAdminKeyPair2 = getNewKeyPair();
-            companyId2 = getSHA512(cmpAdminKeyPair2.publicKey, 10);
-            cmpAdminKeyPair3 = getNewKeyPair();
-            companyId3 = getSHA512(cmpAdminKeyPair3.publicKey, 10);
+            cmpAdminKeyPair2 = createNewKeyPair();
+            companyId2 = calculateHash(cmpAdminKeyPair2.publicKey).slice(0, 10)
+            cmpAdminKeyPair3 = createNewKeyPair();
+            companyId3 = calculateHash(cmpAdminKeyPair3.publicKey).slice(0, 10)
 
             // Company address.
             companyAddress2 = getCompanyAddress(companyId2);
@@ -777,7 +777,7 @@ describe('Batch Actions', function () {
             await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company3", "desc3", "web3", cmpAdminKeyPair3.publicKey, ["prd1", "prd3"]);
 
             // Create Operator.
-            optKeyPair2 = getNewKeyPair();
+            optKeyPair2 = createNewKeyPair();
             operatorAddress2 = getOperatorAddress(optKeyPair2.publicKey);
             await mockCreateOperator(context, handler, cmpAdminKeyPair2.privateKey, optKeyPair2.publicKey, "task1");
         });

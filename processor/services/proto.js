@@ -7,14 +7,14 @@ const protobuf = require('protobufjs')
 // A new empty protobuf root instance.
 let root = new protobuf.Root()
 
-// Retrieve protobuf files.
+// Retrieve every protobuf file.
 let files = fs
     .readdirSync(path.resolve(__dirname, '../../protos'))
     .map(f => path.resolve(__dirname, '../../protos', f))
     .filter(f => f.endsWith('.proto'))
 
 try {
-    // Load synchronously each protobuf files.
+    // Load synchronously each protobuf file.
     root = root.loadSync(files)
 } catch (error) {
     throw error
@@ -22,8 +22,8 @@ try {
 
 // Payload lookup.
 const SCPayload = root.lookup('SCPayload')
-const SCPayloadActions = SCPayload.Action
-const SCPayloadFields = SCPayload.fields
+const SCPayloadActions = SCPayload['Action']
+const SCPayloadFields = SCPayload['fields']
 
 // Users lookup.
 const SystemAdmin = root.lookup('SystemAdmin')

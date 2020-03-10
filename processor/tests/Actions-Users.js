@@ -27,9 +27,9 @@ const {
     getCertificationAuthorityAddress
 } = require('../services/addressing');
 const {
-    getNewKeyPair,
-    getSHA512
+    calculateHash
 } = require('../services/utils');
+const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Users Actions', function () {
     let handler = null;
@@ -51,7 +51,7 @@ describe('Users Actions', function () {
 
         before(function () {
             // Generate System Admin key pair.
-            sysAdminKeyPair = getNewKeyPair()
+            sysAdminKeyPair = createNewKeyPair()
         });
 
         describe('Create System Admin', function () {
@@ -110,7 +110,7 @@ describe('Users Actions', function () {
 
             before(function () {
                 // Generate new key pair for the new System Admin.
-                newAdminKeys = getNewKeyPair();
+                newAdminKeys = createNewKeyPair();
             });
 
             it('Should reject if no timestamp is given', async function () {
@@ -252,15 +252,15 @@ describe('Users Actions', function () {
             await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
 
             // Company Admin key pair.
-            cmpAdminKeyPair = getNewKeyPair();
-            companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+            cmpAdminKeyPair = createNewKeyPair();
+            companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
             companyAddress = getCompanyAddress(companyId);
 
             // Populate the state with a Company.
             await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, companyName, companyDescription, companyWebsite, cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
             // Operator key pair.
-            optKeyPair = getNewKeyPair();
+            optKeyPair = createNewKeyPair();
             operatorAddress = getOperatorAddress(optKeyPair.publicKey);
         });
 
@@ -458,7 +458,7 @@ describe('Users Actions', function () {
 
         before(async function () {
             // Certification Authority key pair.
-            caKeyPair = getNewKeyPair();
+            caKeyPair = createNewKeyPair();
             caAddress = getCertificationAuthorityAddress(caKeyPair.publicKey);
         });
 

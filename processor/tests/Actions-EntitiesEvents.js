@@ -31,9 +31,9 @@ const {
     getBatchAddress
 } = require('../services/addressing');
 const {
-    getSHA512,
-    getNewKeyPair
+    calculateHash
 } = require('../services/utils');
+const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Entities Events Actions', function () {
     let handler = null;
@@ -68,24 +68,24 @@ describe('Entities Events Actions', function () {
         context = new Context();
 
         // Record the System Admin and get key pair.
-        sysAdminKeyPair = getNewKeyPair()
+        sysAdminKeyPair = createNewKeyPair()
         await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
 
         // Populate the state with mock types.
         await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
 
         // Company Admin key pair.
-        cmpAdminKeyPair = getNewKeyPair();
-        companyId = getSHA512(cmpAdminKeyPair.publicKey, 10);
+        cmpAdminKeyPair = createNewKeyPair();
+        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
 
         // Company address.
-        companyAddress = getCompanyAddress(getSHA512(cmpAdminKeyPair.publicKey, 10));
+        companyAddress = getCompanyAddress(calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10))
 
         // Create Company.
         await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);
 
         // Create Operator.
-        optKeyPair = getNewKeyPair();
+        optKeyPair = createNewKeyPair();
         operatorAddress = getOperatorAddress(optKeyPair.publicKey);
         await mockCreateOperator(context, handler, cmpAdminKeyPair.privateKey, optKeyPair.publicKey, "task1");
 

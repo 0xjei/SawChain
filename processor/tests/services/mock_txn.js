@@ -8,7 +8,7 @@ const {Secp256k1Context, Secp256k1PrivateKey} = require('sawtooth-sdk/signing/se
 
 /**
  * A wrapper class for SawChain Transaction.
- * (nb. the wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development)
+ * (nb. The wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development).
  */
 class Txn {
     /**

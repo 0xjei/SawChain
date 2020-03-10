@@ -2,7 +2,7 @@
 
 /**
  * A wrapper class for SawChain Context.
- * (nb. the wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development)
+ * (nb. The wrapper class purpose is to simulate the Sawtooth blockchain in order to speed up tests development).
  */
 class Context {
     /**

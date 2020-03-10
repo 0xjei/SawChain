@@ -6,7 +6,7 @@ const SawChainHandler = require('./services/handler_wrapper');
 const Txn = require('./services/mock_txn');
 const Context = require('./services/mock_context');
 const {SCPayload} = require('../services/proto');
-const {getNewKeyPair} = require('../services/utils')
+const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Core Handler Behavior', function () {
     let handler = null;
@@ -15,7 +15,7 @@ describe('Core Handler Behavior', function () {
 
     before(function () {
         handler = new SawChainHandler()
-        signerKeyPair = getNewKeyPair()
+        signerKeyPair = createNewKeyPair()
     });
 
     beforeEach(function () {

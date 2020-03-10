@@ -11,77 +11,77 @@ const {
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
     CreatePropertyTypeAction,
-    CreateCompanyAction,
-    CreateOperatorAction,
     CreateCertificationAuthorityAction,
+    CreateCompanyAction,
+    CreateFieldAction,
+    CreateOperatorAction,
     CreateDescriptionEventAction,
-    CreateTransformationEventAction,
-    CreateFieldAction
+    CreateTransformationEventAction
 } = require('../../services/proto')
 
 /**
- * Execute a Create System Admin action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
+ * Create and execute a create System Admin action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} privateKey The System Admin private key.
  */
-const mockCreateSystemAdmin = async (context, handler, sysAdminPrivateKey) => {
+const mockCreateSystemAdmin = async (context, handler, privateKey) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_SYSADMIN,
+            action: SCPayloadActions['CREATE_SYSADMIN'],
             timestamp: Date.now()
         }),
-        sysAdminPrivateKey
+        privateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Task Type action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} id Task Type id.
- * @param {String} role Task Type role.
+ * Create and execute a create Task Type action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} id The Task Type unique identifier.
+ * @param {String} role The Task Type role.
  */
 const mockCreateTaskType = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     id,
     role
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_TASK_TYPE,
+            action: SCPayloadActions['CREATE_TASK_TYPE'],
             timestamp: Date.now(),
             createTaskType: CreateTaskTypeAction.create({
                 id: id,
                 role: role
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Product Type action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} id Product Type unique identifier.
- * @param {String} name Product name.
- * @param {String} description Product description.
- * @param {Number} measure Product unit of measure from enumeration of possible values.
- * @param {Object[]} derivedProducts List of identifiers and conversion rate for derived product types.
+ * Create and execute a create Product Type action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} id The Product Type unique identifier.
+ * @param {String} name The Product Type name.
+ * @param {String} description A short description.
+ * @param {Number} measure The unit of measure of the product chosen from an enumeration of possible values.
+ * @param {Object[]} derivedProducts A list of products which can be derived from the Product Type.
  */
 const mockCreateProductType = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     id,
     name,
     description,
@@ -90,7 +90,7 @@ const mockCreateProductType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_PRODUCT_TYPE,
+            action: SCPayloadActions['CREATE_PRODUCT_TYPE'],
             timestamp: Date.now(),
             createProductType: CreateProductTypeAction.create({
                 id: id,
@@ -100,32 +100,32 @@ const mockCreateProductType = async (
                 derivedProducts: derivedProducts
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Event Parameter Type action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} id Event Parameter Type unique identifier.
- * @param {String} name Event Parameter name.
- * @param {Number} type Event Parameter type from enumeration of possible values.
+ * Create and execute a create Event Parameter Type action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} id The Event Parameter Type unique identifier.
+ * @param {String} name The Event Parameter Type name.
+ * @param {Number} type The Event Parameter type chosen from an enumeration of possible values.
  */
 const mockCreateEventParameterType = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     id,
     name,
     type
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
+            action: SCPayloadActions['CREATE_EVENT_PARAMETER_TYPE'],
             timestamp: Date.now(),
             createEventParameterType: CreateEventParameterTypeAction.create({
                 id: id,
@@ -133,31 +133,31 @@ const mockCreateEventParameterType = async (
                 type: type
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Event Parameter Type action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} id Event Type unique identifier.
- * @param {Number} typology Event Type typology from enumeration of possible values.
- * @param {String} name Event name.
- * @param {String} description Event description.
- * @param {String[]} parameters List of identifiers of Event Parameter Types that customize the Event Type data.
- * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Event
+ * Create and execute a create Event Type action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} id The Event Type unique identifier.
+ * @param {Number} typology The Event Type typology which can be description or transformation.
+ * @param {String} name The Event Type name.
+ * @param {String} description A short description.
+ * @param {String[]} parameters A list of ids of Event Parameter Types used to customize the Event Type information.
+ * @param {String[]} enabledTaskTypes List of ids of Task Types that operators must have to record the Event Type.
+ * @param {String[]} enabledProductTypes List of ids of Product Types where it will be possible to record the Event
  *     Type.
- * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Event Type can be recorded.
- * @param {String[]} derivedProductTypes List of identifiers of derived Product Types.
+ * @param {String[]} derivedProductTypes List of Product Types identifiers derived from those enabled.
  */
 const mockCreateEventType = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     id,
     typology,
     name,
@@ -169,7 +169,7 @@ const mockCreateEventType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_EVENT_TYPE,
+            action: SCPayloadActions['CREATE_EVENT_TYPE'],
             timestamp: Date.now(),
             createEventType: CreateEventTypeAction.create({
                 id: id,
@@ -182,28 +182,28 @@ const mockCreateEventType = async (
                 derivedProductTypes: derivedProductTypes
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Property Type action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} id Property Type unique identifier.
- * @param {String} name Property name.
- * @param {Number} type Property type from enumeration of possible values.
- * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the
- *     Property Type.
- * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
+ * Create and execute a create Property Type action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} id The Property Type unique identifier.
+ * @param {String} name The Property name.
+ * @param {Number} type The Property type chosen from an enumeration of possible values.
+ * @param {String[]} enabledTaskTypes List of ids of Task Types that operators must have to record the Property Type.
+ * @param {String[]} enabledProductTypes List of ids of Product Types where it will be possible to record the Property
+ *     Type.
  */
 const mockCreatePropertyType = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     id,
     name,
     type,
@@ -212,7 +212,7 @@ const mockCreatePropertyType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_PROPERTY_TYPE,
+            action: SCPayloadActions['CREATE_PROPERTY_TYPE'],
             timestamp: Date.now(),
             createPropertyType: CreatePropertyTypeAction.create({
                 id: id,
@@ -222,7 +222,7 @@ const mockCreatePropertyType = async (
                 enabledProductTypes: enabledProductTypes
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
@@ -230,59 +230,59 @@ const mockCreatePropertyType = async (
 
 
 /**
- * Execute a Create Company action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
- * @param {String} name Company name.
- * @param {String} description Company description.
- * @param {String} website Company website.
- * @param {String} cmpAdminPublicKey Company Admin public key.
- * @param {String[]} enabledProductTypes Enabled product types list.
+ * Create and execute a create Company action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
+ * @param {String} name The Company name.
+ * @param {String} description A short description.
+ * @param {String} website The Company official website.
+ * @param {String} companyAdminPublicKey The Company Admin public key.
+ * @param {String[]} enabledProductTypes List of ids of Product Types whose creation is enabled in the Company.
  */
 const mockCreateCompany = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     name,
     description,
     website,
-    cmpAdminPublicKey,
+    companyAdminPublicKey,
     enabledProductTypes
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_COMPANY,
+            action: SCPayloadActions['CREATE_COMPANY'],
             timestamp: Date.now(),
             createCompany: CreateCompanyAction.create({
                 name: name,
                 description: description,
                 website: website,
-                admin: cmpAdminPublicKey,
+                admin: companyAdminPublicKey,
                 enabledProductTypes: enabledProductTypes
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Field action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} cmpAdminPrivateKey The Company Admin public key.
- * @param {String} id Field id.
- * @param {String} description Field description.
- * @param {String} product Field cultivable Product Type.
- * @param {float} productQuantity Field predicted production quantity.
- * @param {Object} location Field location coordinates.
+ * Create and execute a create Field action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} companyAdminPrivateKey The Company Admin private key.
+ * @param {String} id The Field unique identifier.
+ * @param {String} description A short description.
+ * @param {String} product The Product Type identifier which refers to the product grown in the Field.
+ * @param {float} productQuantity The maximum production quantity of the Field.
+ * @param {Object} location The approximate location in coordinates of the Field.
  */
 const mockCreateField = async (
     context,
     handler,
-    cmpAdminPrivateKey,
+    companyAdminPrivateKey,
     id,
     description,
     product,
@@ -291,7 +291,7 @@ const mockCreateField = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_FIELD,
+            action: SCPayloadActions['CREATE_FIELD'],
             timestamp: Date.now(),
             createField: CreateFieldAction.create({
                 id: id,
@@ -301,56 +301,57 @@ const mockCreateField = async (
                 location: location
             })
         }),
-        cmpAdminPrivateKey
+        companyAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Operator action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} cmpAdminPrivateKey The Company Admin private key.
- * @param {String} optPublicKey Operator public key.
- * @param {String} task Task Type identifier for Operator task.
+ * Create and execute a create Operator action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} companyAdminPrivateKey The Company Admin private key.
+ * @param {String} optPublicKey The Operator public key.
+ * @param {String} task The role chosen for the Operator task inside the Company.
  */
 const mockCreateOperator = async (
     context,
     handler,
-    cmpAdminPrivateKey,
+    companyAdminPrivateKey,
     optPublicKey,
     task
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_OPERATOR,
+            action: SCPayloadActions['CREATE_OPERATOR'],
             timestamp: Date.now(),
             createOperator: CreateOperatorAction.create({
                 publicKey: optPublicKey,
                 task: task
             })
         }),
-        cmpAdminPrivateKey
+        companyAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Certification Authority action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
+ * Create and execute a create Certification Authority action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {Object} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
- * @param {String} website The Certification Authority website.
- * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
+ * @param {String} website The Certification Authority official website.
+ * @param {String[]} products List of ids of Product Types where the Certification Authority is enabled to issue
+ *     certificates.
  */
 const mockCreateCertificationAuthority = async (
     context,
     handler,
-    sysAdminPrivateKey,
+    systemAdminPrivateKey,
     publicKey,
     name,
     website,
@@ -358,7 +359,7 @@ const mockCreateCertificationAuthority = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
+            action: SCPayloadActions['CREATE_CERTIFICATION_AUTHORITY'],
             timestamp: Date.now(),
             createCertificationAuthority: CreateCertificationAuthorityAction.create({
                 publicKey: publicKey,
@@ -367,26 +368,27 @@ const mockCreateCertificationAuthority = async (
                 products: products
             })
         }),
-        sysAdminPrivateKey
+        systemAdminPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Execute a Create Description Event action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} optPrivateKey The Operator private key.
- * @param {String} eventTypeId EventType unique identifier.
- * @param {String} batch Input batch where Event will be recorded.
- * @param {String} field Input field where Event will be recorded.
- * @param {Object[]} values Unique identifiers and values of different EventParameterValues.
+ * Create and execute a create Description Event action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} operatorPrivateKey The Operator private key.
+ * @param {String} eventTypeId The Event Type unique identifier.
+ * @param {String} batch The input Batch identifier where the Event should be recorded.
+ * @param {String} field The input Field identifier where the Event should be recorded.
+ * @param {Object[]} values List of ids of Event Parameter Value objects used to fill in the input parameters.
+ *
  */
 const mockCreateDescriptionEvent = async (
     context,
     handler,
-    optPrivateKey,
+    operatorPrivateKey,
     eventTypeId,
     batch,
     field,
@@ -394,7 +396,7 @@ const mockCreateDescriptionEvent = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+            action: SCPayloadActions['CREATE_DESCRIPTION_EVENT'],
             timestamp: Date.now(),
             createDescriptionEvent: CreateDescriptionEventAction.create({
                 eventTypeId: eventTypeId,
@@ -403,29 +405,28 @@ const mockCreateDescriptionEvent = async (
                 values: values
             })
         }),
-        optPrivateKey
+        operatorPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
-
 /**
- * Execute a Create Transformation Event action.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} optPrivateKey The Operator private key.
- * @param {String} eventTypeId EventType unique identifier.
- * @param {String[]} batches Input batches to transform.
- * @param {String[]} fields Input fields to transform.
- * @param {float[]} quantities Input quantities to subtract from fields or batches.
- * @param {String} derivedProduct Output Product Type for the output Batch.
- * @param {String} outputBatchId Output Batch identifier.
+ * Create and execute a create Transformation Event action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} operatorPrivateKey The Operator private key.
+ * @param {String} eventTypeId The Event Type unique identifier.
+ * @param {String[]} batches List of ids of Batch identifiers where the Event should be recorded.
+ * @param {String[]} fields List of ids of Field identifiers where the Event should be recorded.
+ * @param {float[]} quantities List of input quantities to subtract from input resources (batches/fields).
+ * @param {String} derivedProduct The output Batch Product Type.
+ * @param {String} outputBatchId The output Batch unique identifier.
  */
 const mockCreateTransformationEvent = async (
     context,
     handler,
-    optPrivateKey,
+    operatorPrivateKey,
     eventTypeId,
     batches,
     fields,
@@ -435,7 +436,7 @@ const mockCreateTransformationEvent = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+            action: SCPayloadActions['CREATE_TRANSFORMATION_EVENT'],
             timestamp: Date.now(),
             createTransformationEvent: CreateTransformationEventAction.create({
                 eventTypeId: eventTypeId,
@@ -446,63 +447,68 @@ const mockCreateTransformationEvent = async (
                 outputBatchId: outputBatchId
             })
         }),
-        optPrivateKey
+        operatorPrivateKey
     )
 
     await handler.apply(txn, context)
 }
 
 /**
- * Populate a food supply-chain with mock data.
- * @param {Context} context Current state context.
- * @param {SawChainHandlerWrapper} handler Current instance of SawChain transaction handler wrapper.
- * @param {String} sysAdminPrivateKey System Admin private key.
+ * Populate the state object with a bunch of different combinations of types.
+ * This function is made in order to simplify tests using a pre-defined set of types.
+ * (nb. The information is for testing purposes only and is not intended for any production use).
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} systemAdminPrivateKey The Operator private key.
  */
-const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) => {
+const populateStateWithMockData = async (
+    context,
+    handler,
+    systemAdminPrivateKey
+) => {
     // Task types.
-    await mockCreateTaskType(context, handler, sysAdminPrivateKey, 'task1', 'role1')
-    await mockCreateTaskType(context, handler, sysAdminPrivateKey, 'task2', 'role2')
-    await mockCreateTaskType(context, handler, sysAdminPrivateKey, 'task3', 'role3')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task1', 'role1')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task2', 'role2')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task3', 'role3')
 
     // Product Types.
-    const derivedProd1 = ProductType.DerivedProduct.create({
+    const derivedProd1 = ProductType['DerivedProduct'].create({
         derivedProductType: 'prd1',
         conversionRate: 0.8
     })
 
-    const derivedProd2 = ProductType.DerivedProduct.create({
+    const derivedProd2 = ProductType['DerivedProduct'].create({
         derivedProductType: 'prd2',
         conversionRate: 0.7
     })
 
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, 'prd1', 'name1', 'desc1', 3, []) // Bottles.
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, 'prd2', 'name2', 'desc2', 1, [derivedProd1]) // Olive
-                                                                                                                    // oil.
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, 'prd3', 'name3', 'desc3', 0, [derivedProd2]) // Olives.
-    await mockCreateProductType(context, handler, sysAdminPrivateKey, 'prd4', 'name4', 'desc4', 0, [derivedProd2]) // Olives.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd1', 'name1', 'desc1', 3, []) // Bottles.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd2', 'name2', 'desc2', 1, [derivedProd1]) // Olive
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd3', 'name3', 'desc3', 0, [derivedProd2]) // Olives.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd4', 'name4', 'desc4', 0, [derivedProd2]) // Olives.
 
     // Event Parameter Types.
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param1', 'name1', 0)
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param2', 'name2', 1)
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param3', 'name3', 2)
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param4', 'name4', 0)
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param5', 'name5', 1)
-    await mockCreateEventParameterType(context, handler, sysAdminPrivateKey, 'param6', 'name6', 2)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param1', 'name1', 0)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param2', 'name2', 1)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param3', 'name3', 2)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param4', 'name4', 0)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param5', 'name5', 1)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param6', 'name6', 2)
 
     // Event Types.
-    const param1 = EventType.EventParameter.create({
+    const param1 = EventType['EventParameter'].create({
         parameterTypeId: 'param1',
         required: true,
         minValue: 10,
         maxValue: 100
     })
-    const param2 = EventType.EventParameter.create({
+    const param2 = EventType['EventParameter'].create({
         parameterTypeId: 'param2',
         required: true,
         minLength: 3,
         maxLength: 10
     })
-    const param3 = EventType.EventParameter.create({
+    const param3 = EventType['EventParameter'].create({
         parameterTypeId: 'param3',
         required: true
     })
@@ -513,21 +519,21 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         minValue: 10,
         maxValue: 100
     })
-    const param5 = EventType.EventParameter.create({
+    const param5 = EventType['EventParameter'].create({
         parameterTypeId: 'param5',
         required: false,
         minLength: 1,
         maxLength: 10
     })
-    const param6 = EventType.EventParameter.create({
+    const param6 = EventType['EventParameter'].create({
         parameterTypeId: 'param6',
         required: false
     })
 
     // Description events.
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event1',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name1',
         'desc1',
         [param1, param2, param3],
@@ -536,9 +542,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         []
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event2',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name2',
         'desc2',
         [param4, param5, param6],
@@ -547,9 +553,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         []
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event3',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name3',
         'desc3',
         [param1, param4],
@@ -558,9 +564,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         []
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event4',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name4',
         'desc4',
         [param4],
@@ -569,9 +575,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         []
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event5',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name5',
         'desc5',
         [],
@@ -580,9 +586,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         []
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event6',
-        EventType.EventTypology.DESCRIPTION,
+        EventType['EventTypology']['DESCRIPTION'],
         'name6',
         'desc6',
         [param1, param4],
@@ -592,9 +598,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
     )
 
     // Transformation events.
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event7',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType['EventTypology']['TRANSFORMATION'],
         'name7',
         'desc7',
         [],
@@ -603,9 +609,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         ['prd2']
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event8',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType['EventTypology']['TRANSFORMATION'],
         'name8',
         'desc8',
         [],
@@ -614,9 +620,9 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
         ['prd2']
     )
 
-    await mockCreateEventType(context, handler, sysAdminPrivateKey,
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event9',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType['EventTypology']['TRANSFORMATION'],
         'name9',
         'desc9',
         [],
@@ -626,12 +632,12 @@ const populateStateWithMockData = async (context, handler, sysAdminPrivateKey) =
     )
 
     // Property Types.
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property1', 'name1', 0, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property2', 'name2', 1, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property3', 'name3', 2, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property4', 'name4', 3, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property5', 'name5', 0, ['task2'], ['prd2'])
-    await mockCreatePropertyType(context, handler, sysAdminPrivateKey, 'property6', 'name6', 1, ['task1'], ['prd1'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property1', 'name1', 0, ['task1'], ['prd2'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property2', 'name2', 1, ['task1'], ['prd2'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property3', 'name3', 2, ['task1'], ['prd2'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property4', 'name4', 3, ['task1'], ['prd2'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property5', 'name5', 0, ['task2'], ['prd2'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property6', 'name6', 1, ['task1'], ['prd1'])
 }
 
 module.exports = {
@@ -641,11 +647,11 @@ module.exports = {
     mockCreateEventParameterType,
     mockCreateEventType,
     mockCreatePropertyType,
-    mockCreateOperator,
-    mockCreateCertificationAuthority,
-    populateStateWithMockData,
     mockCreateCompany,
     mockCreateField,
+    mockCreateOperator,
+    mockCreateCertificationAuthority,
     mockCreateDescriptionEvent,
-    mockCreateTransformationEvent
+    mockCreateTransformationEvent,
+    populateStateWithMockData
 }
