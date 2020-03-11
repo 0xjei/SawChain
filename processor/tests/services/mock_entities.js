@@ -28,7 +28,7 @@ const {
 const mockCreateSystemAdmin = async (context, handler, privateKey) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_SYSADMIN'],
+            action: SCPayloadActions.CREATE_SYSADMIN,
             timestamp: Date.now()
         }),
         privateKey
@@ -54,7 +54,7 @@ const mockCreateTaskType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_TASK_TYPE'],
+            action: SCPayloadActions.CREATE_TASK_TYPE,
             timestamp: Date.now(),
             createTaskType: CreateTaskTypeAction.create({
                 id: id,
@@ -90,7 +90,7 @@ const mockCreateProductType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_PRODUCT_TYPE'],
+            action: SCPayloadActions.CREATE_PRODUCT_TYPE,
             timestamp: Date.now(),
             createProductType: CreateProductTypeAction.create({
                 id: id,
@@ -125,7 +125,7 @@ const mockCreateEventParameterType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_EVENT_PARAMETER_TYPE'],
+            action: SCPayloadActions.CREATE_EVENT_PARAMETER_TYPE,
             timestamp: Date.now(),
             createEventParameterType: CreateEventParameterTypeAction.create({
                 id: id,
@@ -169,7 +169,7 @@ const mockCreateEventType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_EVENT_TYPE'],
+            action: SCPayloadActions.CREATE_EVENT_TYPE,
             timestamp: Date.now(),
             createEventType: CreateEventTypeAction.create({
                 id: id,
@@ -212,7 +212,7 @@ const mockCreatePropertyType = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_PROPERTY_TYPE'],
+            action: SCPayloadActions.CREATE_PROPERTY_TYPE,
             timestamp: Date.now(),
             createPropertyType: CreatePropertyTypeAction.create({
                 id: id,
@@ -252,7 +252,7 @@ const mockCreateCompany = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_COMPANY'],
+            action: SCPayloadActions.CREATE_COMPANY,
             timestamp: Date.now(),
             createCompany: CreateCompanyAction.create({
                 name: name,
@@ -291,7 +291,7 @@ const mockCreateField = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_FIELD'],
+            action: SCPayloadActions.CREATE_FIELD,
             timestamp: Date.now(),
             createField: CreateFieldAction.create({
                 id: id,
@@ -324,7 +324,7 @@ const mockCreateOperator = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_OPERATOR'],
+            action: SCPayloadActions.CREATE_OPERATOR,
             timestamp: Date.now(),
             createOperator: CreateOperatorAction.create({
                 publicKey: optPublicKey,
@@ -359,7 +359,7 @@ const mockCreateCertificationAuthority = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_CERTIFICATION_AUTHORITY'],
+            action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
             timestamp: Date.now(),
             createCertificationAuthority: CreateCertificationAuthorityAction.create({
                 publicKey: publicKey,
@@ -396,7 +396,7 @@ const mockCreateDescriptionEvent = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_DESCRIPTION_EVENT'],
+            action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
             timestamp: Date.now(),
             createDescriptionEvent: CreateDescriptionEventAction.create({
                 eventTypeId: eventTypeId,
@@ -436,7 +436,7 @@ const mockCreateTransformationEvent = async (
 ) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions['CREATE_TRANSFORMATION_EVENT'],
+            action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
             timestamp: Date.now(),
             createTransformationEvent: CreateTransformationEventAction.create({
                 eventTypeId: eventTypeId,
@@ -472,12 +472,12 @@ const populateStateWithMockData = async (
     await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task3', 'role3')
 
     // Product Types.
-    const derivedProd1 = ProductType['DerivedProduct'].create({
+    const derivedProd1 = ProductType.DerivedProduct.create({
         derivedProductType: 'prd1',
         conversionRate: 0.8
     })
 
-    const derivedProd2 = ProductType['DerivedProduct'].create({
+    const derivedProd2 = ProductType.DerivedProduct.create({
         derivedProductType: 'prd2',
         conversionRate: 0.7
     })
@@ -496,19 +496,19 @@ const populateStateWithMockData = async (
     await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param6', 'name6', 2)
 
     // Event Types.
-    const param1 = EventType['EventParameter'].create({
+    const param1 = EventType.EventParameter.create({
         parameterTypeId: 'param1',
         required: true,
         minValue: 10,
         maxValue: 100
     })
-    const param2 = EventType['EventParameter'].create({
+    const param2 = EventType.EventParameter.create({
         parameterTypeId: 'param2',
         required: true,
         minLength: 3,
         maxLength: 10
     })
-    const param3 = EventType['EventParameter'].create({
+    const param3 = EventType.EventParameter.create({
         parameterTypeId: 'param3',
         required: true
     })
@@ -519,13 +519,13 @@ const populateStateWithMockData = async (
         minValue: 10,
         maxValue: 100
     })
-    const param5 = EventType['EventParameter'].create({
+    const param5 = EventType.EventParameter.create({
         parameterTypeId: 'param5',
         required: false,
         minLength: 1,
         maxLength: 10
     })
-    const param6 = EventType['EventParameter'].create({
+    const param6 = EventType.EventParameter.create({
         parameterTypeId: 'param6',
         required: false
     })
@@ -533,7 +533,7 @@ const populateStateWithMockData = async (
     // Description events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event1',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name1',
         'desc1',
         [param1, param2, param3],
@@ -544,7 +544,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event2',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name2',
         'desc2',
         [param4, param5, param6],
@@ -555,7 +555,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event3',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name3',
         'desc3',
         [param1, param4],
@@ -566,7 +566,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event4',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name4',
         'desc4',
         [param4],
@@ -577,7 +577,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event5',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name5',
         'desc5',
         [],
@@ -588,7 +588,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event6',
-        EventType['EventTypology']['DESCRIPTION'],
+        EventType.EventTypology.DESCRIPTION,
         'name6',
         'desc6',
         [param1, param4],
@@ -600,7 +600,7 @@ const populateStateWithMockData = async (
     // Transformation events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event7',
-        EventType['EventTypology']['TRANSFORMATION'],
+        EventType.EventTypology.TRANSFORMATION,
         'name7',
         'desc7',
         [],
@@ -611,7 +611,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event8',
-        EventType['EventTypology']['TRANSFORMATION'],
+        EventType.EventTypology.TRANSFORMATION,
         'name8',
         'desc8',
         [],
@@ -622,7 +622,7 @@ const populateStateWithMockData = async (
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'event9',
-        EventType['EventTypology']['TRANSFORMATION'],
+        EventType.EventTypology.TRANSFORMATION,
         'name9',
         'desc9',
         [],

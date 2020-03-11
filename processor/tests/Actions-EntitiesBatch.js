@@ -1253,7 +1253,7 @@ describe('Batch Actions', function () {
         });
     });
 
-    describe('Finalize Batch Action', function() {
+    describe('Finalize Batch Action', function () {
         const batch = "batch2";
         let batchAddress2 = null;
 

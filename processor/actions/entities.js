@@ -848,8 +848,8 @@ async function recordBatchProperty(
             propertyTypeId: property,
             values: [propertyValue]
         }));
-    else {
-        for (const propertyList of batchState.properties) {
+    else {
+        for (const propertyList of batchState.properties) {
             if ((propertyList).propertyTypeId === property) {
                 (propertyList).values.push(propertyValue)
             }
@@ -877,7 +877,7 @@ async function createProposal(
     signerPublicKey,
     timestamp,
     {batch, receiverCompany, notes}
-) {
+) {
     // Validation: Batch is not set.
     if (!batch)
         reject(`Batch is not set!`);
@@ -962,7 +962,7 @@ async function answerProposal(
     signerPublicKey,
     timestamp,
     {batch, senderCompany, receiverCompany, response, motivation}
-) {
+) {
     // Validation: Batch is not set.
     if (!batch)
         reject(`Batch is not set!`);
@@ -1035,7 +1035,7 @@ async function answerProposal(
     // Get issued proposal
     let issuedProposal = null;
 
-    for (const proposal of batchState.proposals) {
+    for (const proposal of batchState.proposals) {
         if (proposal.senderCompany === senderCompany &&
             proposal.receiverCompany === receiverCompany &&
             proposal.status === Batch.Proposal.Status.ISSUED)

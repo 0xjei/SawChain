@@ -22,8 +22,8 @@ try {
 
 // Payload lookup.
 const SCPayload = root.lookup('SCPayload')
-const SCPayloadActions = SCPayload['Action']
-const SCPayloadFields = SCPayload['fields']
+const SCPayloadActions = root.lookup('Action').values
+const SCPayloadFields = root.lookup('Action').parent.fields
 
 // Users lookup.
 const SystemAdmin = root.lookup('SystemAdmin')
