@@ -35,7 +35,7 @@ responsible for the entire supply-chain application logic. Each component will r
 The project main directory includes a [docker-compose](docker-compose.yaml) file that contains the instructions for Docker to make up multiple components and network them together. 
 The core pre-packaged Sawtooth components are downloaded from [DockerHub](https://hub.docker.com/search/?q=sawtooth&type=image).
 
-#### Components
+### Components
 
 | Name                   | Endpoint              | Source    | Description
 | ---------------------- | --------------------- | --------- | ------------------------

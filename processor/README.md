@@ -1,10 +1,10 @@
 # SawChain Transaction Family Specification
 ## Overview
-The SawChain Transaction Family allows each member of a consortium to rely on a predefined set of immutable transaction actions 
-for updating a single shared ledger. The external agreements as well as users, products and events are managed through a user-specifiable set of types adaptable to every use-case.
-Any individual is able to read information from ledger state to reconstruct the history of events of production batches, ownership exchange and quantity shifts.
+The SawChain Transaction Family allows each member of a supply-chain consortium to rely on a predefined set of immutable transaction actions 
+for updating a single shared ledger. The external agreements as well as users, products and events are managed through a user-specifiable set of types which are adaptable to every use case.
+Any individual is able to read data from the state of the ledger to reconstruct the history of events that occurs on production batches, ownership changes and quantity shifts.
 
-*nb.* The project is under development. This specification file must **NOT** be considered as definitive.
+*nb.* The project is under development and this specification file must **NOT** be considered as definitive.
 
 ## Contents
 - [State](#state)
@@ -37,29 +37,28 @@ Any individual is able to read information from ledger state to reconstruct the 
 ## State
 Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
 Protocol Buffers are language-neutral, platform-neutral, extensible mechanism for serializing structured data.
-To improve the understanding of the relationships between objects they have been categorized as follows:
-- **Users**: *System Admin*, *Company Admin*, *Operator*, *Certification Authority*.
-- **Types**: *Task Type*, *Product Type*, *Event Parameter Type*, *Event Type*.
-- **Entities**: *Company*, *Field*, *Batch*, *Event*.
+To improve the understanding of the relationships between state objects they have been grouped as follows:
+- **Users**: *System Admin*, *Company Admin*, *Operator*, and *Certification Authority*.
+- **Types**: *Task Type*, *Product Type*, *Event Parameter Type*, *Event Type*, and *Property Type*.
+- **Entities**: *Company*, *Field*, *Event* and *Batch* .
 
 As described in the [Addressing](#addressing) section below, these objects are stored in separate sub-namespaces under the SawChain namespace.
 
 ### Users
-Every user is an authorized "*agent*" who can send transactions. This could include not only humans, but also autonomous sensors sending transactions that update
-properties like temperature and location for production batches. All users must be created (registered on-chain) in order to send transactions.
-Each agent is uniquely identified by his/her own public key.
+Every user is an authorized *agent* able to send transactions to the ledger. 
+This could include not only humans, but also autonomous sensors or other IoT devices. 
+Each user is uniquely identified by his/her own public key and it must be created (recorded on-chain) in order to be authorized to send transactions.
 
 #### System Admin
-The System Admin is a special kind of external user from supply-chain participants identified as trustworthy inside the consortium.
-He is responsible for system bootstrap by recording companies and their administrators, and the entire set of types, according to supply-chain rules and agreements. 
-Referencing an external agent from the consortium, it is possible to avoid tampering or internal advantages by the participants themselves.
-There can be only one System Admin for each SawChain release.
+The System Admin is a special kind of user who is external and unique among supply-chain participants, but identified as trustworthy by themselves.
+He is responsible for system startup which concerns the recording of companies as well as their administrators, the entire set of types according to supply-chain rules and agreements. 
+By the external nature of the System Admin, is possible to avoid tampering and mitigate corporate terrorism between participants.
 
 ```protobuf
-message Users {
+message SystemAdmin {
     // The System Admin's public key.
     string publicKey = 1;
-    
+
     // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 2;
 }
@@ -442,10 +441,10 @@ message Batch {
 
 ## Addressing
 SawChain state objects are stored under the namespace obtained by taking the first six characters of the SHA-512 hash of the string SawChain (**87f67d**).
-The addressing flexibility in Sawtooth permits to use each hexadecimal character after the namespace as you wish in order to make more easy to retrieve information stored in the state
-(check [Sawtooth Addressing](https://sawtooth.hyperledger.org/docs/core/releases/latest/app_developers_guide/address_and_namespace.html?highlight=addressing) for more info).
+The addressing flexibility in Sawtooth allows to create an addressing scheme to organize the hexadecimal characters after the namespace.
+This is useful to make a pure scheme to retrieve information stored in the state (check [Sawtooth Addressing](https://sawtooth.hyperledger.org/docs/core/releases/latest/app_developers_guide/address_and_namespace.html?highlight=addressing) for more info.
 
-The SawChain addressing scheme uses the next two hexadecimal characters after the namespace to group together addresses containing the same kind of data.
+The SawChain addressing scheme uses the next two hexadecimal characters after the namespace to group together addresses containing records with the same structure.
 
 * Users: `00`
 * Types: `01`
@@ -454,14 +453,12 @@ The SawChain addressing scheme uses the next two hexadecimal characters after th
 * Batch: `04`
 * Event: `05`
 
-There's a subsequent subdivision of next hexadecimal characters based on which information is going to be stored.
-The remaining 62 characters of an object's address are determined as below:
-
-For Users and Types, the subsequent two hexadecimal characters are useful to group different kind of users.
+The next hexadecimal characters are organized based on which type of record is going to be stored in the state.
+The remaining 62 characters of state addresses are determined as below:
 
 * System Admin
     - The two hexadecimal characters `10`,
-    - The first 60 characters of zeros.
+    - 60 zeros.
 * Company Admin
     - The two hexadecimal characters `11`,
     - The first 60 characters of the SHA-512 of its public key.
@@ -484,38 +481,46 @@ For Users and Types, the subsequent two hexadecimal characters are useful to gro
 * Event Type
     - The two hexadecimal characters `23`,
     - The first 60 characters of the SHA-512 of its identifier.
+* Property Type
+    - The two hexadecimal characters `24`,
+    - The first 60 characters of the SHA-512 of its identifier.
 
 * Company
     - The two hexadecimal characters `02`,
-    - The first 60 characters of the SHA-512 of its identifier.
+    - The first 62 characters of the SHA-512 of its identifier.
 * Field
     - The two hexadecimal characters `03`,
     - The first 42 characters of the SHA-512 of its identifier.
-    - The first 20 characters of the SHA-512 of company identifier.
+    - The first 20 characters of the SHA-512 of its company identifier.
 * Batch
     - The two hexadecimal characters `04`,
-    - The first 42 characters of the SHA-512 of its identifier.
-    - The first 20 characters of the SHA-512 of company identifier.
+    - The first 62 characters of the SHA-512 of its identifier.
 
 ## Transactions
 ### Transaction Payload
-All SawChain transactions are wrapped in a tagged payload object to allow the transaction dispatching to the appropriate handling logic.
+All SawChain transactions are wrapped in a tagged payload object to allow the transaction dispatching to the appropriate action handling logic.
 
 ```protobuf
 message SCPayload {
     enum Action {
-        CREATE_SYSADMIN = 0;
-        UPDATE_SYSADMIN = 1;
+        CREATE_SYSTEM_ADMIN = 0;
+        UPDATE_SYSTEM_ADMIN = 1;
         CREATE_TASK_TYPE = 2;
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
         CREATE_EVENT_TYPE = 5;
-        CREATE_CERTIFICATION_AUTHORITY = 6;
-        CREATE_COMPANY = 7;
-        CREATE_FIELD = 8;
-        CREATE_OPERATOR = 9;
-        CREATE_DESCRIPTION_EVENT = 10;
-        CREATE_TRANSFORMATION_EVENT = 11;
+        CREATE_PROPERTY_TYPE = 6;
+        CREATE_CERTIFICATION_AUTHORITY = 7;
+        CREATE_COMPANY = 8;
+        CREATE_FIELD = 9;
+        CREATE_OPERATOR = 10;
+        CREATE_DESCRIPTION_EVENT = 11;
+        CREATE_TRANSFORMATION_EVENT = 12;
+        ADD_BATCH_CERTIFICATE = 13;
+        RECORD_BATCH_PROPERTY = 14;
+        CREATE_PROPOSAL = 15;
+        ANSWER_PROPOSAL = 16;
+        FINALIZE_BATCH = 17;
     }
 
     Action action = 1;
@@ -523,17 +528,23 @@ message SCPayload {
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 2;
 
-    UpdateSystemAdminAction updateSysAdmin = 3;
+    UpdateSystemAdminAction updateSystemAdmin = 3;
     CreateTaskTypeAction createTaskType = 4;
     CreateProductTypeAction createProductType = 5;
     CreateEventParameterTypeAction createEventParameterType = 6;
     CreateEventTypeAction createEventType = 7;
-    CreateCertificationAuthorityAction createCertificationAuthority = 8;
-    CreateCompanyAction createCompany = 9;
-    CreateFieldAction createField = 10;
-    CreateOperatorAction createOperator = 11;
-    CreateDescriptionEvent createDescriptionEvent = 12;
-    CreateTransformationEvent createTransformationEvent = 13;
+    CreatePropertyTypeAction createPropertyType = 8;
+    CreateCertificationAuthorityAction createCertificationAuthority = 9;
+    CreateCompanyAction createCompany = 10;
+    CreateFieldAction createField = 11;
+    CreateOperatorAction createOperator = 12;
+    CreateDescriptionEventAction createDescriptionEvent = 13;
+    CreateTransformationEventAction createTransformationEvent = 14;
+    AddBatchCertificateAction addBatchCertificate = 15;
+    RecordBatchPropertyAction recordBatchProperty = 16;
+    CreateProposalAction createProposal = 17;
+    AnswerProposalAction answerProposal = 18;
+    FinalizeBatchAction finalizeBatch = 19;
 }
 ```
 
@@ -547,22 +558,21 @@ A Create System Admin transaction is invalid if one of the following conditions 
 * System Admin is already recorded.
 
 ### Update System Admin
-A System Admin can be changed by updating the public key recorded into the System Admin unique state address.
+The System Admin can be replaced by changing the public key recorded into the unique state address for System Admin.
+The only user enabled to perform this action is the current System Admin.
 
 ```protobuf
 message UpdateSystemAdminAction {
-    // New System Admin's public key.
+    // The new System Admin public key.
     string publicKey = 1;
 }
 ```
 
 An Update System Admin transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Public key field is not set.
-* Public key field doesn't contain a valid public key.
-* System Admin is not recorded.
-* There is a user already associated to given public key.
-* Transaction signer is not the System Admin.
+* The public key field doesn't contain a valid public key.
+* The signer is not the System Admin.
+* The public key belongs to another authorized user.
 
 ### Create Task Type
 When the System Admin creates a Task Type he has to specify a unique identifier among these types and a string which describes the role.
