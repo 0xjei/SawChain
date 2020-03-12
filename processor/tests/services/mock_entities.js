@@ -28,7 +28,7 @@ const {
 const mockCreateSystemAdmin = async (context, handler, privateKey) => {
     const txn = new Txn(
         SCPayload.create({
-            action: SCPayloadActions.CREATE_SYSADMIN,
+            action: SCPayloadActions.CREATE_SYSTEM_ADMIN,
             timestamp: Date.now()
         }),
         privateKey

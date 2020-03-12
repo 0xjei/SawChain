@@ -2,6 +2,7 @@
 
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
 const {createHash} = require('crypto')
+const {SystemAdmin} = require('./proto')
 
 /**
  * A quick convenience function to throw an InvalidTransaction error with a joined message.
@@ -29,13 +30,23 @@ const calculateHash = (input) => {
 const getActionField = (payload, actionField) => {
     // Check if the SCPayload object contains the wanted action field name.
     if (!payload[actionField])
-        reject(`Action payload is missing for ${actionField} action!`)
+        reject(`Action payload is missing for ${actionField} action.`)
 
     return payload[actionField]
+}
+
+/**
+ * Return true or false depending on whether or not the given value is a valid public key.
+ * It should reject an address if it's not a string or not 66 hex characters.
+ * @param {String} publicKey The string to evaluate.
+ */
+const isValidPublicKey = (publicKey) => {
+    return RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey)
 }
 
 module.exports = {
     reject,
     calculateHash,
-    getActionField
+    getActionField,
+    isValidPublicKey
 }

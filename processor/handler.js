@@ -63,15 +63,15 @@ class SawChainHandler extends TransactionHandler {
 
         // Validation: Payload timestamp is not set.
         if (!timestamp.low && !timestamp.high)
-            reject(`Payload timestamp is not set!`)
+            reject(`Payload timestamp is not set.`)
 
         // Action handling.
         switch (action) {
-            case SCPayloadActions.CREATE_SYSADMIN:
+            case SCPayloadActions.CREATE_SYSTEM_ADMIN:
                 await createSystemAdmin(context, signerPublicKey, timestamp)
                 break
 
-            case SCPayloadActions.UPDATE_SYSADMIN:
+            case SCPayloadActions.UPDATE_SYSTEM_ADMIN:
                 await updateSystemAdmin(
                     context,
                     signerPublicKey,

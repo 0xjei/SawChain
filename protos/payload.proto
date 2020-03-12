@@ -7,8 +7,8 @@ import "entities.proto";
 
 message SCPayload {
     enum Action {
-        CREATE_SYSADMIN = 0;
-        UPDATE_SYSADMIN = 1;
+        CREATE_SYSTEM_ADMIN = 0;
+        UPDATE_SYSTEM_ADMIN = 1;
         CREATE_TASK_TYPE = 2;
         CREATE_PRODUCT_TYPE = 3;
         CREATE_EVENT_PARAMETER_TYPE = 4;
@@ -52,7 +52,7 @@ message SCPayload {
 }
 
 message UpdateSystemAdminAction {
-    // New System Admin's public key.
+    // The new System Admin public key.
     string publicKey = 1;
 }
 
