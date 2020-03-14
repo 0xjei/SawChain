@@ -17,6 +17,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
         * [Product Type](#product-type)
         * [Event Parameter Type](#event-parameter-type)
         * [Event Type](#event-type)
+        * [Property Type](#property-type)
     * [Entities](#entities)
         * [Company](#company)
         * [Field](#field)
@@ -29,6 +30,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
     * [Create Product Type](#create-product-type)
     * [Create Event Parameter Type](#create-event-parameter-type)
     * [Create Event Type](#create-event-type)
+    * [Create Property Type](#create-property-type)
     * [Create Company](#create-company)
     * [Create Field](#create-field)
     * [Create Operator](#create-operator)
@@ -124,157 +126,160 @@ message CertificationAuthority {
 ```
 
 ## Types
-Each Type is a template structure which users can defined to match their design.
-In order to validate incoming data, each entity (like events, batches, etc.) is assigned to a particular Type at creation. 
-Types are recorded into the state to avoid subsequent changes or misunderstandings between parties.  
-As the supply chain needs to evolve, different Types can be recorded into the state.
- 
+Due to the variety of food supply chains the identification of building blocks for designing a generic food chain seems very difficult. 
+Types are template forms which guarantee adaptability to a wide range of use cases. They will be used to define a particular type of state object involved in the supply chain.
+The System Admin will configure and record each possible Type into the state according to the consortium specifications.
+This mechanism leads to an extensible on-chain configuration which avoids subsequent changes or misunderstandings between parties.
+
 #### Task Type
-Operators are bound to a specified role inside a company which describes their responsibilities. 
-This information can be used to filter different types of products and events that the operator can interact. 
-Task type is used to define a particular task/role for operators. 
+A Task Type describes a particular task that can be assigned to an Operator inside a Company.
+An Operator is authorized to deal with a subset of products and events based on his/her task. 
 
 ```protobuf
 message TaskType {
-    // Unique identifier.
+    // The Task Type unique identifier.
     string id = 1;
 
-    // Task name.
-    string role = 2;
+    // The name of the task.
+    string task = 2;
 }
 ```
 
 ### Product Type
-A food supply-chain moves tons of production batches from production to retailing steps. The production companies are well-known and
-every product needs to be monitored as well as each possible derived product from it.
-Every product that can be produced, processed and sell along the supply chain is recorded as Product Type.
-This is so important to notice that SawChain tracks units of amount of products (i.e. production batch) and can be configured to track
-single production units, but it's not the point.
-The conversion rate for each derived product enable the recording of real quantity changes.
+Along a food supply-chain tons of different quantities of products are moved every day.
+Each company has its own particular working process that involves only particular products.
+A Product Type is used to identify a particular type of product that can be produced, processed and sell along the supply chain.
+Multiple product types can derive from one type of product, each of which has its own quantity conversion rate, 
+which varies from production process to product quality.
 
 ```protobuf
 message ProductType {
-    message DerivedProduct {
-        // Derived Product Type identifier.
-        string derivedProductType = 1;
+    message DerivedProductType {
+        // The derived Product Type state address.
+        string productTypeAddress = 1;
 
-        // Quantity conversion rate.
+        // A multiplier value for the quantity conversion rate.
         float conversionRate = 2;
     }
 
-    // Possible values for unit of measure.
-    enum UnitOfMeasure {
-        KILOS = 0;
-        LITRE = 1;
-        METRE = 2;
-        UNIT = 3;
-    }
-
-    // Unique identifier.
+    // The Product Type unique identifier.
     string id = 1;
 
-    // Product name.
+    // The product name.
     string name = 2;
 
-    // Product description.
+    // A short description of the product.
     string description = 3;
 
-    // Product quantity unit of measure.
-    UnitOfMeasure measure = 4;
+    // The unit of measure used for the product quantity.
+    TypeData.UnitOfMeasure measure = 4;
 
-    // List of derived products.
-    repeated DerivedProduct derivedProducts = 5;
+    // A list of derived Product Types with a quantity conversion rate.
+    repeated DerivedProductType derivedProductTypes = 5;
 }
 ```
 
 ### Event Parameter Type
-Due to the variety of supply-chain relevant events, it's not possible to figure out which information should be added in general.
-For this purpose, Event Parameter Type allows to construct a custom piece of additional information that is used to make up an Event Type.
+Even the same events may require different information based on the production process adopted by the company or the products involved.
+Due to the variety of supply-chain relevant events it's not possible to guess which information must be associated to the event.
+The Event Parameter Type allows to create a custom type of template information (named parameter) which can be attached 
+to a multiple Event Type with additional features (ex. required, min/max values/length).
 
 ```protobuf
 message EventParameterType {
-    // Event Parameter values for type.
-    enum Type {
-        NUMBER = 0;
-        STRING = 1;
-        BYTES = 2;
-    }
-
-    // Unique identifier.
+    // The Event Parameter Type unique identifier.
     string id = 1;
 
-    // Event Parameter name.
+    // The Event Parameter Type name.
     string name = 2;
 
-    // Event Parameter type.
-    Type type = 3;
+    // The Event Parameter Type information data type.
+    TypeData.DataType type = 3;
 }
 ```
 
 ### Event Type
-An Event Type represent an important production, processing or retailing activity performed on a field or production batch.
-The same event can be recorded in different kind of products from operators assigned to different tasks.
+An Event Type represent an important production, processing or retailing activity performed on a production entity (Field/Batch).
+An Event Type is constructed using a list of previously defined Event Parameter Types.
 
-Relevant events are made up through a list of previously defined Event Parameters Types.
-Each parameter can be enriched with some fields depends on his type (required, min/max value and length) that needs to be satisfied to record it correctly.
+A Parameter can have different additional features (required, min/max value/length) to satisfy in order to record the Event correctly.
 For example, a parameter *Notes* can have a *required* property set to *true* and a *maxLength* property set to *80*.
-A value must not be assigned to 'values' fields, it's going to be assigned during Event recording step.
-Exclusively only one values field will be validated based on parameter type.
-As in the previous example, *Notes* must have the *stringValue* field filled with a string having a number of characters greater than 0 and less than 80.
+A value can be assigned to one of the 'values' fields (according to parameter DataType) only if it's a default value,
+otherwise, the Operator will provide a value during Event recording.
+For example, *Notes* must have the field *stringValue* filled with a string containing up to 80 characters.
 
-The *typology* field is used to separate Event Types that deals with transformations of products and his quantities (TRANSFORMATION) to ones that provides
-information and data about an activity (DESCRIPTION). If the Event Type deals with transformations, the *derivedProductTypes* field must be filled in.
+The *typology* field is used to separate description and transformation Event Types.
+The first typology provides custom parameters to fill in with information and data about a real activity, and the second one deals with transformations of products (ie. quantities manipulation).
+In the latter case it is necessary to provide a list of enabled derived Product Types.
 
 ```protobuf
 message EventType {
-    // Different typology of events.
-    enum EventTypology {
-        DESCRIPTION = 0; // Information only.
-        TRANSFORMATION = 1; // Quantity and product changes.
+    enum Typology {
+        // Deal with information.
+        DESCRIPTION = 0;
+        // Deal with quantities.
+        TRANSFORMATION = 1;
     }
 
-    // Event Parameter structure.
-    message EventParameter {
-        // Parameter Type identifier.
-        string parameterTypeId = 1;
+    message Parameter {
+        // The Event Parameter Type state address.
+        string eventParameterTypeAddress = 1;
 
-        // Parameter Properties.
+        // The Event Parameter additional features.
         bool required = 2;
         int32 minValue = 3;
         int32 maxValue = 4;
         int32 minLength = 5;
         int32 maxLength = 6;
-
-        // Values fields. Only one of these fields should be used,
-        // and it should match the type specified Type in EventParameterType.
-        float floatValue = 7;
-        string stringValue = 8;
-        bytes bytesValue = 9;
     }
 
-    // Unique identifier.
+    // The Event Type unique identifier.
     string id = 1;
 
-    // Event typology.
-    EventTypology typology = 2;
+    // The Event Type typology.
+    Typology typology = 2;
 
-    // Event name.
+    // The Event Type name.
     string name = 3;
 
-    // Event description.
+    // A short description of the event.
     string description = 4;
 
-    // List of Event Parameters.
-    repeated EventParameter parameters = 5;
+    // A list of Event Parameters with additional features.
+    repeated Parameter parameters = 5;
 
-    // List of Task Type identifiers.
+    // A list of enabled Task Types addresses for recording the event.
     repeated string enabledTaskTypes = 6;
 
-    // List of Product Type identifiers.
+    // A list of enabled Product Types addresses where recording the event.
     repeated string enabledProductTypes = 7;
 
-    // List of Derived Product Type identifiers (for TRANSFORMATION typology only).
-    repeated string derivedProductTypes = 8;
+    // A list of enabled derived Product Types addresses for the transformation of the product.
+    repeated string enabledDerivedProductTypes = 8;
+}
+```
+
+### Property Type
+A property is a particular feature that you want to update over time, such as temperature or location.
+A Property Type allow to define one of these particular properties to extend the events that can be recorded by operators on production batches. 
+They perfectly marry the possibility of recording updates through non-human operators (ie. IoT sensors).
+
+```protobuf
+message PropertyType {
+    // The Property Type unique identifier.
+    string id = 1;
+
+    // The Property Type name.
+    string name = 2;
+
+    // The Property Type information data type.
+    TypeData.DataType dataType = 3;
+
+    // A list of enabled Task Types addresses for recording the property.
+    repeated string enabledTaskTypes = 4;
+
+    // A list of enabled Product Types addresses where recording the property.
+    repeated string enabledProductTypes = 5;
 }
 ```
 
@@ -575,28 +580,29 @@ An Update System Admin transaction is invalid if one of the following conditions
 * The public key belongs to another authorized user.
 
 ### Create Task Type
-When the System Admin creates a Task Type he has to specify a unique identifier among these types and a string which describes the role.
+The System Admin must specify a unique id among Task Types and a name for the task in order to create a Task Type.
 
 ```protobuf
 message CreateTaskTypeAction {
-    // Task Type unique identifier.
+    // The Task Type unique identifier.
     string id = 1;
 
-    // Task name.
-    string role = 2;
+    // The name of the task.
+    string task = 2;
 }
 ```
 
 A Create Task Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Identifier is not set.
-* Role is not set.
-* Transaction signer is not the System Admin.
-* There is a Task Type already associated to given id.
+* No id specified.
+* No task specified.
+* The signer is not the System Admin.
+* The id belongs to another Task Type.
 
 ### Create Product Type
-To create a Product Type, the System Admin needs to provide a unique identifier and some products information, such as name, description and unit of measure.
-If there are types of products that are derivable through a transformation event from it, then id and conversion rate from new quantity must be specified.
+The System Admin must provide a unique id among Product Types, a product name, an optional short description and the unit 
+of measure for the quantity in order to create a Product Type.
+If other Product Types derive from this one, the state address of these Product Types with the relative conversion rate for the quantity must be specified.
 
 ```protobuf
 message CreateProductTypeAction {
@@ -616,90 +622,134 @@ message CreateProductTypeAction {
     repeated ProductType.DerivedProduct derivedProducts = 5;
 }
 ```
+
 None of the provided PropertyValues match the types specified in the Record's RecordType.
 
 A Create Product Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Identifier is not set.
-* Name is not set.
-* Description is not set.
-* Provided value for unit of measure doesn't match the types specified in the ProductType's UnitOfMeasure.
-* Transaction signer is not the System Admin.
+* No id specified.
+* No name specified.
+* Provided value for measure doesn't match any possible value.
+* The signer is not the System Admin.
 * There is a Product Type already associated to given id.
-* At least one of the provided values for derivedProductTypes doesn't match a valid Product Type.
+* Derived Product Type address must be a 70-char hex string.
+* Specified derived Product Type does not exist.
+* Specified conversion rate is not greater than zero.
 
 ### Create Event Parameter Type
-When the System Admin creates a Event Parameter Type he has to specify a unique identifier among these types, a name and a correct information type.
+The System Admin must provide a unique id among Event Parameter Types, a name and the information data type in order to 
+create an Event Parameter Type.
 
 ```protobuf
 message CreateEventParameterTypeAction {
-    // Event Parameter Type unique identifier.
+    // The Event Parameter Type unique identifier.
     string id = 1;
 
-    // Event Parameter Type name.
+    // The Event Parameter Type name.
     string name = 2;
 
-    // Event Parameter Type information type.
-    EventParameterType.Type type = 3;
+    // The Event Parameter Type information data type.
+    TypeData.DataType type = 3;
 }
 ```
+
 A Create Event Parameter Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Identifier is not set.
-* Name is not set.
-* Provided value for type doesn't match the types specified in the EventParameter's EventParameterType.
-* Transaction signer is not the System Admin.
-* There is an Event Parameter Type already associated to given id.
+* No id specified.
+* No name specified.
+* Provided value for data type doesn't match any possible value.
+* The signer is not the System Admin.
+* The id ${id} belongs to another Event Parameter Type.
 
 ### Create Event Type
-To create a Event Type, the System Admin needs to provide a unique identifier, the typology, a name and description.
-The list of event parameters can be specified to customize the information requirements that needs to be provided for recording the event into the state.
-To decide who can record and where can be recorded an event with a specific type, the Task Types and Product Types lists must be specified.
-If the typology indicates there's an activity that involves product transformation, a list of types of products that are derivable through a transformation event from it must be specified.
+The System Admin must provide a unique id among Event Types, a name, the typology, a short description and four different lists.
+The Parameters list can be specified to customize the information recording. For each Parameter additional features can be used.
+The enabled Task and Product Types lists are used to filter, respectively, who and where the Event can be recorded.
+For Event Type of *typology* equal to *TRANSFORMATION*, a list of enabled derived Product Types 
+(ie. products resulting from the transformation of the initial product) must be specified.
 
 ```protobuf
 message CreateEventTypeAction {
-    // Event Type unique identifier.
+    // The Event Type unique identifier.
     string id = 1;
 
-    // Event Type typology (description/transformation).
-    EventType.EventTypology typology = 2;
+    // The Event Type typology.
+    EventType.Typology typology = 2;
 
-    // Event Type name.
+    // The Event Type name.
     string name = 3;
 
-    // Event Type description.
+    // The Event Type description.
     string description = 4;
 
-    // List of EventParameters.
-    repeated EventType.EventParameter parameters = 5;
-    
-    // List of authorized Task Types.
+    // A list of Event Parameters with additional features.
+    repeated EventType.Parameter parameters = 5;
+
+    // A list of enabled Task Types addresses for recording the event.
     repeated string enabledTaskTypes = 6;
 
-    // List of enabled Product Types.
+    // A list of enabled Product Types addresseswhere recording the event.
     repeated string enabledProductTypes = 7;
 
-    // List of derived Product Types (for transformations typology only)
-    repeated string derivedProductTypes = 8;
+    // A list of enabled derived Product Types addresses for the transformation of the product.
+    repeated string enabledDerivedProductTypes = 8;
 }
 ```
 
 A Create Event Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Identifier is not set.
-* Provided value for typology doesn't match the types specified in the EventType's EventTypology.
-* Name is not set.
-* Description is not set.
-* Transaction signer is not the System Admin.
-* There is an Event Type already associated to given id.
-* At least one of the provided Event Parameter Types values for parameters doesn't match a valid Event Parameter Type.
-* At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
-* At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
-* No derived products for transformation event typology.
-* Derived products are given for description event.
-* At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
-* At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
+* No id specified.
+* Provided value for typology doesn't match any possible value.
+* No name specified.
+* No description specified.
+* The signer is not the System Admin.
+* The id belongs to another Event Type.
+* At least one Task Type state address is not a valid Task Type address.
+* At least one specified Task Type doesn't exist.
+* At least one Product Type state address is not a valid Product Type address.
+* At least one specified Product Type doesn't exist.
+* At least one Event Parameter Type state address is not a valid Event Parameter Type address.
+* At least one specified Event Parameter Type doesn't exist.
+* No derived products specified for an event with transformation typology.
+* At least one derived Product Type state address is not a valid Product Type address.
+* At least one specified derived Product Type doesn't exist.
+* At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
+
+### Create Property Type
+The System Admin must provide a unique id among Property Types, a name, the information data type and two lists.
+The enabled Task and Product Types lists are used to filter, respectively, who and where the Property can be recorded.
+
+```protobuf
+message CreatePropertyTypeAction {
+    // The Property Type unique identifier.
+    string id = 1;
+
+    // The Property Type name.
+    string name = 2;
+
+    // The Property Type information data type.
+    TypeData.DataType dataType = 3;
+
+    // A list of enabled Task Types addresses for recording the property.
+    repeated string enabledTaskTypes = 4;
+
+    // A list of enabled Product Types addresses where recording the property.
+    repeated string enabledProductTypes = 5;
+}
+```
+
+A Create Property Type transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* No id specified.
+* No name specified.
+* Provided value for data type doesn't match any possible value.
+* The signer is not the System Admin.
+* The id belongs to another Property Type.
+* At least one Task Type state address is not a valid Task Type address.
+* At least one specified Task Type doesn't exist.
+* At least one Product Type state address is not a valid Product Type address.
+* At least one specified Product Type doesn't exist.
+
 
 ### Create Certification Authority
 The System Admin can create a Certification Authority enabled to record certificates over every Company batch. 
