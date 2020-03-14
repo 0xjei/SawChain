@@ -10,12 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "sawtooth-sdk": "1.0.5",
-    "eslint": "^6.8.0"
+    "sawtooth-sdk": "1.0.5"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^6.2.2",
-    "protobufjs": "^6.8.8"
+    "protobufjs": "^6.8.9"
   }
 }
