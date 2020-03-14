@@ -3,62 +3,62 @@ syntax = "proto3";
 package sawchain;
 
 message TaskType {
-    // Unique identifier.
+    // The Task Type unique identifier.
     string id = 1;
 
-    // Task name.
-    string role = 2;
+    // The name of the task.
+    string task = 2;
 }
 
 message ProductType {
-    message DerivedProduct {
-        // Derived Product Type identifier.
-        string derivedProductType = 1;
+    message DerivedProductType {
+        // The derived Product Type state address.
+        string productTypeAddress = 1;
 
-        // Quantity conversion rate.
-        float conversionRate = 2;
+        // A multiplier value for the quantity conversion rate.
+        double conversionRate = 2;
     }
 
-    // Unique identifier.
+    // The Product Type unique identifier.
     string id = 1;
 
-    // Product name.
+    // The product name.
     string name = 2;
 
-    // Product description.
+    // A short description of the product.
     string description = 3;
 
-    // Product quantity unit of measure.
+    // The unit of measure used for the product quantity.
     TypeData.UnitOfMeasure measure = 4;
 
-    // List of derived products.
-    repeated DerivedProduct derivedProducts = 5;
+    // A list of derived Product Types with a quantity conversion rate.
+    repeated DerivedProductType derivedProductTypes = 5;
 }
 
 message EventParameterType {
-    // Unique identifier.
+    // The Event Parameter Type unique identifier.
     string id = 1;
 
-    // Event Parameter name.
+    // The Event Parameter Type name.
     string name = 2;
 
-    // Event Parameter type.
-    TypeData.Type type = 3;
+    // The Event Parameter Type information data type.
+    TypeData.DataType dataType = 3;
 }
 
 message EventType {
-    // Different typology of events.
-    enum EventTypology {
-        DESCRIPTION = 0; // Information only.
-        TRANSFORMATION = 1; // Quantity and product changes.
+    enum Typology {
+        // Deal with information.
+        DESCRIPTION = 0;
+        // Deal with quantities.
+        TRANSFORMATION = 1;
     }
 
-    // Event Parameter structure.
-    message EventParameter {
-        // Parameter Type identifier.
-        string parameterTypeId = 1;
+    message Parameter {
+        // The Event Parameter Type state address.
+        string eventParameterTypeAddress = 1;
 
-        // Parameter Properties.
+        // The Event Parameter additional features.
         bool required = 2;
         int32 minValue = 3;
         int32 maxValue = 4;
@@ -66,45 +66,45 @@ message EventType {
         int32 maxLength = 6;
     }
 
-    // Unique identifier.
+    // The Event Type unique identifier.
     string id = 1;
 
-    // Event typology.
-    EventTypology typology = 2;
+    // The Event Type typology.
+    Typology typology = 2;
 
-    // Event name.
+    // The Event Type name.
     string name = 3;
 
-    // Event description.
+    // A short description of the event.
     string description = 4;
 
-    // List of Event Parameters.
-    repeated EventParameter parameters = 5;
+    // A list of enabled Task Types addresses for recording the event.
+    repeated string enabledTaskTypes = 5;
 
-    // List of Task Type identifiers.
-    repeated string enabledTaskTypes = 6;
+    // A list of enabled Product Types addresses where recording the event.
+    repeated string enabledProductTypes = 6;
 
-    // List of Product Type identifiers.
-    repeated string enabledProductTypes = 7;
+    // A list of Event Parameters with additional features.
+    repeated Parameter parameters = 7;
 
-    // List of Derived Product Type identifiers (for TRANSFORMATION typology only).
-    repeated string derivedProductTypes = 8;
+    // A list of enabled derived Product Types addresses for the transformation of the product.
+    repeated string enabledDerivedProductTypes = 8;
 }
 
 message PropertyType {
-    // Unique identifier.
+    // The Property Type unique identifier.
     string id = 1;
 
-    // Property name.
+    // The Property Type name.
     string name = 2;
 
-    // Property type.
-    TypeData.Type type = 3;
+    // The Property Type information data type.
+    TypeData.DataType dataType = 3;
 
-    // List of Task Type identifiers.
+    // A list of enabled Task Types addresses for recording the property.
     repeated string enabledTaskTypes = 4;
 
-    // List of Product Type identifiers.
+    // A list of enabled Product Types addresses where recording the property.
     repeated string enabledProductTypes = 5;
 }
 
@@ -117,7 +117,7 @@ message TypeData {
         UNIT = 3;
     }
 
-    enum Type {
+    enum DataType {
         NUMBER = 0;
         STRING = 1;
         BYTES = 2;

@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const {
     SystemAdmin,
@@ -8,223 +8,221 @@ const {
     EventType,
     PropertyType,
     TypeData
-} = require('../services/proto');
+} = require('../services/proto')
 const {
     reject
-} = require('../services/utils');
+} = require('../services/utils')
 const {
     getTaskTypeAddress,
     getSystemAdminAddress,
     getProductTypeAddress,
     getEventParameterTypeAddress,
     getEventTypeAddress,
-    getPropertyTypeAddress
-} = require('../services/addressing');
+    getPropertyTypeAddress,
+    isValidAddress,
+    FULL_PREFIXES,
+    TYPE_PREFIXES
+} = require('../services/addressing')
 
 /**
- * Handle a Task Type transaction action.
- * @param {Context} context Current state context.
+ * Record a new Task Type into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Task Type unique identifier.
- * @param {String} role A string describing a task/role bindable to Operators.
+ * @param {String} id The Task Type unique identifier.
+ * @param {String} task The Task Type name.
  */
-async function createTaskType(
-    context,
-    signerPublicKey,
-    timestamp,
-    {id, role}
-) {
-    // Validation: Id is not set.
+async function createTaskType(context, signerPublicKey, timestamp, {id, task}) {
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`)
 
-    // Validation: Role is not set.
-    if (!role)
-        reject(`Role is not set!`);
+    // Validation: No task specified.
+    if (!task)
+        reject(`No task specified`)
 
-    const systemAdminAddress = getSystemAdminAddress();
-    const taskTypeAddress = getTaskTypeAddress(id);
+    const systemAdminAddress = getSystemAdminAddress()
+    const taskTypeAddress = getTaskTypeAddress(id)
 
     const state = await context.getState([
         systemAdminAddress,
         taskTypeAddress
-    ]);
+    ])
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`You must be the System Admin to create a Task Type!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is a Task Type already associated to given id.
+    // Validation: The id belongs to another Task Type.
     if (state[taskTypeAddress].length > 0)
-        reject(`There is a Task Type already associated to given id: ${id}!`);
+        reject(`The id ${id} belongs to another Task Type`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
-    updates[getTaskTypeAddress(id)] = TaskType.encode({
+    updates[taskTypeAddress] = TaskType.encode({
         id: id,
-        role: role
-    }).finish();
+        task: task
+    }).finish()
 
     await context.setState(updates)
 }
 
 /**
- * Handle a Product Type transaction action.
- * @param {Context} context Current state context.
+ * Record a new Product Type into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Product Type unique identifier.
- * @param {String} name Product name.
- * @param {String} description Product description.
- * @param {Number} measure Product unit of measure from enumeration of possible values.
- * @param {Object[]} derivedProducts List of identifiers and conversion rate for derived product types.
+ * @param {String} id The Product Type unique identifier.
+ * @param {String} name The Product name.
+ * @param {String} description A short description of the product.
+ * @param {Number} measure The unit of measure used for the product quantity.
+ * @param {Object[]} derivedProductTypes A list of derived Product Types with a quantity conversion rate.
  */
 async function createProductType(
     context,
     signerPublicKey,
     timestamp,
-    {id, name, description, measure, derivedProducts}
+    {id, name, description, measure, derivedProductTypes}
 ) {
-    // Validation: Id is not set.
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`)
 
-    // Validation: Name is not set.
+    // Validation: No name specified.
     if (!name)
-        reject(`Name is not set!`);
+        reject(`No name specified`)
 
-    // Validation: Description is not set.
-    if (!description)
-        reject(`Description is not set!`);
+    // Validation: Measure doesn't match one any possible value.
+    if (!Object.values(TypeData.UnitOfMeasure).some(value => value === measure))
+        reject(`Provided value for measure doesn't match any possible value`)
 
-    // Validation: Provided value for measure doesn't match the types specified in the ProductType's UnitOfMeasure.
-    if (!Object.values(TypeData.UnitOfMeasure).some((value) => value === measure))
-        reject(`Provided value for measure doesn't match any possible value!`);
-
-    const systemAdminAddress = getSystemAdminAddress();
-    const productTypeAddress = getProductTypeAddress(id);
+    const systemAdminAddress = getSystemAdminAddress()
+    const productTypeAddress = getProductTypeAddress(id)
 
     const state = await context.getState([
         systemAdminAddress,
         productTypeAddress
-    ]);
+    ])
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is a Product Type already associated to given id.
+    // Validation: The id belongs to another Product Type.
     if (state[productTypeAddress].length > 0)
-        reject(`There is a Product Type already associated to given id!`);
+        reject(`The id ${id} belongs to another Product Type`)
 
-    // Validation: At least one of the provided values for derivedProducts doesn't match a valid Product Type.
-    for (const derivedProduct of derivedProducts) {
-        let derivedProductTypeAddress = getProductTypeAddress(derivedProduct.derivedProductType);
+    for (const derivedPT of derivedProductTypes) {
+        // Validation: At least one derived Product Type state address is not a valid Product Type address.
+        if (!isValidAddress(derivedPT.productTypeAddress) ||
+            !derivedPT.productTypeAddress.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE)
+        )
+            reject(`Derived Product Type address is not a valid 70-char hex string Product Type address: 
+                             ${derivedPT.productTypeAddress}`
+            )
 
-        let derivedProductState = await context.getState([
-            derivedProductTypeAddress
-        ]);
+        const state = await context.getState([
+            derivedPT.productTypeAddress
+        ])
 
-        if (!derivedProductState[derivedProductTypeAddress].length) {
-            reject(`The provided Product Type ${id} doesn't match a valid Product Type!`);
-        }
+        // Validation: At least one specified derived Product Type doesn't exist.
+        if (state[derivedPT.productTypeAddress].length === 0)
+            reject(`Specified derived Product Type does not exist: ${derivedPT.productTypeAddress}`)
 
-        // Validation: At least one of the provided values for derivedProducts doesn't have a conversionRate greater than 0
-        if (!derivedProduct.conversionRate > 0) {
-            reject(`The provided conversion rate for ${id} is lower than 0!`);
-        }
+        // Validation: Conversion rate must be greater than zero.
+        if (!derivedPT.conversionRate > 0)
+            reject(`Specified conversion rate is not greater than zero: ${derivedPT.conversionRate}`)
     }
 
     // State update.
-    const updates = {};
+    const updates = {}
 
-    updates[getProductTypeAddress(id)] = ProductType.encode({
+    updates[productTypeAddress] = ProductType.encode({
         id: id,
         name: name,
         description: description,
         measure: measure,
-        derivedProducts: derivedProducts
-    }).finish();
+        derivedProductTypes: derivedProductTypes
+    }).finish()
 
     await context.setState(updates)
 }
 
 /**
- * Handle a Event Parameter Type transaction action.
- * @param {Context} context Current state context.
+ * Record a new Event Parameter Type into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Event Parameter Type unique identifier.
- * @param {String} name Event Parameter name.
- * @param {Number} type Event Parameter type from enumeration of possible values.
+ * @param {String} id The Event Parameter Type unique identifier.
+ * @param {String} name The Event Parameter Type name.
+ * @param {Number} dataType The data type used for the parameter information.
  */
 async function createEventParameterType(
     context,
     signerPublicKey,
     timestamp,
-    {id, name, type}
+    {id, name, dataType}
 ) {
-    // Validation: Id is not set.
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`)
 
-    // Validation: Name is not set.
+    // Validation: No name specified.
     if (!name)
-        reject(`Name is not set!`);
+        reject(`No name specified`)
 
-    // Validation: Provided value for type doesn't match the types specified in the EventParameter's EventParameterType.
-    if (!Object.values(TypeData.Type).some((value) => value === type))
-        reject(`Provided value for type doesn't match any possible value!`);
+    // Validation: DataType doesn't match one any possible value.
+    if (!Object.values(TypeData.DataType).some((value) => value === dataType))
+        reject(`Provided value for dataType doesn't match any possible value`)
 
-    const systemAdminAddress = getSystemAdminAddress();
-    const eventParameterTypeAddress = getEventParameterTypeAddress(id);
+    const systemAdminAddress = getSystemAdminAddress()
+    const eventParameterTypeAddress = getEventParameterTypeAddress(id)
 
     const state = await context.getState([
         systemAdminAddress,
         eventParameterTypeAddress
-    ]);
+    ])
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is an Event Parameter Type already associated to given id.
+    // Validation: The id belongs to another Event Parameter Type.
     if (state[eventParameterTypeAddress].length > 0)
-        reject(`There is an Event Parameter Type already associated to given id!`);
+        reject(`The id ${id} belongs to another Event Parameter Type`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     updates[eventParameterTypeAddress] = EventParameterType.encode({
         id: id,
         name: name,
-        type: type
-    }).finish();
+        dataType: dataType
+    }).finish()
 
     await context.setState(updates)
 }
 
 /**
- * Handle a Event Type transaction action.
- * @param {Context} context Current state context.
+ * Record a new Event Type into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Event Type unique identifier.
- * @param {Number} typology Event Type typology from enumeration of possible values.
- * @param {String} name Event name.
- * @param {String} description Event description.
- * @param {String[]} parameters List of identifiers of Event Parameter Types that customize the Event Type data.
- * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Event Type.
- * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Event Type can be recorded.
- * @param {String[]} derivedProductTypes List of identifiers of derived Product Types.
+ * @param {String} id The Event Type unique identifier.
+ * @param {Number} typology The Event Type typology.
+ * @param {String} name The Event Type name.
+ * @param {String} description A short description of the event.
+ * @param {String[]} enabledTaskTypes A list of enabled Task Types addresses for recording the event.
+ * @param {String[]} enabledProductTypes A list of enabled Product Types addresses where recording the event.
+ * @param {String[]} parameters A list of Event Parameters with additional features.
+ * @param {String[]} enabledDerivedProductTypes A list of enabled derived Product Types addresses for the transformation of the product.
  */
 async function createEventType(
     context,
@@ -235,153 +233,149 @@ async function createEventType(
         typology,
         name,
         description,
-        parameters,
         enabledTaskTypes,
         enabledProductTypes,
-        derivedProductTypes
+        parameters,
+        enabledDerivedProductTypes
     }
 ) {
-    // Validation: Id is not set.
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`)
 
-    // Validation: Provided value for typology doesn't match the types specified in the EventType's EventTypology.
-    if (!Object.values(EventType.EventTypology).some((value) => value === typology))
-        reject(`Provided value for typology doesn't match any possible value!`);
+    // Validation: Typology doesn't match one any possible value.
+    if (!Object.values(EventType.Typology).some((value) => value === typology))
+        reject(`Provided value for typology doesn't match any possible value`)
 
-    // Validation: Name is not set.
+    // Validation: No name specified.
     if (!name)
-        reject(`Name is not set!`);
+        reject(`No name specified`)
 
-    // Validation: Description is not set.
+    // Validation: No description specified.
     if (!description)
-        reject(`Description is not set!`);
+        reject(`No description specified`)
 
-    // Validation: Enabled task types list is not set.
-    if (!enabledTaskTypes.length)
-        reject(`Enabled task types list is not set!`);
-
-    // Validation: Enabled product types list is not set.
-    if (!enabledProductTypes.length)
-        reject(`Enabled product types list is not set!`);
-
-    const systemAdminAddress = getSystemAdminAddress();
-    const eventTypeAddress = getEventTypeAddress(id);
+    const systemAdminAddress = getSystemAdminAddress()
+    const eventTypeAddress = getEventTypeAddress(id)
 
     const state = await context.getState([
         systemAdminAddress,
         eventTypeAddress
-    ]);
+    ])
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
+    let derivedProductTypes = []
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is a Event Type already associated to given id.
+    // Validation: The id belongs to another Event Type.
     if (state[eventTypeAddress].length > 0)
-        reject(`There is an Event Type already associated to given id!`);
+        reject(`The id ${id} belongs to another Event Type`)
 
-    // Validation: At least one of the provided Event Parameter Types values for parameters doesn't match a valid Event Parameter Type.
+    for (const taskType of enabledTaskTypes) {
+        // Validation: At least one Task Type state address is not a valid Task Type address.
+        if (!isValidAddress(taskType) || !taskType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE))
+            reject(`Task Type address is not a valid 70-char hex string Task Type address: ${taskType}`)
+
+        const state = await context.getState([
+            taskType
+        ])
+
+        // Validation: At least one specified Task Type doesn't exist.
+        if (state[taskType].length === 0)
+            reject(`Specified Task Type does not exist: ${taskType}`)
+    }
+
+    for (const productType of enabledProductTypes) {
+        // Validation: At least one Product Type state address is not a valid Product Type address.
+        if (!isValidAddress(productType) || !productType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE))
+            reject(`Product Type address is not a valid 70-char hex string Product Type address: ${productType}`)
+
+        const state = await context.getState([
+            productType
+        ])
+
+        // Validation: At least one specified Product Type doesn't exist.
+        if (state[productType].length === 0)
+            reject(`Specified Product Type does not exist: ${productType}`)
+
+        // Update derived Product Types from enabled Product Types.
+        derivedProductTypes = derivedProductTypes.concat(ProductType.decode(state[productType]).derivedProductTypes)
+    }
+
     for (const parameter of parameters) {
-        let parameterTypeAddress = getEventParameterTypeAddress(parameter.parameterTypeId);
+        // Validation: At least one Event Parameter Type state address is not a valid Event Parameter Type address.
+        if (!isValidAddress(parameter.eventParameterTypeAddress) ||
+            !parameter.eventParameterTypeAddress.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.EVENT_PARAMETER_TYPE)
+        )
+            reject(`Event Parameter Type address is not a valid 70-char hex string Event Parameter Type address: 
+                             ${parameter.eventParameterTypeAddress}`
+            )
 
-        let parameterTypeState = await context.getState([
-            parameterTypeAddress
-        ]);
+        const state = await context.getState([
+            parameter.eventParameterTypeAddress
+        ])
 
-        if (!parameterTypeState[parameterTypeAddress].length) {
-            reject(`The provided Event Parameter Type ${parameter.parameterTypeId} doesn't match a valid Event Parameter Type!`);
-        }
+        // Validation: At least one specified Event Parameter Type doesn't exist.
+        if (state[parameter.eventParameterTypeAddress].length === 0)
+            reject(`Specified Event Parameter Type does not exist: ${parameter.eventParameterTypeAddress}`)
     }
 
-    // Validation: At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
-    for (const taskTypeId of enabledTaskTypes) {
-        let taskTypeAddress = getTaskTypeAddress(taskTypeId);
+    // Validation: No derived products specified for an event with transformation typology.
+    if (typology === EventType.Typology.TRANSFORMATION && enabledDerivedProductTypes.length === 0)
+        reject(`No derived products for transformation event typology`)
 
-        let taskTypeState = await context.getState([
-            taskTypeAddress
-        ]);
+    for (const derivedProductType of enabledDerivedProductTypes) {
+        // Validation: At least one derived Product Type state address is not a valid Product Type address.
+        if (!isValidAddress(derivedProductType) ||
+            !derivedProductType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE)
+        )
+            reject(`Derived Product Type address is not a valid 70-char hex string Product Type address: 
+                             ${derivedProductType}`
+            )
 
-        if (!taskTypeState[taskTypeAddress].length) {
-            reject(`The provided Task Type ${taskTypeId} doesn't match a valid Task Type!`);
-        }
-    }
+        const state = await context.getState([
+            derivedProductType
+        ])
 
-    // Validation: At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
-    for (const productTypeId of enabledProductTypes) {
-        let productTypeAddress = getProductTypeAddress(productTypeId);
+        // Validation: At least one specified derived Product Type doesn't exist.
+        if (state[derivedProductType].length === 0)
+            reject(`Specified derived Product Type does not exist: ${derivedProductType}`)
 
-        let productTypeState = await context.getState([
-            productTypeAddress
-        ]);
-
-        if (!productTypeState[productTypeAddress].length) {
-            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
-        }
-    }
-
-    // Validation: No derived products for transformation event typology.
-    if (typology === EventType.EventTypology.TRANSFORMATION && !derivedProductTypes.length)
-        reject(`No derived products for transformation event typology!`);
-
-    // Validation: Derived products are given for description event.
-    if (typology !== EventType.EventTypology.TRANSFORMATION && derivedProductTypes.length > 0)
-        reject(`Derived products are given for description event!`);
-
-    // Validation: At least one of the provided Product Types values for derived product types doesn't match a valid Product Type.
-    for (const productTypeId of derivedProductTypes) {
-        const productTypeAddress = getProductTypeAddress(productTypeId);
-
-        let state = await context.getState([
-            productTypeAddress
-        ]);
-
-        if (!state[productTypeAddress].length) {
-            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
-        }
-
-        // Validation: At least one of the provided Product Types values for derived product types doesn't match with one of those enabled for the Product Type.
-        for (const enableProductType of enabledProductTypes) {
-            let productTypeAddress = getProductTypeAddress(enableProductType);
-
-            let state = await context.getState([
-                productTypeAddress
-            ]);
-
-            const productTypeState = ProductType.decode(state[productTypeAddress]);
-
-            if (!productTypeState.derivedProducts.some(drvPrdTp => drvPrdTp.derivedProductType === productTypeId))
-                reject(`The provided derived Product Type ${productTypeId} doesn't match with one of those enabled for the Product Type!`);
-        }
+        // Validation: At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
+        if (!derivedProductTypes.some(derivedPT => derivedPT.productTypeAddress === derivedProductType))
+            reject(`Specified derived Product Type does not match a valid derived product for enabled Product Types: 
+                             ${derivedProductType}`
+            )
     }
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     updates[eventTypeAddress] = EventType.encode({
         id: id,
         typology: typology,
         name: name,
         description: description,
-        parameters: parameters,
         enabledTaskTypes: enabledTaskTypes,
         enabledProductTypes: enabledProductTypes,
-        derivedProductTypes: derivedProductTypes
-    }).finish();
+        parameters: parameters,
+        enabledDerivedProductTypes: typology === EventType.Typology.TRANSFORMATION ? enabledDerivedProductTypes : []
+    }).finish()
 
     await context.setState(updates)
 }
 
 /**
- * Handle a Property Type transaction action.
- * @param {Context} context Current state context.
+ * Record a new Property Type into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Property Type unique identifier.
- * @param {String} name Property name.
- * @param {Number} type Property type from enumeration of possible values.
+ * @param {String} id The Property Type unique identifier.
+ * @param {String} name The Property Type name.
+ * @param {Number} dataType Property type from enumeration of possible values.
  * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
  * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
  */
@@ -392,85 +386,79 @@ async function createPropertyType(
     {
         id,
         name,
-        type,
+        dataType,
         enabledTaskTypes,
         enabledProductTypes
     }
 ) {
-    // Validation: Id is not set.
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`)
 
-    // Validation: Name is not set.
+    // Validation: No name specified.
     if (!name)
-        reject(`Name is not set!`);
+        reject(`No name specified`)
 
-    // Validation: Provided value for type doesn't match the types specified in the PropertyType's Type.
-    if (!Object.values(TypeData.Type).some((value) => value === type))
-        reject(`Provided value for type doesn't match any possible value!`);
+    // Validation: Data type doesn't match one any possible value.
+    if (!Object.values(TypeData.DataType).some((value) => value === dataType))
+        reject(`Provided value for data type doesn't match any possible value`)
 
-    // Validation: Enabled task types list is not set.
-    if (!enabledTaskTypes.length)
-        reject(`Enabled task types list is not set!`);
-
-    // Validation: Enabled product types list is not set.
-    if (!enabledProductTypes.length)
-        reject(`Enabled product types list is not set!`);
-
-    const systemAdminAddress = getSystemAdminAddress();
-    const propertyTypeAddress = getPropertyTypeAddress(id);
+    const systemAdminAddress = getSystemAdminAddress()
+    const propertyTypeAddress = getPropertyTypeAddress(id)
 
     const state = await context.getState([
         systemAdminAddress,
         propertyTypeAddress
-    ]);
+    ])
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is a Property Type already associated to given id.
+    // Validation: The id belongs to another Property Type.
     if (state[propertyTypeAddress].length > 0)
-        reject(`There is an Property Type already associated to given id!`);
+        reject(`The id ${id} belongs to another Property Type`)
 
-    // Validation: At least one of the provided Task Types values for enable task types doesn't match a valid Task Type.
-    for (const taskTypeId of enabledTaskTypes) {
-        let taskTypeAddress = getTaskTypeAddress(taskTypeId);
+    for (const taskType of enabledTaskTypes) {
+        // Validation: At least one Task Type state address is not a valid Task Type address.
+        if (!isValidAddress(taskType) || !taskType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE))
+            reject(`Task Type address is not a valid 70-char hex string Task Type address: ${taskType}`)
 
-        let taskTypeState = await context.getState([
-            taskTypeAddress
-        ]);
+        const state = await context.getState([
+            taskType
+        ])
 
-        if (!taskTypeState[taskTypeAddress].length) {
-            reject(`The provided Task Type ${taskTypeId} doesn't match a valid Task Type!`);
-        }
+        // Validation: At least one specified Task Type doesn't exist.
+        if (state[taskType].length === 0)
+            reject(`Specified Task Type does not exist: ${taskType}`)
     }
 
-    // Validation: At least one of the provided Product Types values for enable product types doesn't match a valid Product Type.
-    for (const productTypeId of enabledProductTypes) {
-        let productTypeAddress = getProductTypeAddress(productTypeId);
+    for (const productType of enabledProductTypes) {
+        // Validation: At least one Product Type state address is not a valid Product Type address.
+        if (!isValidAddress(productType) || !productType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE))
+            reject(`Product Type address is not a valid 70-char hex string Product Type address: ${productType}`)
 
-        let productTypeState = await context.getState([
-            productTypeAddress
-        ]);
+        const state = await context.getState([
+            productType
+        ])
 
-        if (!productTypeState[productTypeAddress].length) {
-            reject(`The provided Product Type ${productTypeId} doesn't match a valid Product Type!`);
-        }
+        // Validation: At least one specified Product Type doesn't exist.
+        if (state[productType].length === 0)
+            reject(`Specified Product Type does not exist: ${productType}`)
     }
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     updates[propertyTypeAddress] = PropertyType.encode({
         id: id,
         name: name,
-        type: type,
+        dataType: dataType,
         enabledTaskTypes: enabledTaskTypes,
         enabledProductTypes: enabledProductTypes
-    }).finish();
+    }).finish()
 
     await context.setState(updates)
 }
@@ -481,4 +469,4 @@ module.exports = {
     createEventParameterType,
     createEventType,
     createPropertyType
-};
+}

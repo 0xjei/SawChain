@@ -37,7 +37,7 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
 
     // Validation: System Admin is already recorded.
     if (state[systemAdminAddress].length > 0)
-        reject(`The System Admin is already recorded.`)
+        reject(`The System Admin is already recorded`)
 
     // State update.
     const updates = {}
@@ -60,7 +60,7 @@ async function createSystemAdmin(context, signerPublicKey, timestamp) {
 async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey}) {
     // Validation: Public key field doesn't contain a valid public key.
     if (!isValidPublicKey(publicKey))
-        reject(`The public key field doesn't contain a valid public key.`)
+        reject(`The public key field doesn't contain a valid public key`)
 
     const systemAdminAddress = getSystemAdminAddress()
     const companyAdminAddress = getCompanyAdminAddress(publicKey)
@@ -78,20 +78,20 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
 
     // Validation: The signer is not the System Admin.
     if (systemAdminState.publicKey !== signerPublicKey)
-        reject(`The signer is not the System Admin.`)
+        reject(`The signer is not the System Admin`)
 
     // Validation: The public key belongs to another authorized user.
     if (systemAdminState.publicKey === publicKey)
-        reject(`The public key belongs to the current System Admin.`)
+        reject(`The public key belongs to the current System Admin`)
 
     if (state[companyAdminAddress].length > 0)
-        reject(`The public key belongs to a Company Admin.`)
+        reject(`The public key belongs to a Company Admin`)
 
     if (state[operatorAddress].length > 0)
-        reject(`The public key belongs to an Operator.`)
+        reject(`The public key belongs to an Operator`)
 
     if (state[certificationAuthorityAddress].length > 0)
-        reject(`The public key belongs to a Certification Authority.`)
+        reject(`The public key belongs to a Certification Authority`)
 
     // State update.
     const updates = {}

@@ -2,7 +2,6 @@
 
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
 const {createHash} = require('crypto')
-const {SystemAdmin} = require('./proto')
 
 /**
  * A quick convenience function to throw an InvalidTransaction error with a joined message.

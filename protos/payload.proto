@@ -57,81 +57,81 @@ message UpdateSystemAdminAction {
 }
 
 message CreateTaskTypeAction {
-    // Task Type unique identifier.
+    // The Task Type unique identifier.
     string id = 1;
 
-    // Task name.
-    string role = 2;
+    // The name of the task.
+    string task = 2;
 }
 
 message CreateProductTypeAction {
-    // Product Type unique identifier.
+    // The Product Type unique identifier.
     string id = 1;
 
-    // Product Type name.
+    // The product name.
     string name = 2;
 
-    // Product Type description.
+    // A short description of the product.
     string description = 3;
 
-    // Product Type unit of measure.
+    // The unit of measure used for the product quantity.
     TypeData.UnitOfMeasure measure = 4;
 
-    // List of derived product types.
-    repeated ProductType.DerivedProduct derivedProducts = 5;
+    // A list of derived Product Types with a quantity conversion rate.
+    repeated ProductType.DerivedProductType derivedProductTypes = 5;
 }
 
 message CreateEventParameterTypeAction {
-    // Event Parameter Type unique identifier.
+    // The Event Parameter Type unique identifier.
     string id = 1;
 
-    // Event Parameter Type name.
+    // The Event Parameter Type name.
     string name = 2;
 
-    // Event Parameter Type information type.
-    TypeData.Type type = 3;
+    // The Event Parameter Type information data type.
+    TypeData.DataType dataType = 3;
 }
 
 message CreateEventTypeAction {
-    // Event Type unique identifier.
+    // The Event Type unique identifier.
     string id = 1;
 
-    // Event Type typology (description/transformation).
-    EventType.EventTypology typology = 2;
+    // The Event Type typology.
+    EventType.Typology typology = 2;
 
-    // Event Type name.
+    // The Event Type name.
     string name = 3;
 
-    // Event Type description.
+    // The Event Type description.
     string description = 4;
 
-    // List of EventParameters.
-    repeated EventType.EventParameter parameters = 5;
+    // A list of enabled Task Types addresses for recording the event.
+    repeated string enabledTaskTypes = 5;
 
-    // List of authorized Task Types.
-    repeated string enabledTaskTypes = 6;
+    // A list of enabled Product Types addresses where recording the event.
+    repeated string enabledProductTypes = 6;
 
-    // List of enabled Product Types.
-    repeated string enabledProductTypes = 7;
+    // A list of Event Parameters with additional features.
+    repeated EventType.Parameter parameters = 7;
 
-    // List of derived Product Types (for transformations typology only)
-    repeated string derivedProductTypes = 8;
+    // A list of enabled derived Product Types addresses for the transformation of the product.
+    repeated string enabledDerivedProductTypes = 8;
 }
 
 message CreatePropertyTypeAction {
-    // Property Type unique identifier.
+    // The Property Type unique identifier.
     string id = 1;
 
-    // Property Type name.
+    // The Property Type name.
     string name = 2;
 
-    // Property Type unit of measure.
-    TypeData.Type type = 3;
+    // The Property Type information data type.
+    TypeData.DataType dataType = 3;
 
-    // List of Task Type identifiers.
+    // A list of enabled Task Types addresses for recording the property.
     repeated string enabledTaskTypes = 4;
 
-    // List of enabled Product Types.
+    // A list of enabled Product Types addresses where recording the property.
     repeated string enabledProductTypes = 5;
 }
 
