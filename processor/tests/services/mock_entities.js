@@ -18,6 +18,11 @@ const {
     CreateDescriptionEventAction,
     CreateTransformationEventAction
 } = require('../../services/proto')
+const {
+    getTaskTypeAddress,
+    getProductTypeAddress,
+    getEventParameterTypeAddress
+} = require('../../services/addressing')
 
 /**
  * Create and execute a create System Admin action.
@@ -43,14 +48,14 @@ const mockCreateSystemAdmin = async (context, handler, privateKey) => {
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} id The Task Type unique identifier.
- * @param {String} role The Task Type role.
+ * @param {String} task The Task Type name.
  */
 const mockCreateTaskType = async (
     context,
     handler,
     systemAdminPrivateKey,
     id,
-    role
+    task
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -58,7 +63,7 @@ const mockCreateTaskType = async (
             timestamp: Date.now(),
             createTaskType: CreateTaskTypeAction.create({
                 id: id,
-                role: role
+                task: task
             })
         }),
         systemAdminPrivateKey
@@ -73,10 +78,10 @@ const mockCreateTaskType = async (
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} id The Product Type unique identifier.
- * @param {String} name The Product Type name.
- * @param {String} description A short description.
- * @param {Number} measure The unit of measure of the product chosen from an enumeration of possible values.
- * @param {Object[]} derivedProducts A list of products which can be derived from the Product Type.
+ * @param {String} name The Product name.
+ * @param {String} description A short description of the product.
+ * @param {Number} measure The unit of measure used for the product quantity.
+ * @param {Object[]} derivedProductTypes A list of derived Product Types with a quantity conversion rate.
  */
 const mockCreateProductType = async (
     context,
@@ -86,7 +91,7 @@ const mockCreateProductType = async (
     name,
     description,
     measure,
-    derivedProducts
+    derivedProductTypes
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -97,7 +102,7 @@ const mockCreateProductType = async (
                 name: name,
                 description: description,
                 measure: measure,
-                derivedProducts: derivedProducts
+                derivedProductTypes: derivedProductTypes
             })
         }),
         systemAdminPrivateKey
@@ -113,7 +118,7 @@ const mockCreateProductType = async (
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} id The Event Parameter Type unique identifier.
  * @param {String} name The Event Parameter Type name.
- * @param {Number} type The Event Parameter type chosen from an enumeration of possible values.
+ * @param {Number} dataType The data type used for the parameter information.
  */
 const mockCreateEventParameterType = async (
     context,
@@ -121,7 +126,7 @@ const mockCreateEventParameterType = async (
     systemAdminPrivateKey,
     id,
     name,
-    type
+    dataType
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -130,7 +135,7 @@ const mockCreateEventParameterType = async (
             createEventParameterType: CreateEventParameterTypeAction.create({
                 id: id,
                 name: name,
-                type: type
+                dataType: dataType
             })
         }),
         systemAdminPrivateKey
@@ -145,14 +150,13 @@ const mockCreateEventParameterType = async (
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} id The Event Type unique identifier.
- * @param {Number} typology The Event Type typology which can be description or transformation.
+ * @param {Number} typology The Event Type typology.
  * @param {String} name The Event Type name.
- * @param {String} description A short description.
- * @param {String[]} parameters A list of ids of Event Parameter Types used to customize the Event Type information.
- * @param {String[]} enabledTaskTypes List of ids of Task Types that operators must have to record the Event Type.
- * @param {String[]} enabledProductTypes List of ids of Product Types where it will be possible to record the Event
- *     Type.
- * @param {String[]} derivedProductTypes List of Product Types identifiers derived from those enabled.
+ * @param {String} description A short description of the event.
+ * @param {String[]} enabledTaskTypes A list of enabled Task Types addresses for recording the event.
+ * @param {String[]} enabledProductTypes A list of enabled Product Types addresses where recording the event.
+ * @param {String[]} parameters A list of Event Parameters with additional features.
+ * @param {String[]} enabledDerivedProductTypes A list of enabled derived Product Types addresses for the transformation of the product.
  */
 const mockCreateEventType = async (
     context,
@@ -165,7 +169,7 @@ const mockCreateEventType = async (
     parameters,
     enabledTaskTypes,
     enabledProductTypes,
-    derivedProductTypes
+    enabledDerivedProductTypes
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -179,7 +183,7 @@ const mockCreateEventType = async (
                 parameters: parameters,
                 enabledTaskTypes: enabledTaskTypes,
                 enabledProductTypes: enabledProductTypes,
-                derivedProductTypes: derivedProductTypes
+                enabledDerivedProductTypes: enabledDerivedProductTypes
             })
         }),
         systemAdminPrivateKey
@@ -194,11 +198,11 @@ const mockCreateEventType = async (
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} id The Property Type unique identifier.
- * @param {String} name The Property name.
- * @param {Number} type The Property type chosen from an enumeration of possible values.
- * @param {String[]} enabledTaskTypes List of ids of Task Types that operators must have to record the Property Type.
- * @param {String[]} enabledProductTypes List of ids of Product Types where it will be possible to record the Property
- *     Type.
+ * @param {String} name The Property Type name.
+ * @param {Number} dataType Property type from enumeration of possible values.
+ * @param {String[]} enabledTaskTypes List of identifiers of Task Types which Operators must have to record the Property Type.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the Property Type can be recorded.
+
  */
 const mockCreatePropertyType = async (
     context,
@@ -206,7 +210,7 @@ const mockCreatePropertyType = async (
     systemAdminPrivateKey,
     id,
     name,
-    type,
+    dataType,
     enabledTaskTypes,
     enabledProductTypes
 ) => {
@@ -217,7 +221,7 @@ const mockCreatePropertyType = async (
             createPropertyType: CreatePropertyTypeAction.create({
                 id: id,
                 name: name,
-                type: type,
+                dataType: dataType,
                 enabledTaskTypes: enabledTaskTypes,
                 enabledProductTypes: enabledProductTypes
             })
@@ -227,7 +231,6 @@ const mockCreatePropertyType = async (
 
     await handler.apply(txn, context)
 }
-
 
 /**
  * Create and execute a create Company action.
@@ -454,190 +457,308 @@ const mockCreateTransformationEvent = async (
 }
 
 /**
- * Populate the state object with a bunch of different combinations of types.
- * This function is made in order to simplify tests using a pre-defined set of types.
+ * Populate the state object recording a bunch of different combinations of types.
+ * This function is made in order to speed up tests by a pre-defined set of types.
  * (nb. The information is for testing purposes only and is not intended for any production use).
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
- * @param {String} systemAdminPrivateKey The Operator private key.
+ * @param {String} systemAdminPrivateKey The System Admin private key.
  */
-const populateStateWithMockData = async (
-    context,
-    handler,
-    systemAdminPrivateKey
-) => {
+const populateStateWithMockData = async (context, handler, systemAdminPrivateKey) => {
     // Task types.
-    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task1', 'role1')
-    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task2', 'role2')
-    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'task3', 'role3')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'TKT1', 'role1')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'TKT2', 'role2')
+    await mockCreateTaskType(context, handler, systemAdminPrivateKey, 'TKT3', 'role3')
 
     // Product Types.
-    const derivedProd1 = ProductType.DerivedProduct.create({
-        derivedProductType: 'prd1',
+    const derivedProd1 = ProductType.DerivedProductType.create({
+        productTypeAddress: getProductTypeAddress('PDT1'),
         conversionRate: 0.8
     })
 
-    const derivedProd2 = ProductType.DerivedProduct.create({
-        derivedProductType: 'prd2',
+    const derivedProd2 = ProductType.DerivedProductType.create({
+        productTypeAddress: getProductTypeAddress('PDT2'),
         conversionRate: 0.7
     })
 
-    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd1', 'name1', 'desc1', 3, []) // Bottles.
-    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd2', 'name2', 'desc2', 1, [derivedProd1]) // Olive
-    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd3', 'name3', 'desc3', 0, [derivedProd2]) // Olives.
-    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'prd4', 'name4', 'desc4', 0, [derivedProd2]) // Olives.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'PDT1', 'name1', 'desc1', 3, []) // Bottles.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'PDT2', 'name2', 'desc2', 1, [derivedProd1]) // Olive
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'PDT3', 'name3', 'desc3', 0, [derivedProd2]) // Olives.
+    await mockCreateProductType(context, handler, systemAdminPrivateKey, 'PDT4', 'name4', 'desc4', 0, [derivedProd2]) // Olives.
 
     // Event Parameter Types.
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param1', 'name1', 0)
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param2', 'name2', 1)
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param3', 'name3', 2)
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param4', 'name4', 0)
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param5', 'name5', 1)
-    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'param6', 'name6', 2)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT1', 'name1', 0)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT2', 'name2', 1)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT3', 'name3', 2)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT4', 'name4', 0)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT5', 'name5', 1)
+    await mockCreateEventParameterType(context, handler, systemAdminPrivateKey, 'EPT6', 'name6', 2)
 
     // Event Types.
-    const param1 = EventType.EventParameter.create({
-        parameterTypeId: 'param1',
+    const param1 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT1'),
         required: true,
         minValue: 10,
         maxValue: 100
     })
-    const param2 = EventType.EventParameter.create({
-        parameterTypeId: 'param2',
+    const param2 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT2'),
         required: true,
         minLength: 3,
         maxLength: 10
     })
-    const param3 = EventType.EventParameter.create({
-        parameterTypeId: 'param3',
+    const param3 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT3'),
         required: true
     })
 
-    const param4 = EventType.EventParameter.create({
-        parameterTypeId: 'param4',
+    const param4 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT4'),
         required: false,
         minValue: 10,
         maxValue: 100
     })
-    const param5 = EventType.EventParameter.create({
-        parameterTypeId: 'param5',
+    const param5 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT5'),
         required: false,
         minLength: 1,
         maxLength: 10
     })
-    const param6 = EventType.EventParameter.create({
-        parameterTypeId: 'param6',
+    const param6 = EventType.Parameter.create({
+        eventParameterTypeAddress: getEventParameterTypeAddress('EPT6'),
         required: false
     })
 
     // Description events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event1',
+        'EVT1',
         EventType.EventTypology.DESCRIPTION,
         'name1',
         'desc1',
-        [param1, param2, param3],
-        ['task1'],
-        ['prd3', 'prd2'],
+        [
+            param1,
+            param2,
+            param3
+        ],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3'),
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event2',
+        'EVT2',
         EventType.EventTypology.DESCRIPTION,
         'name2',
         'desc2',
-        [param4, param5, param6],
-        ['task1'],
-        ['prd3', 'prd2'],
+        [
+            param4,
+            param5,
+            param6
+        ],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3'),
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event3',
+        'EVT3',
         EventType.EventTypology.DESCRIPTION,
         'name3',
         'desc3',
-        [param1, param4],
-        ['task1'],
-        ['prd2'],
+        [
+            param1,
+            param4
+        ],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event4',
+        'EVT4',
         EventType.EventTypology.DESCRIPTION,
         'name4',
         'desc4',
         [param4],
-        ['task2'],
-        ['prd2'],
+        [
+            getTaskTypeAddress('TKT2')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event5',
+        'EVT5',
         EventType.EventTypology.DESCRIPTION,
         'name5',
         'desc5',
         [],
-        ['task1'],
-        ['prd3', 'prd2'],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3'),
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event6',
+        'EVT6',
         EventType.EventTypology.DESCRIPTION,
         'name6',
         'desc6',
         [param1, param4],
-        ['task1'],
-        ['prd3', 'prd2'],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3'),
+            getProductTypeAddress('PDT2')
+        ],
         []
     )
 
     // Transformation events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event7',
+        'EVT7',
         EventType.EventTypology.TRANSFORMATION,
         'name7',
         'desc7',
         [],
-        ['task1'],
-        ['prd3'],
-        ['prd2']
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event8',
+        'EVT8',
         EventType.EventTypology.TRANSFORMATION,
         'name8',
         'desc8',
         [],
-        ['task2'],
-        ['prd3'],
-        ['prd2']
+        [
+            getTaskTypeAddress('TKT2')
+        ],
+        [
+            getProductTypeAddress('PDT3')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'event9',
+        'EVT9',
         EventType.EventTypology.TRANSFORMATION,
         'name9',
         'desc9',
         [],
-        ['task1'],
-        ['prd2'],
-        ['prd1']
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ],
+        [
+            getProductTypeAddress('PDT1')
+        ]
     )
 
     // Property Types.
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property1', 'name1', 0, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property2', 'name2', 1, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property3', 'name3', 2, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property4', 'name4', 3, ['task1'], ['prd2'])
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property5', 'name5', 0, ['task2'], ['prd2'])
-    await mockCreatePropertyType(context, handler, systemAdminPrivateKey, 'property6', 'name6', 1, ['task1'], ['prd1'])
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT1',
+        'name1',
+        0,
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT2',
+        'name2',
+        1,
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT3',
+        'name3',
+        2,
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT4',
+        'name4',
+        3,
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT5',
+        'name5',
+        0,
+        [
+            getTaskTypeAddress('TKT2')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreatePropertyType(context, handler, systemAdminPrivateKey,
+        'PRT6',
+        'name6',
+        1,
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT1')
+        ]
+    )
 }
 
 module.exports = {
