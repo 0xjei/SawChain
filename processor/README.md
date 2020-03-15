@@ -12,6 +12,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
         * [System Admin](#system-admin)
         * [Company Admin](#company-admin)
         * [Operator](#operator)
+        * [Certification Authority](#certification-authority)
     * [Types](#types)
         * [Task Type](#task-type)
         * [Product Type](#product-type)
@@ -31,6 +32,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
     * [Create Event Parameter Type](#create-event-parameter-type)
     * [Create Event Type](#create-event-type)
     * [Create Property Type](#create-property-type)
+    * [Create Certification Authority](#create-certification-authority)
     * [Create Company](#create-company)
     * [Create Field](#create-field)
     * [Create Operator](#create-operator)
@@ -67,14 +69,16 @@ message SystemAdmin {
 ```
 
 ### Company Admin
-Each company is managed by a Company Administrator who is enabled to issue credentials and
-assign tasks to Operators. If the company covers the primary production phase, the Company Administrator can also record the company production fields.
+Each Company is managed by a Company Admin who is enabled to issue credentials and tasks to Operators who work inside the Company itself. 
+If a Company is a primary production Company, then his admin can record a list of production Fields.
+The Company Admin is created at the time of creation of the Company.
 
 ```protobuf
 message CompanyAdmin {
+    // The Company Admin's public key.
     string publicKey = 1;
 
-    // Company identifier.
+    // The Company address.
     string company = 2;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
@@ -102,23 +106,24 @@ message Operator {
 ```
 
 ### Certification Authority
-A Certification Authority represent a real-world external authority who verifies production batches qualities, product and status along the supply-chain.
-Each authority is represented with a unique public key, a name and website reference and a list of products where can certify their analysis.
-They can work over each production batch of every company because they are recognized as verification entity by the entire consortium.
+A Certification Authority represent a real-world external authority who certify the quality of production batches along the supply chain.
+Each one is represented with a unique public key, a name and website reference.
+The list of Product Types is used to identify a particular type of product that can be certified.
+They can certify each production batch of every company because they are recognized as authority by the consortium of participants.
 
 ```protobuf
 message CertificationAuthority {
-    // The CertificationAuthority's public key.
+    // The Certification Authority public key.
     string publicKey = 1;
 
-    // The CertificationAuthority name.
+    // The Certification Authority name.
     string name = 2;
 
-    // The CertificationAuthority website.
+    // The Certification Authority website.
     string website = 3;
 
-    // List of enabled Product Types for certification.
-    repeated string products = 4;
+    // A list of enabled Product Types addresses where recording the certificate.
+    repeated string enabledProductTypes = 4;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 5;
@@ -285,71 +290,75 @@ message PropertyType {
 
 ## Entities
 ### Company
-Along the entire supply-chain, different companies compete to decrease costs and to maximize earnings.
-Consequently, it's obvious that every company needs information integrity and reliability from untrusted parties without revealing any secret.
-A Company is uniquely identified by the hash of the first 10 characters of the public key of its Company Admin.
-To avoid single point of failure, every Company has a list of authorized Operators.
-The Operators can create batches for the Company and record events on them.
-To improve traceability, each production Company has an additional list of his production Fields.
+The supply chain is composed by different companies which compete to decrease costs and to maximize earnings.
+A direct consequence is the necessity of information integrity and reliability from untrusted parties without revealing any secret.
+A Company is uniquely identified by the hash of the first ten characters of the public key of its Company Admin.
+A Company has a list of authorized Operators to enable batch creation and event recording on their production resources.
+If a Company is a primary production Company, then his production Fields are specified as well.
 
 ```protobuf
 message Company {
-    // Company unique identifier (First 10 characters of sha512 of adminPublicKey).
+    // The Company unique identifier (first 10 characters of Company Admin's public key).
     string id = 1;
 
-    // Company name.
+    // The Company name.
     string name = 2;
 
-    // Company description.
+    // A short description of the Company.
     string description = 3;
 
-    // Company website.
+    // The Company website.
     string website = 4;
 
-    // Approximately when transaction was submitted, as a Unix UTC timestamp.
-    uint64 timestamp = 5;
+    // The Company Admin public key.
+    string adminPublicKey = 5;
 
-    // Company Admin public key.
-    string adminPublicKey = 6;
+    // A list of enabled Product Types addresses used in the Company.
+    repeated string enabledProductTypes = 6;
 
-    // List of Company Fields (only for production companies).
+    // A list of Company Fields addresses (for production companies only).
     repeated string fields = 7;
 
-    // List of Company Operators.
+    // A list of Company Operators addresses who are enabled to record.
     repeated string operators = 8;
 
-    // List of Company Batches.
+    // A list of Company Batches addresses.
     repeated string batches = 9;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 10;
 }
 ```
 
 ### Field
-The primary production phase is the most sensible to introduction of un-tracked materials and products.
-It's impossible to avoid the totality of the problems, but it's possible to mitigate them. Using a prediction of the production quantity of a field,
-it's possible to limit the creation of production batches, mitigating the introduction of un-tracked products because their quantity it's not related to the field. 
-The list of recorded Events related to the Field, are stored inside the Field state object itself.
+The primary production phase is the most insecure due to the introduction of un-tracked materials and products.
+Whatever the system and technology is, it is impossible to eliminate these problems caused by the individuals.
+However, it's possible to limit the creation of production batches using a prediction of the maximum production quantity of the Field.
+For example, if someone introduce un-traced products without lowering the quantity of the Field, 
+they would not be recorded in the system and it would be not possible to reconstruct their history of events.
+The list of recorded Events related to the Field is stored inside the Field state object itself.
 
 ```protobuf
 message Field {
-    // Field identifier.
+    // The Field unique identifier.
     string id = 1;
 
-    // Field description.
+    // A short description of the Field.
     string description = 2;
 
-    // Owner Company identifier.
+    // The owner Company address.
     string company = 3;
 
-    // Cultivated Product Type.
+    // The Product Type address of the cultivable product.
     string product = 4;
 
-    // Predicted production quantity.
+    // The predicted maximum production quantity.
     float quantity = 5;
 
-    // Location coordinates.
+    // The Field approximate location coordinates.
     Location location = 6;
 
-    // List of recorded Events.
+    // A list of Events state objects.
     repeated Event events = 7;
 }
 ```
@@ -662,7 +671,8 @@ A Create Event Parameter Type transaction is invalid if one of the following con
 * The id ${id} belongs to another Event Parameter Type.
 
 ### Create Event Type
-The System Admin must provide a unique id among Event Types, a name, the typology, a short description and four different lists.
+The System Admin must provide a unique id among Event Types, a name, the typology, a short description and four different lists
+in order to create an Event Type.
 The Parameters list can be specified to customize the information recording. For each Parameter additional features can be used.
 The enabled Task and Product Types lists are used to filter, respectively, who and where the Event can be recorded.
 For Event Type of *typology* equal to *TRANSFORMATION*, a list of enabled derived Product Types 
@@ -716,7 +726,8 @@ A Create Event Type transaction is invalid if one of the following conditions oc
 * At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
 
 ### Create Property Type
-The System Admin must provide a unique id among Property Types, a name, the information data type and two lists.
+The System Admin must provide a unique id among Property Types, a name, the information data type and two lists
+in order to create an Property Type.
 The enabled Task and Product Types lists are used to filter, respectively, who and where the Property can be recorded.
 
 ```protobuf
@@ -752,102 +763,106 @@ A Create Property Type transaction is invalid if one of the following conditions
 
 
 ### Create Certification Authority
-The System Admin can create a Certification Authority enabled to record certificates over every Company batch. 
-The System Admin needs to specify the Certification Authority public key, the name and website reference, and the list of products who can certify. 
-The transaction creates a new Certification Authority into the state.
+The System Admin must provide a valid unused public key, a name, a website, and a list of Product Types 
+in order to create a Certification Authority.
+The enabled Product Types list is used to filter where the certificate can be recorded.
 
 ```protobuf
 message CreateCertificationAuthorityAction {
-    // CertificationAuthority public key.
+    // The Certification Authority public key.
     string publicKey = 1;
 
-    // CertificationAuthority name.
+    // The Certification Authority name.
     string name = 2;
 
-    // CertificationAuthority website.
+    // The Certification Authority website.
     string website = 3;
 
-    // List of enabled Product Types for certification.
-    repeated string products = 4;
+    // A list of enabled Product Types addresses where recording the certificate.
+    repeated string enabledProductTypes = 4;
 }
 ```
 
 A Create Certification Authority transaction is invalid if one of the following conditions occurs:
-* Timestamp is not set.
-* Public key is not set.
-* Name is not set.
-* Website is not set.
-* Products is not set.
-* Public key field doesn't contain a valid public key.
-* The System Admin is not recorded.
-* There is a user already associated to given public key.
-* Transaction signer is not the System Admin.
-* At least one of the provided Product Type values for products doesn't match a valid Product Type.
+* The public key field doesn't contain a valid public key.
+* No name specified.
+* No website specified.
+* The signer is not the System Admin.
+* The public key belongs to another authorized user.
+* At least one Product Type state address is not a valid Product Type address.
+* At least one specified Product Type doesn't exist.
 
 ### Create Company
-To create a Company, the System Admin needs to provide some information: a name, a description, a website reference and the public key of the Company Admin.
-The identifier of the Company is derived from the public key of the Company Admin.
-This transaction record a new Company and a new Company Admin into the state.
+The System Admin must provide a name, a website, a short description, the Company Admin's public key and a list
+in order to create a Company.
+The enabled Product Types list is used to filter which products are enabled in the Company.
+The Company identifier is derived from the first ten characters of the hash SHA-512 calculated on the Company Admin's public key.
+The other lists must be left empty.
+This action creates a new Company and Company Admin into the state.
 
 ```protobuf
 message CreateCompanyAction {
-    // Company name.
+    // The Company name.
     string name = 1;
 
-    // Company description.
+    // A short description of the Company.
     string description = 2;
 
-    // Company website.
+    // The Company website.
     string website = 3;
 
-    // Company Admin public key.
+    // The Company Admin public key.
     string admin = 4;
+
+    // A list of enabled Product Types addresses used in the Company.
+    repeated string enabledProductTypes = 5;
 }
 ```
 
 A Create Company transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Name is not set.
-* Description is not set.
-* Website is not set.
-* Admin public key is not set.
-* Admin public key doesn't contain a valid public key.
-* Transaction signer is not the System Admin.
-* There is already a user with the admin's public key.
+* No name specified.
+* No description specified.
+* No website specified.
+* The admin field doesn't contain a valid public key.
+* The signer is not the System Admin.
+* The public key belongs to another authorized user.
+* At least one Product Type address is not well-formatted or not exists.
 
 ### Create Field
-A Field can be created by a Company Admin associated to a Company recorded into the state.
-The Company Admin needs to specify the unique identifier, a description, the cultivated product, the predicted production quantity and the approximation of Field's location.
+A Company Admin must provide an unique id among his Company Fields, a short description, the Product Type for the product which is cultivated in the Field,
+the predicted maximum production quantity and the approximate location in coordinates.
+This action create a new Field state object and update the fields list of the relative Company state object.
 
 ```protobuf
 message CreateFieldAction {
-    // Field unique identifier.
+    // The Field unique identifier.
     string id = 1;
 
-    // Field description.
+    // A short description of the Field.
     string description = 2;
 
-    // Field cultivated product.
+    // The Product Type address of the cultivable product.
     string product = 3;
 
-    // Field predicted production quantity.
+    // The predicted maximum production quantity.
     float quantity = 4;
 
-    // Field location.
+    // The Field approximate location coordinates.
     Location location = 5;
 }
 ```
 
 A Create Field transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Id is not set.
-* Description is not set.
-* Product is not set.
-* Location is not set.
-* Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
-* There is already a Field with the provided id into the Company.
-* The provided Product Type value for product doesn't match a valid Product Type.
-* Quantity is lower than or equal to zero.
+* No id specified.
+* No description specified.
+* No location specified.
+* The signer is not a Company Admin.
+* At least one Product Type address is not well-formatted or not exists.
+* Product field doesn't match an enabled Company Product Type address.
+* Quantity must be greater than zero.
+* The id belongs to another company Field.
 
 ## Create Operator
 A Company Admin can create an Operator enabled to record production batches and events for his Company. 
