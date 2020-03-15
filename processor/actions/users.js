@@ -91,11 +91,11 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
 }
 
 /**
- * Handle a create Operator transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The System Admin public key.
+ * Record a new Operator into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey A Company Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} publicKey Operator public key.
+ * @param {String} publicKey The Operator public key.
  * @param {String} task Task Type identifier for Operator task.
  */
 async function createOperator(
@@ -104,77 +104,53 @@ async function createOperator(
     timestamp,
     {publicKey, task}
 ) {
-    // Validation: Public key is not set.
-    if (!publicKey)
-        reject(`Public key is not set!`)
-
-    // Validation: Task is not set.
-    if (!task)
-        reject(`Task is not set!`)
-
     // Validation: Public key field doesn't contain a valid public key.
-    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
-        reject(`Public key field doesn't contain a valid public key!`)
+    if (!isValidPublicKey(publicKey))
+        reject(`The public key field doesn't contain a valid public key`)
 
-    const systemAdminAddress = getSystemAdminAddress()
-    const companyId = hashAndSlice(signerPublicKey, 10)
-    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey)
-    const companyAddress = getCompanyAddress(companyId)
-    const operatorAddress = getOperatorAddress(publicKey)
-    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
-    const companyAdminOperatorAddress = getCompanyAdminAddress(publicKey)
-    const taskTypeAddress = getTaskTypeAddress(task)
+    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
+    const operatorAddress = getOperatorAddress(publicKey);
 
-    const state = await context.getState([
-        systemAdminAddress,
-        companyAdminAddress,
-        companyAddress,
-        operatorAddress,
-        certificationAuthorityAddress,
-        companyAdminOperatorAddress,
-        taskTypeAddress
+    let state = await context.getState([
+        companyAdminAddress
+    ]);
+
+    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
+
+    // Validation: The signer is not a Company Admin.
+    if (companyAdminState.publicKey !== signerPublicKey)
+        reject(`You must be a Company Admin with a Company to create an Operator`)
+
+    // Validation: At least one Task Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [task],
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE,
+        "Task Type"
+    )
+
+    // Validation: The public key belongs to another authorized user.
+    await isPublicKeyUsed(context, publicKey)
+
+    state = await context.getState([
+        companyAdminState.company
     ])
 
-    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
-    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress])
-    const companyState = Company.decode(state[companyAddress])
-
-    // Validation: Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
-    if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
-        reject(`You must be a Company Admin for a Company to create an Operator!`)
-
-    // Validation: There is a user already associated to given public key.
-    if (systemAdminState.publicKey === publicKey)
-        reject(`The public key is associated with the current System Admin!`)
-
-    if (state[companyAdminOperatorAddress].length > 0)
-        reject(`There is already a Company Admin with the given public key!`)
-
-    // Validation: Given public key is already associated to an OP.
-    if (state[operatorAddress].length > 0)
-        reject(`There is already an Operator with the given public key!`)
-
-    // Validation: Given public key is already associated to a CertAuth.
-    if (state[certificationAuthorityAddress].length > 0)
-        reject(`There is already a Certification Authority with the given public key!`)
-
-    // Validation: The provided Task Type value for task doesn't match a valid Task Type.
-    if (!state[taskTypeAddress].length)
-        reject(`The provided Task Type value for task doesn't match a valid Task Type!`)
+    const companyState = Company.decode(state[companyAdminState.company])
 
     // State update.
     const updates = {}
 
     updates[operatorAddress] = Operator.encode({
         publicKey: publicKey,
-        company: companyId,
+        company: companyAdminState.company,
         task: task,
         timestamp: timestamp
     }).finish()
 
     // Update company.
     companyState.operators.push(publicKey)
-    updates[companyAddress] = Company.encode(companyState).finish()
+    updates[companyAdminState.company] = Company.encode(companyState).finish()
 
     await context.setState(updates)
 }

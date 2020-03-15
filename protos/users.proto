@@ -25,10 +25,10 @@ message Operator {
     // The Operator's public key.
     string publicKey = 1;
 
-    // Company identifier.
+    // The Company state address.
     string company = 2;
 
-    // Assigned task into the company.
+    // The assigned Task Type address.
     string task = 3;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp

@@ -24,7 +24,7 @@ message Company {
     // A list of Company Fields addresses (for production companies only).
     repeated string fields = 7;
 
-    // A list of Company Operators addresses who are enabled to record.
+    // A list of Company Operators public keys who are enabled to record.
     repeated string operators = 8;
 
     // A list of Company Batches addresses.

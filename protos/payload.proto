@@ -184,10 +184,10 @@ message CreateFieldAction {
 }
 
 message CreateOperatorAction {
-    // Operator public key.
+    // The Operator's public key.
     string publicKey = 1;
 
-    // Operator task.
+    // The assigned Task Type address.
     string task = 2;
 }
 
