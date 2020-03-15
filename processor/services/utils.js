@@ -1,7 +1,16 @@
 'use strict'
 
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
-const {isValidAddress} = require('./addressing')
+const {
+    getSystemAdminAddress,
+    getOperatorAddress,
+    getCompanyAdminAddress,
+    getCertificationAuthorityAddress,
+    isValidAddress
+} = require('./addressing')
+const {
+    SystemAdmin
+} = require('./proto')
 
 /**
  * A quick convenience function to throw an InvalidTransaction error with a joined message.
@@ -54,9 +63,44 @@ const checkStateAddresses = async (context, addresses, start, object) => {
     }
 }
 
+/**
+ * Check if the public key is already associated with a user into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} publicKey The public key to verify.
+ */
+const isPublicKeyUsed = async (context, publicKey) => {
+    const systemAdminAddress = getSystemAdminAddress()
+    const companyAdminAddress = getCompanyAdminAddress(publicKey)
+    const operatorAddress = getOperatorAddress(publicKey)
+    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
+
+    const state = await context.getState([
+        systemAdminAddress,
+        companyAdminAddress,
+        operatorAddress,
+        certificationAuthorityAddress
+    ])
+
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
+
+    // Validation: The public key belongs to another authorized user.
+    if (systemAdminState.publicKey === publicKey)
+        reject(`The public key belongs to the current System Admin`)
+
+    if (state[companyAdminAddress].length > 0)
+        reject(`The public key belongs to a Company Admin`)
+
+    if (state[operatorAddress].length > 0)
+        reject(`The public key belongs to an Operator`)
+
+    if (state[certificationAuthorityAddress].length > 0)
+        reject(`The public key belongs to a Certification Authority`)
+}
+
 module.exports = {
     reject,
     getActionField,
     isValidPublicKey,
-    checkStateAddresses
+    checkStateAddresses,
+    isPublicKeyUsed
 }

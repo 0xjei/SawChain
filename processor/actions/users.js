@@ -10,7 +10,9 @@ const {
 } = require('../services/proto')
 const {
     reject,
-    isValidPublicKey
+    isValidPublicKey,
+    checkStateAddresses,
+    isPublicKeyUsed
 } = require('../services/utils')
 const {
     getSystemAdminAddress,
@@ -20,7 +22,9 @@ const {
     getTaskTypeAddress,
     getProductTypeAddress,
     getCompanyAddress,
-    hashAndSlice
+    hashAndSlice,
+    FULL_PREFIXES,
+    TYPE_PREFIXES
 } = require('../services/addressing')
 
 /**
@@ -63,16 +67,8 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
         reject(`The public key field doesn't contain a valid public key`)
 
     const systemAdminAddress = getSystemAdminAddress()
-    const companyAdminAddress = getCompanyAdminAddress(publicKey)
-    const operatorAddress = getOperatorAddress(publicKey)
-    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
 
-    const state = await context.getState([
-        systemAdminAddress,
-        companyAdminAddress,
-        operatorAddress,
-        certificationAuthorityAddress
-    ])
+    const state = await context.getState([systemAdminAddress])
 
     const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
@@ -81,17 +77,7 @@ async function updateSystemAdmin(context, signerPublicKey, timestamp, {publicKey
         reject(`The signer is not the System Admin`)
 
     // Validation: The public key belongs to another authorized user.
-    if (systemAdminState.publicKey === publicKey)
-        reject(`The public key belongs to the current System Admin`)
-
-    if (state[companyAdminAddress].length > 0)
-        reject(`The public key belongs to a Company Admin`)
-
-    if (state[operatorAddress].length > 0)
-        reject(`The public key belongs to an Operator`)
-
-    if (state[certificationAuthorityAddress].length > 0)
-        reject(`The public key belongs to a Certification Authority`)
+    await isPublicKeyUsed(context, publicKey)
 
     // State update.
     const updates = {}
@@ -194,99 +180,62 @@ async function createOperator(
 }
 
 /**
- * Handle a create Certification Authority into the state.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The System Admin public key.
+ * Record a new Certification Authority into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey The current System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {Object} publicKey The Certification Authority public key.
+ * @param {String} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
  * @param {String} website The Certification Authority website.
- * @param {String[]} products The products where the Certification Authority is enabled to issue certificates.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the certificate can be recorded.
  */
 async function createCertificationAuthority(
     context,
     signerPublicKey,
     timestamp,
-    {publicKey, name, website, products}
+    {publicKey, name, website, enabledProductTypes}
 ) {
-    // Validation: Public key is not set.
-    if (!publicKey)
-        reject(`Public key is not set!`)
-
-    // Validation: Name is not set.
-    if (!name)
-        reject(`Name is not set!`)
-
-    // Validation: Website is not set.
-    if (!website)
-        reject(`Website is not set!`)
-
-    // Validation: Products is not set.
-    if (!products.length > 0)
-        reject(`Products is not set`)
-
     // Validation: Public key field doesn't contain a valid public key.
-    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey))
-        reject(`Public key field doesn't contain a valid public key!`)
+    if (!isValidPublicKey(publicKey))
+        reject(`The public key field doesn't contain a valid public key`)
+
+    // Validation: No name specified.
+    if (!name)
+        reject(`No name specified`)
+
+    // Validation: No website specified.
+    if (!website)
+        reject(`No website specified`)
 
     const systemAdminAddress = getSystemAdminAddress()
-    const companyAdminAddress = getCompanyAdminAddress(publicKey)
-    const operatorAddress = getOperatorAddress(publicKey)
-    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
 
-    const state = await context.getState([
-        systemAdminAddress,
-        companyAdminAddress,
-        operatorAddress,
-        certificationAuthorityAddress
-    ])
+    const state = await context.getState([systemAdminAddress])
 
     const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: System Admin is not recorded.
-    if (systemAdminState.publicKey === '')
-        reject(`System Admin is not recorded!`)
-
-    // Validation: There is a user already associated to given public key.
-    if (systemAdminState.publicKey === publicKey)
-        reject(`The public key is associated with the current System Admin!`)
-
-    // Validation: Given public key is already associated to a CA.
-    if (state[companyAdminAddress].length0)
-        reject(`There is already a Company Admin with the given public key!`)
-
-    // Validation: Given public key is already associated to an OP.
-    if (state[operatorAddress].length > 0)
-        reject(`There is already an Operator with the given public key!`)
-
-    // Validation: Given public key is already associated to a CertAuth.
-    if (state[certificationAuthorityAddress].length > 0)
-        reject(`There is already a Certification Authority with the given public key!`)
-
-    // Validation: Transaction signer is not the System Admin.
+    // Validation: The signer is not the System Admin.
     if (systemAdminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: At least one of the provided values for products doesn't match a valid Product Type.
-    for (const product of products) {
-        let productTypeAddress = getProductTypeAddress(product)
+    // Validation: The public key belongs to another authorized user.
+    await isPublicKeyUsed(context, publicKey)
 
-        let state = await context.getState([
-            productTypeAddress
-        ])
-
-        if (!state[productTypeAddress].length > 0)
-            reject(`The provided Product Type ${product} doesn't match with a valid Product Type!`)
-    }
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledProductTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
     // State update.
     const updates = {}
 
-    updates[certificationAuthorityAddress] = CertificationAuthority.encode({
+    updates[getCertificationAuthorityAddress(publicKey)] = CertificationAuthority.encode({
         publicKey: publicKey,
         name: name,
         website: website,
-        products: products,
+        enabledProductTypes: enabledProductTypes,
         timestamp: timestamp
     }).finish()
 
