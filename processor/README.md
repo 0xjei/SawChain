@@ -87,17 +87,18 @@ message CompanyAdmin {
 ```
 
 ### Operator
-An Operator is an authorized user enabled to record data about production batches and events which happened within the company who works for.
-The task field allows dynamic filtering during registration of data which decreases occurrences of errors.
+An Operator is an authorized user enabled to record events which happened in the Company who works for.
+An Operator is authorized to deal with a subset of products and events based on his/her task. 
 
 ```protobuf
 message Operator {
+    // The Operator's public key.
     string publicKey = 1;
 
-    // Company identifier.
+    // The Company state address.
     string company = 2;
 
-    // Assigned task into the company.
+    // The assigned Task Type address.
     string task = 3;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
@@ -319,7 +320,7 @@ message Company {
     // A list of Company Fields addresses (for production companies only).
     repeated string fields = 7;
 
-    // A list of Company Operators addresses who are enabled to record.
+    // A list of Company Operators public keys who are enabled to record.
     repeated string operators = 8;
 
     // A list of Company Batches addresses.
@@ -867,14 +868,14 @@ A Create Field transaction is invalid if one of the following conditions occurs:
 ## Create Operator
 A Company Admin can create an Operator enabled to record production batches and events for his Company. 
 The Company Admin needs to specify the Operator public key and the Task Type associated to his role inside the Company. 
-The transaction creates a new Operator into the state and updates Company Admin's Company operators list.
+This action creates a new Operator into the state and updates the Company operators list.
 
 ```protobuf
 message CreateOperatorAction {
-    // Operator public key.
+    // The Operator's public key.
     string publicKey = 1;
 
-    // Operator task.
+    // The assigned Task Type address.
     string task = 2;
 }
 ```
