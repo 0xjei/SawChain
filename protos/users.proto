@@ -36,17 +36,17 @@ message Operator {
 }
 
 message CertificationAuthority {
-    // The CertificationAuthority's public key.
+    // The Certification Authority public key.
     string publicKey = 1;
 
-    // The CertificationAuthority name.
+    // The Certification Authority name.
     string name = 2;
 
-    // The CertificationAuthority website.
+    // The Certification Authority website.
     string website = 3;
 
-    // List of enabled Product Types for certification.
-    repeated string products = 4;
+    // A list of enabled Product Types addresses where recording the certificate.
+    repeated string enabledProductTypes = 4;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
     uint64 timestamp = 5;

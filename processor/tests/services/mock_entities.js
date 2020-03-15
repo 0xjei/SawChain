@@ -532,7 +532,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
     // Description events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT1',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name1',
         'desc1',
         [
@@ -552,7 +552,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT2',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name2',
         'desc2',
         [
@@ -572,7 +572,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT3',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name3',
         'desc3',
         [
@@ -590,7 +590,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT4',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name4',
         'desc4',
         [param4],
@@ -605,7 +605,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT5',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name5',
         'desc5',
         [],
@@ -621,7 +621,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT6',
-        EventType.EventTypology.DESCRIPTION,
+        EventType.Typology.DESCRIPTION,
         'name6',
         'desc6',
         [param1, param4],
@@ -638,7 +638,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
     // Transformation events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT7',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType.Typology.TRANSFORMATION,
         'name7',
         'desc7',
         [],
@@ -655,7 +655,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT8',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType.Typology.TRANSFORMATION,
         'name8',
         'desc8',
         [],
@@ -672,7 +672,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT9',
-        EventType.EventTypology.TRANSFORMATION,
+        EventType.Typology.TRANSFORMATION,
         'name9',
         'desc9',
         [],

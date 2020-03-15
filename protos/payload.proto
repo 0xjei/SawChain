@@ -136,17 +136,17 @@ message CreatePropertyTypeAction {
 }
 
 message CreateCertificationAuthorityAction {
-    // CertificationAuthority public key.
+    // The Certification Authority public key.
     string publicKey = 1;
 
-    // CertificationAuthority name.
+    // The Certification Authority name.
     string name = 2;
 
-    // CertificationAuthority website.
+    // The Certification Authority website.
     string website = 3;
 
-    // List of enabled Product Types for certification.
-    repeated string products = 4;
+    // A list of enabled Product Types addresses where recording the certificate.
+    repeated string enabledProductTypes = 4;
 }
 
 message CreateCompanyAction {

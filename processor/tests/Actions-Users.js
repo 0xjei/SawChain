@@ -21,6 +21,7 @@ const {
 const {
     getSystemAdminAddress,
     getOperatorAddress,
+    getProductTypeAddress,
     getCompanyAddress,
     getCertificationAuthorityAddress,
     hashAndSlice
@@ -182,7 +183,7 @@ describe('User Actions', function () {
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -211,9 +212,12 @@ describe('User Actions', function () {
             expect(parseInt(decodedState.timestamp)).to.equal(timestamp)
         })
 
-        after(function () {
+        after(async function () {
             // Replace System Admin key pair with the new one.
             systemAdminKeyPair = newSystemAdminKeyPair
+
+            // Populate the state with mock Types data.
+            await populateStateWithMockData(context, handler, systemAdminKeyPair.privateKey)
         })
     })
 
@@ -232,9 +236,6 @@ describe('User Actions', function () {
         let operatorAddress = null
 
         before(async function () {
-            // Populate the state with mock types.
-            await populateStateWithMockData(context, handler, systemAdminKeyPair.privateKey)
-
             // Company Admin key pair.
             cmpAdminKeyPair = createNewKeyPair()
             companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
@@ -433,17 +434,26 @@ describe('User Actions', function () {
     })
 
     describe('Create Certification Authority Action', async function () {
-        const caName = "ca1"
-        const caWebsite = "website1"
-        const products = ["prd1", "prd2"]
+        const name = "name1"
+        const website = "website1"
 
         let caKeyPair = null
         let caAddress = null
+        let enabledProductTypes = null
+        let invalidProductTypeAddress = null
 
         before(async function () {
-            // Certification Authority key pair.
+            // Get Certification Authority key pair and state address.
             caKeyPair = createNewKeyPair()
             caAddress = getCertificationAuthorityAddress(caKeyPair.publicKey)
+
+            enabledProductTypes = [
+                getProductTypeAddress("PDT1"),
+                getProductTypeAddress("PDT2")
+            ]
+
+            // Create invalid data for testing purpose.
+            invalidProductTypeAddress = getProductTypeAddress('PDT0')
         })
 
         it('Should reject if no timestamp is given', async function () {
@@ -454,7 +464,7 @@ describe('User Actions', function () {
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -468,27 +478,29 @@ describe('User Actions', function () {
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no public key is given', async function () {
+        it('Should reject if the publicKey field doesn\'t contain a valid public key', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
-                    createCertificationAuthority: CreateCertificationAuthorityAction.create({})
+                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
+                        publicKey: caKeyPair.publicKey.slice(0, 65)
+                    })
                 }),
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no name is given', async function () {
+        it('Should reject if no name specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
@@ -500,139 +512,123 @@ describe('User Actions', function () {
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no website is given', async function () {
+        it('Should reject if no website specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName
+                        name: name
                     })
                 }),
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no products are given', async function () {
+        it('Should reject if the signer is not the System Admin', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName,
-                        website: caWebsite
+                        name: name,
+                        website: website,
                     })
                 }),
-                systemAdminKeyPair.privateKey
+                caKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
-                    timestamp: Date.now(),
-                    createCertificationAuthority: CreateCertificationAuthorityAction.create({
-                        publicKey: caKeyPair.publicKey.slice(0, 60),
-                        name: caName,
-                        website: caWebsite,
-                        products: products
-                    })
-                }),
-                systemAdminKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if there is a user already associated to given public key', async function () {
+        it('Should reject if the public key belongs to another authorized user', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: systemAdminKeyPair.publicKey,
-                        name: caName,
-                        website: caWebsite,
-                        products: products
+                        name: name,
+                        website: website
                     })
                 }),
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if transaction signer is not the System Admin', async function () {
+        it('Should reject if at least one Product Type state address is not valid', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName,
-                        website: caWebsite,
-                        products: products
+                        name: name,
+                        website: website,
+                        enabledProductTypes: [
+                            invalidProductTypeAddress.slice(0, 30)
+                        ]
                     })
                 }),
-                caKeyPair.privateKey
+                systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if at least one of the provided values for products doesn\'t match a valid Product Type', async function () {
+        it('Should reject if at least one specified Product Type doesn\'t exist', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
                     timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName,
-                        website: caWebsite,
-                        products: ["no-prod"]
+                        name: name,
+                        website: website,
+                        enabledProductTypes: [
+                            invalidProductTypeAddress
+                        ]
                     })
                 }),
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
+
         it('Should create the Certification Authority', async function () {
             const timestamp = Date.now()
 
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
-                    timestamp: timestamp,
+                    timestamp: Date.now(),
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
-                        name: caName,
-                        website: caWebsite,
-                        products: products
+                        name: name,
+                        website: website,
+                        enabledProductTypes: enabledProductTypes
                     })
                 }),
                 systemAdminKeyPair.privateKey
@@ -641,13 +637,16 @@ describe('User Actions', function () {
             await handler.apply(txn, context)
 
             state = context._state[caAddress]
+            decodedState = CertificationAuthority.decode(state)
 
             expect(state).to.not.be.null
-            expect(CertificationAuthority.decode(state).publicKey).to.equal(caKeyPair.publicKey)
-            expect(CertificationAuthority.decode(state).name).to.equal(caName)
-            expect(CertificationAuthority.decode(state).website).to.equal(caWebsite)
-            expect(CertificationAuthority.decode(state).products.length).to.equal(products.length)
-            expect(parseInt(CertificationAuthority.decode(state).timestamp)).to.equal(timestamp)
+            expect(decodedState.publicKey).to.equal(caKeyPair.publicKey)
+            expect(decodedState.name).to.equal(name)
+            expect(decodedState.website).to.equal(website)
+            expect(decodedState.enabledProductTypes.length).to.equal(enabledProductTypes.length)
+            expect(decodedState.enabledProductTypes[0]).to.equal(enabledProductTypes[0])
+            expect(decodedState.enabledProductTypes[1]).to.equal(enabledProductTypes[1])
+            expect(parseInt(decodedState.timestamp)).to.equal(timestamp)
         })
     })
 })
