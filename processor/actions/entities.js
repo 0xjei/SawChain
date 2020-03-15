@@ -17,8 +17,7 @@ const {
     TypeData
 } = require('../services/proto');
 const {
-    reject,
-    calculateHash
+    reject
 } = require('../services/utils');
 const {
     getSystemAdminAddress,
@@ -32,7 +31,8 @@ const {
     getFieldAddress,
     getBatchAddress,
     getProposalAddress,
-    getCertificationAuthorityAddress
+    getCertificationAuthorityAddress,
+    hashAndSlice
 } = require('../services/addressing');
 
 /**
@@ -153,7 +153,7 @@ async function createCompany(
     if (!enabledProductTypes.length)
         reject(`Enabled product types list is not set!`);
 
-    const id = calculateHash(admin).slice(0, 10)
+    const id = hashAndSlice(admin, 10)
     const systemAdminAddress = getSystemAdminAddress();
     const companyAdminAddress = getCompanyAdminAddress(admin);
     const operatorAddress = getOperatorAddress(admin);
@@ -255,7 +255,7 @@ async function createField(
     if (!location)
         reject(`Location is not set!`);
 
-    const companyId = calculateHash(signerPublicKey).slice(0, 10)
+    const companyId = hashAndSlice(signerPublicKey, 10)
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
     const companyAddress = getCompanyAddress(companyId);
     const productAddress = getProductTypeAddress(product);

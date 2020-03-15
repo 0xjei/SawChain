@@ -10,7 +10,8 @@ const {
     TypeData
 } = require('../services/proto')
 const {
-    reject
+    reject,
+    checkStateAddresses
 } = require('../services/utils')
 const {
     getTaskTypeAddress,
@@ -117,26 +118,18 @@ async function createProductType(
     if (state[productTypeAddress].length > 0)
         reject(`The id ${id} belongs to another Product Type`)
 
-    for (const derivedPT of derivedProductTypes) {
-        // Validation: At least one derived Product Type state address is not a valid Product Type address.
-        if (!isValidAddress(derivedPT.productTypeAddress) ||
-            !derivedPT.productTypeAddress.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE)
-        )
-            reject(`Derived Product Type address is not a valid 70-char hex string Product Type address: 
-                             ${derivedPT.productTypeAddress}`
-            )
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        derivedProductTypes.map(dpt => dpt.productTypeAddress),
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
-        const state = await context.getState([
-            derivedPT.productTypeAddress
-        ])
-
-        // Validation: At least one specified derived Product Type doesn't exist.
-        if (state[derivedPT.productTypeAddress].length === 0)
-            reject(`Specified derived Product Type does not exist: ${derivedPT.productTypeAddress}`)
-
+    for (const derivedProductType of derivedProductTypes) {
         // Validation: Conversion rate must be greater than zero.
-        if (!derivedPT.conversionRate > 0)
-            reject(`Specified conversion rate is not greater than zero: ${derivedPT.conversionRate}`)
+        if (!derivedProductType.conversionRate > 0)
+            reject(`Specified conversion rate is not greater than zero: ${derivedProductType.conversionRate}`)
     }
 
     // State update.
@@ -274,81 +267,55 @@ async function createEventType(
     if (state[eventTypeAddress].length > 0)
         reject(`The id ${id} belongs to another Event Type`)
 
-    for (const taskType of enabledTaskTypes) {
-        // Validation: At least one Task Type state address is not a valid Task Type address.
-        if (!isValidAddress(taskType) || !taskType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE))
-            reject(`Task Type address is not a valid 70-char hex string Task Type address: ${taskType}`)
+    // Validation: At least one Task Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledTaskTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE,
+        "Task Type"
+    )
 
-        const state = await context.getState([
-            taskType
-        ])
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledProductTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
-        // Validation: At least one specified Task Type doesn't exist.
-        if (state[taskType].length === 0)
-            reject(`Specified Task Type does not exist: ${taskType}`)
-    }
-
-    for (const productType of enabledProductTypes) {
-        // Validation: At least one Product Type state address is not a valid Product Type address.
-        if (!isValidAddress(productType) || !productType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE))
-            reject(`Product Type address is not a valid 70-char hex string Product Type address: ${productType}`)
-
-        const state = await context.getState([
-            productType
-        ])
-
-        // Validation: At least one specified Product Type doesn't exist.
-        if (state[productType].length === 0)
-            reject(`Specified Product Type does not exist: ${productType}`)
-
-        // Update derived Product Types from enabled Product Types.
-        derivedProductTypes = derivedProductTypes.concat(ProductType.decode(state[productType]).derivedProductTypes)
-    }
-
-    for (const parameter of parameters) {
-        // Validation: At least one Event Parameter Type state address is not a valid Event Parameter Type address.
-        if (!isValidAddress(parameter.eventParameterTypeAddress) ||
-            !parameter.eventParameterTypeAddress.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.EVENT_PARAMETER_TYPE)
-        )
-            reject(`Event Parameter Type address is not a valid 70-char hex string Event Parameter Type address: 
-                             ${parameter.eventParameterTypeAddress}`
-            )
-
-        const state = await context.getState([
-            parameter.eventParameterTypeAddress
-        ])
-
-        // Validation: At least one specified Event Parameter Type doesn't exist.
-        if (state[parameter.eventParameterTypeAddress].length === 0)
-            reject(`Specified Event Parameter Type does not exist: ${parameter.eventParameterTypeAddress}`)
-    }
+    // Validation: At least one Event Parameter Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        parameters.map(ept => ept.eventParameterTypeAddress),
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.EVENT_PARAMETER_TYPE,
+        "Event Parameter Type"
+    )
 
     // Validation: No derived products specified for an event with transformation typology.
     if (typology === EventType.Typology.TRANSFORMATION && enabledDerivedProductTypes.length === 0)
         reject(`No derived products for transformation event typology`)
 
+    // Get derived Product Type from enabled Product Type
+    for (const enabledProductType of enabledProductTypes) {
+        const state = await context.getState([enabledProductType])
+
+        // Update derived Product Types list from enabled Product Types lists.
+        derivedProductTypes = derivedProductTypes.concat(ProductType.decode(state[enabledProductType]).derivedProductTypes)
+    }
+
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledDerivedProductTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Derived Product Type"
+    )
+
+    // Validation: At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
     for (const derivedProductType of enabledDerivedProductTypes) {
-        // Validation: At least one derived Product Type state address is not a valid Product Type address.
-        if (!isValidAddress(derivedProductType) ||
-            !derivedProductType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE)
-        )
-            reject(`Derived Product Type address is not a valid 70-char hex string Product Type address: 
-                             ${derivedProductType}`
-            )
-
-        const state = await context.getState([
-            derivedProductType
-        ])
-
-        // Validation: At least one specified derived Product Type doesn't exist.
-        if (state[derivedProductType].length === 0)
-            reject(`Specified derived Product Type does not exist: ${derivedProductType}`)
-
         // Validation: At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
         if (!derivedProductTypes.some(derivedPT => derivedPT.productTypeAddress === derivedProductType))
-            reject(`Specified derived Product Type does not match a valid derived product for enabled Product Types: 
-                             ${derivedProductType}`
-            )
+            reject(`Specified derived Product Type does not match a valid derived product for enabled Product Types: ${derivedProductType}`)
     }
 
     // State update.
@@ -421,33 +388,21 @@ async function createPropertyType(
     if (state[propertyTypeAddress].length > 0)
         reject(`The id ${id} belongs to another Property Type`)
 
-    for (const taskType of enabledTaskTypes) {
-        // Validation: At least one Task Type state address is not a valid Task Type address.
-        if (!isValidAddress(taskType) || !taskType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE))
-            reject(`Task Type address is not a valid 70-char hex string Task Type address: ${taskType}`)
+    // Validation: At least one Task Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledTaskTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.TASK_TYPE,
+        "Task Type"
+    )
 
-        const state = await context.getState([
-            taskType
-        ])
-
-        // Validation: At least one specified Task Type doesn't exist.
-        if (state[taskType].length === 0)
-            reject(`Specified Task Type does not exist: ${taskType}`)
-    }
-
-    for (const productType of enabledProductTypes) {
-        // Validation: At least one Product Type state address is not a valid Product Type address.
-        if (!isValidAddress(productType) || !productType.startsWith(FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE))
-            reject(`Product Type address is not a valid 70-char hex string Product Type address: ${productType}`)
-
-        const state = await context.getState([
-            productType
-        ])
-
-        // Validation: At least one specified Product Type doesn't exist.
-        if (state[productType].length === 0)
-            reject(`Specified Product Type does not exist: ${productType}`)
-    }
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledProductTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
     // State update.
     const updates = {}

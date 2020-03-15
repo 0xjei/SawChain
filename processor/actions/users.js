@@ -10,7 +10,6 @@ const {
 } = require('../services/proto')
 const {
     reject,
-    calculateHash,
     isValidPublicKey
 } = require('../services/utils')
 const {
@@ -20,7 +19,8 @@ const {
     getCertificationAuthorityAddress,
     getTaskTypeAddress,
     getProductTypeAddress,
-    getCompanyAddress
+    getCompanyAddress,
+    hashAndSlice
 } = require('../services/addressing')
 
 /**
@@ -131,7 +131,7 @@ async function createOperator(
         reject(`Public key field doesn't contain a valid public key!`)
 
     const systemAdminAddress = getSystemAdminAddress()
-    const companyId = calculateHash(signerPublicKey).slice(0, 10)
+    const companyId = hashAndSlice(signerPublicKey, 10)
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey)
     const companyAddress = getCompanyAddress(companyId)
     const operatorAddress = getOperatorAddress(publicKey)
