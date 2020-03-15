@@ -3,9 +3,6 @@
 const {expect} = require('chai');
 const {randomBytes} = require('crypto');
 const {
-    calculateHash
-} = require('../services/utils');
-const {
     NAMESPACE,
     PREFIXES,
     USER_PREFIXES,
@@ -22,7 +19,8 @@ const {
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
-    isValidAddress
+    isValidAddress,
+    hashAndSlice
 } = require('../services/addressing');
 
 describe('Addressing Service', function () {
@@ -55,7 +53,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getCompanyAdminAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -77,7 +75,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getOperatorAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -99,7 +97,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = randomBytes(32).toString('hex');
             address = getCertificationAuthorityAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -121,7 +119,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-taskType-id";
             address = getTaskTypeAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -143,7 +141,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-productType-id";
             address = getProductTypeAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -165,7 +163,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-eventParameterType-id";
             address = getEventParameterTypeAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -187,7 +185,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-eventType-id";
             address = getEventTypeAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -209,7 +207,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-propertyType-id";
             address = getPropertyTypeAddress(data);
-            dataHash = calculateHash(data).slice(0, 60)
+            dataHash = hashAndSlice(data, 60)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -231,7 +229,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-company-id";
             address = getCompanyAddress(data);
-            dataHash = calculateHash(data).slice(0, 62)
+            dataHash = hashAndSlice(data, 62)
         });
 
         it('Should return a hexadecimal string', function () {
@@ -255,7 +253,7 @@ describe('Addressing Service', function () {
             data = "mock-field-id";
             company = "mock-company-id";
             address = getFieldAddress(data, company);
-            dataHash = calculateHash(data).slice(0, 42) + calculateHash(company).slice(0, 20);
+            dataHash = hashAndSlice(data, 42) + hashAndSlice(company, 20);
         });
 
         it('Should return a hexadecimal string', function () {
@@ -278,7 +276,7 @@ describe('Addressing Service', function () {
         before(function () {
             data = "mock-batch-id";
             address = getBatchAddress(data);
-            dataHash = calculateHash(data).slice(0, 62)
+            dataHash = hashAndSlice(data, 62)
         });
 
         it('Should return a hexadecimal string', function () {

@@ -36,11 +36,9 @@ const {
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
-    getProposalAddress
+    getProposalAddress,
+    hashAndSlice
 } = require('../services/addressing');
-const {
-    calculateHash
-} = require('../services/utils');
 const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Batch Actions', function () {
@@ -84,7 +82,7 @@ describe('Batch Actions', function () {
 
         // Company Admin key pair.
         cmpAdminKeyPair = createNewKeyPair();
-        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
+        companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
 
         // Company address.
         companyAddress = getCompanyAddress(companyId);
@@ -108,7 +106,7 @@ describe('Batch Actions', function () {
 
     describe('Add Certificate To Batch Action', function () {
         const link = "link1";
-        const hash = calculateHash("CertificationDocument");
+        const hash = hashAndSlice("CertificationDocument", 256);
 
         let caKeyPair = null;
         let ca2KeyPair = null;
@@ -764,9 +762,9 @@ describe('Batch Actions', function () {
         before(async function () {
             // Create a new Company Admin.
             cmpAdminKeyPair2 = createNewKeyPair();
-            companyId2 = calculateHash(cmpAdminKeyPair2.publicKey).slice(0, 10)
+            companyId2 = hashAndSlice(cmpAdminKeyPair2.publicKey, 10)
             cmpAdminKeyPair3 = createNewKeyPair();
-            companyId3 = calculateHash(cmpAdminKeyPair3.publicKey).slice(0, 10)
+            companyId3 = hashAndSlice(cmpAdminKeyPair3.publicKey, 10)
 
             // Company address.
             companyAddress2 = getCompanyAddress(companyId2);

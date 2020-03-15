@@ -28,11 +28,9 @@ const {
     getOperatorAddress,
     getCompanyAddress,
     getFieldAddress,
-    getBatchAddress
+    getBatchAddress,
+    hashAndSlice
 } = require('../services/addressing');
-const {
-    calculateHash
-} = require('../services/utils');
 const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('Entities Events Actions', function () {
@@ -76,10 +74,10 @@ describe('Entities Events Actions', function () {
 
         // Company Admin key pair.
         cmpAdminKeyPair = createNewKeyPair();
-        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
+        companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
 
         // Company address.
-        companyAddress = getCompanyAddress(calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10))
+        companyAddress = getCompanyAddress(hashAndSlice(cmpAdminKeyPair.publicKey, 10))
 
         // Create Company.
         await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"]);

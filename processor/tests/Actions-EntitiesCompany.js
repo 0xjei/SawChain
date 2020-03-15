@@ -23,10 +23,8 @@ const {
     getCompanyAdminAddress,
     getCompanyAddress,
     getFieldAddress,
+    hashAndSlice
 } = require('../services/addressing');
-const {
-    calculateHash
-} = require('../services/utils');
 const {createNewKeyPair} = require('./services/mock_utils')
 describe('Entities Company Actions', function () {
     let handler = null;
@@ -55,10 +53,10 @@ describe('Entities Company Actions', function () {
 
         // Company Admin key pair.
         cmpAdminKeyPair = createNewKeyPair();
-        companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
+        companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
 
         // Company address.
-        companyAddress = getCompanyAddress(calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10))
+        companyAddress = getCompanyAddress(hashAndSlice(cmpAdminKeyPair.publicKey, 10))
     });
 
     describe('Create Company', async function () {

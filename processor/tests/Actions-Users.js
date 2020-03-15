@@ -22,11 +22,9 @@ const {
     getSystemAdminAddress,
     getOperatorAddress,
     getCompanyAddress,
-    getCertificationAuthorityAddress
+    getCertificationAuthorityAddress,
+    hashAndSlice
 } = require('../services/addressing')
-const {
-    calculateHash
-} = require('../services/utils')
 const {createNewKeyPair} = require('./services/mock_utils')
 
 describe('User Actions', function () {
@@ -239,7 +237,7 @@ describe('User Actions', function () {
 
             // Company Admin key pair.
             cmpAdminKeyPair = createNewKeyPair()
-            companyId = calculateHash(cmpAdminKeyPair.publicKey).slice(0, 10)
+            companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
             companyAddress = getCompanyAddress(companyId)
 
             // Populate the state with a Company.
