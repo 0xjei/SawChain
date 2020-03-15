@@ -150,35 +150,36 @@ message CreateCertificationAuthorityAction {
 }
 
 message CreateCompanyAction {
-    // Company name.
+    // The Company name.
     string name = 1;
 
-    // Company description.
+    // A short description of the Company.
     string description = 2;
 
-    // Company website.
+    // The Company website.
     string website = 3;
 
-    // Company Admin public key.
+    // The Company Admin public key.
     string admin = 4;
 
+    // A list of enabled Product Types addresses used in the Company.
     repeated string enabledProductTypes = 5;
 }
 
 message CreateFieldAction {
-    // Field unique identifier.
+    // The Field unique identifier.
     string id = 1;
 
-    // Field description.
+    // A short description of the Field.
     string description = 2;
 
-    // Field cultivated product.
+    // The Product Type address of the cultivable product.
     string product = 3;
 
-    // Field predicted production quantity.
+    // The predicted maximum production quantity.
     float quantity = 4;
 
-    // Field location.
+    // The Field approximate location coordinates.
     Location location = 5;
 }
 

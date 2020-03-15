@@ -17,7 +17,10 @@ const {
     TypeData
 } = require('../services/proto');
 const {
-    reject
+    reject,
+    isValidPublicKey,
+    isPublicKeyUsed,
+    checkStateAddresses
 } = require('../services/utils');
 const {
     getSystemAdminAddress,
@@ -30,9 +33,11 @@ const {
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
-    getProposalAddress,
+    getTaskTypeAddress,
     getCertificationAuthorityAddress,
-    hashAndSlice
+    hashAndSlice,
+    FULL_PREFIXES,
+    TYPE_PREFIXES
 } = require('../services/addressing');
 
 /**
@@ -112,16 +117,15 @@ const checkField = (value, type) => {
 
 
 /**
- * Handle a create Company transaction action.
- * @param {Context} context Current state context.
+ * Record a new Company and related Company Admin into the state.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Company unique identifier.
- * @param {String} name Company name.
- * @param {String} description Company description.
- * @param {String} website Company website.
- * @param {String} admin Company Admin public key.
- * @param {String[]} enabledProductTypes List of enabled product types.
+ * @param {String} name The Company name.
+ * @param {String} description A short description of the Company.
+ * @param {String} website The Company website.
+ * @param {String} admin The Company Admin's public key.
+ * @param {String[]} enabledProductTypes A list of enabled Product Types addresses used in the Company.
  */
 async function createCompany(
     context,
@@ -129,79 +133,54 @@ async function createCompany(
     timestamp,
     {name, description, website, admin, enabledProductTypes}
 ) {
-    // Validation: Name is not set.
+    // Validation: No name specified.
     if (!name)
-        reject(`Name is not set!`);
+        reject(`No name specified`)
 
-    // Validation: Description is not set.
+    // Validation: No description specified.
     if (!description)
-        reject(`Description is not set!`);
+        reject(`No description specified`)
 
-    // Validation: Website is not set.
+    // Validation: No website specified.
     if (!website)
-        reject(`Website is not set!`);
+        reject(`No website specified`)
 
-    // Validation: Admin public key is not set.
-    if (!admin)
-        reject(`Admin public key is not set!`);
+    // Validation: Admin field doesn't contain a valid public key.
+    if (!isValidPublicKey(admin))
+        reject(`The admin field doesn't contain a valid public key`)
 
-    // Validation: Admin public key doesn't contain a valid public key.
-    if (!RegExp(`^[0-9A-Fa-f]{66}$`).test(admin))
-        reject(`Admin public key doesn't contain a valid public key!`);
-
-    // Validation: Enabled product types list is not set.
-    if (!enabledProductTypes.length)
-        reject(`Enabled product types list is not set!`);
-
-    const id = hashAndSlice(admin, 10)
     const systemAdminAddress = getSystemAdminAddress();
-    const companyAdminAddress = getCompanyAdminAddress(admin);
-    const operatorAddress = getOperatorAddress(admin);
-    const companyAddress = getCompanyAddress(id);
 
-    const state = await context.getState([
-        systemAdminAddress,
-        companyAdminAddress,
-        operatorAddress,
-        companyAddress
-    ]);
+    const state = await context.getState([systemAdminAddress]);
 
-    const adminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
 
-    // Validation: Transaction signer is not the System Admin.
-    if (adminState.publicKey !== signerPublicKey)
-        reject(`Transaction signer is not the System Admin!`);
+    // Validation: The signer is not the System Admin.
+    if (systemAdminState.publicKey !== signerPublicKey)
+        reject(`The signer is not the System Admin`)
 
-    // Validation: There is already a user with the admin's public key.
-    if (signerPublicKey === admin)
-        reject(`There is already the System Admin with the signer's public key!`);
+    // Validation: The public key belongs to another authorized user.
+    await isPublicKeyUsed(context, admin)
 
-    if (state[companyAdminAddress].length > 0)
-        reject(`There is already a Company Admin with the signer's public key!`);
-
-    if (state[operatorAddress].length > 0)
-        reject(`There is already an Operator with the signer's public key!`);
-
-    // Validation: At least one of the provided values for enabled product types doesn't match a Product Type.
-    for (const productType of enabledProductTypes) {
-        const productTypeAddress = getProductTypeAddress(productType);
-
-        const state = await context.getState([
-            productTypeAddress
-        ]);
-
-        if (!state[productTypeAddress].length) {
-            reject(`The provided Product Type ${productType} doesn't match a valid Product Type!`);
-        }
-    }
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        enabledProductTypes,
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
     // State update.
     const updates = {};
 
-    // Recording Company Admin.
-    updates[companyAdminAddress] = CompanyAdmin.encode({
+    // Calculate Company id from Company Admin's public key.
+    const id = hashAndSlice(admin, 10)
+    const companyAddress = getCompanyAddress(id)
+
+    // Record Company Admin.
+    updates[getCompanyAdminAddress(admin)] = CompanyAdmin.encode({
         publicKey: admin,
-        company: id,
+        company: companyAddress,
         timestamp: timestamp
     }).finish();
 
@@ -211,27 +190,27 @@ async function createCompany(
         name: name,
         description: description,
         website: website,
-        timestamp: timestamp,
         adminPublicKey: admin,
         enabledProductTypes: enabledProductTypes,
         fields: [],
         operators: [],
-        batches: []
+        batches: [],
+        timestamp: timestamp,
     }).finish();
 
     await context.setState(updates)
 }
 
 /**
- * Handle a create Field transaction action.
- * @param {Context} context Current state context.
+ * Record a new Field into the state and update the related Company fields list.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The System Admin public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} id Field unique identifier.
- * @param {String} description Field description.
- * @param {String} product Product Type for the cultivable product on the Field.
- * @param {Number} quantity Max predicted production quantity for the Field.
- * @param {Object} location Approximation for the location of the Field.
+ * @param {String} id The Field unique identifier.
+ * @param {String} description A short description of the Field.
+ * @param {String} product The Product Type address of the cultivable product.
+ * @param {Number} quantity The predicted maximum production quantity.
+ * @param {Object} location The Field approximate location coordinates.
  */
 async function createField(
     context,
@@ -239,57 +218,59 @@ async function createField(
     timestamp,
     {id, description, product, quantity, location}
 ) {
-    // Validation: Id is not set.
+    // Validation: No id specified.
     if (!id)
-        reject(`Id is not set!`);
+        reject(`No id specified`);
 
-    // Validation: Description is not set.
+    // Validation: No description specified.
     if (!description)
-        reject(`Description is not set!`);
+        reject(`No description specified`);
 
-    // Validation: Product is not set.
-    if (!product)
-        reject(`Product is not set!`);
-
-    // Validation: Location is not set.
+    // Validation: No location specified.
     if (!location)
-        reject(`Location is not set!`);
+        reject(`No location specified`);
 
-    const companyId = hashAndSlice(signerPublicKey, 10)
     const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
-    const companyAddress = getCompanyAddress(companyId);
-    const productAddress = getProductTypeAddress(product);
-    const fieldAddress = getFieldAddress(id, companyId);
 
-    const state = await context.getState([
+    let state = await context.getState([
         companyAdminAddress,
-        companyAddress,
-        productAddress,
-        fieldAddress
+        product
     ]);
 
     const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
-    const companyState = Company.decode(state[companyAddress]);
 
-    // Validation: Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
-    if (companyAdminState.publicKey !== signerPublicKey || !state[companyAddress].length)
-        reject(`You must be a Company Admin for a Company to create a Field!`);
+    // Validation: The signer is not a Company Admin.
+    if (companyAdminState.publicKey !== signerPublicKey)
+        reject(`You must be a Company Admin with a Company to create a Field`)
 
-    // Validation: There is already a Field with the provided id into the Company.
-    if (state[fieldAddress].length > 0)
-        reject(`There is already a Field with the provided id into the Company!`);
+    // Validation: At least one Product Type address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [product],
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PRODUCT_TYPE,
+        "Product Type"
+    )
 
-    // Validation: The provided Product Type value for product doesn't match a valid Product Type.
-    if (!state[productAddress].length)
-        reject(`The provided Product Type value for product doesn't match a valid Product Type!`);
+    const fieldAddress = getFieldAddress(id, hashAndSlice(signerPublicKey, 10));
 
-    // Validation: The provided Product Type value for product doesn't match an enabled Company Product Type.
+    state = await context.getState([
+        fieldAddress,
+        companyAdminState.company
+    ])
+
+    const companyState = Company.decode(state[companyAdminState.company]);
+
+    // Validation: Product field doesn't match an enabled Company Product Type address.
     if (companyState.enabledProductTypes.indexOf(product) === -1)
-        reject(`The provided Product Type value for product doesn't match an enabled Company Product Type!`);
+        reject(`The product field doesn't match an enabled Company Product Type address`);
 
-    // Validation: Quantity is lower than or equal to zero.
-    if (quantity <= 0)
-        reject(`Quantity is lower than or equal to zero!`);
+    // Validation: Quantity must be greater than zero.
+    if (!quantity > 0)
+        reject(`Specified quantity is not greater than zero: ${quantity}`)
+
+    // Validation: The id belongs to another company Field.
+    if (state[fieldAddress].length > 0)
+        reject(`The id ${id} belongs to another company Field`)
 
     // State update.
     const updates = {};
@@ -298,7 +279,7 @@ async function createField(
     updates[fieldAddress] = Field.encode({
         id: id,
         description: description,
-        company: companyId,
+        company: companyAdminState.company,
         product: product,
         quantity: quantity,
         location: location,
@@ -306,8 +287,8 @@ async function createField(
     }).finish();
 
     // Update company.
-    companyState.fields.push(id);
-    updates[companyAddress] = Company.encode(companyState).finish();
+    companyState.fields.push(fieldAddress);
+    updates[companyAdminState.company] = Company.encode(companyState).finish();
 
     await context.setState(updates);
 }

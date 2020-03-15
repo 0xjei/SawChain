@@ -14,7 +14,7 @@ message CompanyAdmin {
     // The Company Admin's public key.
     string publicKey = 1;
 
-    // Company identifier.
+    // The Company address.
     string company = 2;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp

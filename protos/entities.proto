@@ -3,57 +3,57 @@ syntax = "proto3";
 package sawchain;
 
 message Company {
-    // Company unique identifier (First 10 characters of sha512 of adminPublicKey).
+    // The Company unique identifier (first 10 characters of Company Admin's public key).
     string id = 1;
 
-    // Company name.
+    // The Company name.
     string name = 2;
 
-    // Company description.
+    // A short description of the Company.
     string description = 3;
 
-    // Company website.
+    // The Company website.
     string website = 4;
 
+    // The Company Admin public key.
+    string adminPublicKey = 5;
+
+    // A list of enabled Product Types addresses used in the Company.
+    repeated string enabledProductTypes = 6;
+
+    // A list of Company Fields addresses (for production companies only).
+    repeated string fields = 7;
+
+    // A list of Company Operators addresses who are enabled to record.
+    repeated string operators = 8;
+
+    // A list of Company Batches addresses.
+    repeated string batches = 9;
+
     // Approximately when transaction was submitted, as a Unix UTC timestamp.
-    uint64 timestamp = 5;
-
-    // Company Admin public key.
-    string adminPublicKey = 6;
-
-    // List of Product Type identifiers.
-    repeated string enabledProductTypes = 7;
-
-    // List of Company Fields (only for production companies).
-    repeated string fields = 8;
-
-    // List of Company Operators.
-    repeated string operators = 9;
-
-    // List of Company Batches.
-    repeated string batches = 10;
+    uint64 timestamp = 10;
 }
 
 message Field {
-    // Field identifier.
+    // The Field unique identifier.
     string id = 1;
 
-    // Field description.
+    // A short description of the Field.
     string description = 2;
 
-    // Owner Company identifier.
+    // The owner Company unique identifier.
     string company = 3;
 
-    // Cultivated Product Type.
+    // The Product Type address of the cultivable product.
     string product = 4;
 
-    // Predicted production quantity.
+    // The predicted maximum production quantity.
     float quantity = 5;
 
-    // Location coordinates.
+    // The Field approximate location coordinates.
     Location location = 6;
 
-    // List of recorded Events.
+    // A list of Events state objects.
     repeated Event events = 7;
 }
 
