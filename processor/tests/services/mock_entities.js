@@ -315,14 +315,14 @@ const mockCreateField = async (
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} companyAdminPrivateKey The Company Admin private key.
- * @param {String} optPublicKey The Operator public key.
- * @param {String} task The role chosen for the Operator task inside the Company.
+ * @param {String} publicKey The Operator public key.
+ * @param {String} task Task Type identifier for Operator task.
  */
 const mockCreateOperator = async (
     context,
     handler,
     companyAdminPrivateKey,
-    optPublicKey,
+    publicKey,
     task
 ) => {
     const txn = new Txn(
@@ -330,7 +330,7 @@ const mockCreateOperator = async (
             action: SCPayloadActions.CREATE_OPERATOR,
             timestamp: Date.now(),
             createOperator: CreateOperatorAction.create({
-                publicKey: optPublicKey,
+                publicKey: publicKey,
                 task: task
             })
         }),

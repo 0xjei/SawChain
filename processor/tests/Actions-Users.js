@@ -22,8 +22,10 @@ const {
     getSystemAdminAddress,
     getOperatorAddress,
     getProductTypeAddress,
+    getCompanyAdminAddress,
     getCompanyAddress,
     getCertificationAuthorityAddress,
+    getTaskTypeAddress,
     hashAndSlice
 } = require('../services/addressing')
 const {createNewKeyPair} = require('./services/mock_utils')
@@ -222,43 +224,63 @@ describe('User Actions', function () {
     })
 
     describe('Create Operator Action', async function () {
-        const task = "task1"
+        // Mock data.
+        let task = null
 
-        let cmpAdminKeyPair = null
-        let optKeyPair = null
+        // Company Admin and Operator key pairs.
+        let companyAdminKeyPair = null
+        let operatorKeyPair = null
 
-        let companyId = null
-        const companyName = "mock-company-name"
-        const companyDescription = "mock-company-description"
-        const companyWebsite = "mock-company-website"
-
+        // Company and Company Admin address.
         let companyAddress = null
+        let companyAdminAddress = null
         let operatorAddress = null
+
+        // Invalid addresses for testing purpose.
+        let invalidTaskTypeAddress = null
 
         before(async function () {
             // Company Admin key pair.
-            cmpAdminKeyPair = createNewKeyPair()
-            companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
-            companyAddress = getCompanyAddress(companyId)
+            companyAdminKeyPair = createNewKeyPair()
+            companyAdminAddress = getCompanyAdminAddress(companyAdminKeyPair.publicKey)
+            companyAddress = getCompanyAddress(hashAndSlice(companyAdminKeyPair.publicKey, 10))
 
-            // Populate the state with a Company.
-            await mockCreateCompany(context, handler, systemAdminKeyPair.privateKey, companyName, companyDescription, companyWebsite, cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"])
+            // Create Company.
+            await mockCreateCompany(
+                context,
+                handler,
+                systemAdminKeyPair.privateKey,
+                "name1",
+                "description1",
+                "website1",
+                companyAdminKeyPair.publicKey,
+                [
+                    getProductTypeAddress("PDT1"),
+                    getProductTypeAddress("PDT2"),
+                    getProductTypeAddress("PDT3")
+                ]
+            )
 
             // Operator key pair.
-            optKeyPair = createNewKeyPair()
-            operatorAddress = getOperatorAddress(optKeyPair.publicKey)
-        })
+            operatorKeyPair = createNewKeyPair()
+            operatorAddress = getOperatorAddress(operatorKeyPair.publicKey)
 
+            // Create Task
+            task = getTaskTypeAddress("TKT1")
+
+            // Create invalid data for testing purpose.
+            invalidTaskTypeAddress = getTaskTypeAddress('TKT0')
+        })
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR
                 }),
-                cmpAdminKeyPair.privateKey
+                companyAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -269,114 +291,98 @@ describe('User Actions', function () {
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now()
                 }),
-                cmpAdminKeyPair.privateKey
+                companyAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no public key is given', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({})
-                }),
-                cmpAdminKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if no task is given', async function () {
+        it('Should reject if public key field doesn\'t contain a valid public key', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now(),
                     createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey
+                        publicKey: operatorKeyPair.publicKey.slice(0, 30)
                     })
                 }),
-                cmpAdminKeyPair.privateKey
+                companyAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
+        it('Should reject if the signer is not a Company Admin', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now(),
                     createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey.slice(0, 30),
-                        task: task
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if transaction signer is not the Company Admin', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey,
-                        task: task
+                        publicKey: operatorKeyPair.publicKey
                     })
                 }),
                 systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if given public key match with a Company Admin', async function () {
+        it('Should reject if at least one Task Type state address is not valid', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: Date.now(),
                     createOperator: CreateOperatorAction.create({
-                        publicKey: cmpAdminKeyPair.publicKey,
+                        publicKey: operatorKeyPair.publicKey,
+                        task: invalidTaskTypeAddress.slice(0, 30)
+                    })
+                }),
+                companyAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if at least one specified Task Type doesn\'t exist', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: operatorKeyPair.publicKey,
+                        task: invalidTaskTypeAddress
+                    })
+                }),
+                companyAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if the public key belongs to another authorized user', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_OPERATOR,
+                    timestamp: Date.now(),
+                    createOperator: CreateOperatorAction.create({
+                        publicKey: companyAdminKeyPair.publicKey,
                         task: task
                     })
                 }),
-                cmpAdminKeyPair.privateKey
+                companyAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if the provided value for task doesn\'t match a valid Task Type', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey,
-                        task: "error"
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -389,47 +395,32 @@ describe('User Actions', function () {
                     action: SCPayloadActions.CREATE_OPERATOR,
                     timestamp: timestamp,
                     createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey,
+                        publicKey: operatorKeyPair.publicKey,
                         task: task
                     })
                 }),
-                cmpAdminKeyPair.privateKey
+                companyAdminKeyPair.privateKey
             )
 
             await handler.apply(txn, context)
 
             // Field.
             state = context._state[operatorAddress]
+            decodedState = Operator.decode(state)
 
             expect(state).to.not.be.null
-            expect(Operator.decode(state).publicKey).to.equal(optKeyPair.publicKey)
-            expect(Operator.decode(state).company).to.equal(companyId)
-            expect(Operator.decode(state).task).to.equal(task)
-            expect(parseInt(Operator.decode(state).timestamp)).to.equal(timestamp)
+            expect(decodedState.publicKey).to.equal(operatorKeyPair.publicKey)
+            expect(decodedState.company).to.equal(companyAddress)
+            expect(decodedState.task).to.equal(task)
+            expect(parseInt(decodedState.timestamp)).to.equal(timestamp)
 
             // Company.
             state = context._state[companyAddress]
+            decodedState = Company.decode(state)
 
             expect(state).to.not.be.null
-            expect(Company.decode(state).operators.length).to.equal(1)
-        })
-
-        it('Should reject if there is already an Operator with the provided public key', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_OPERATOR,
-                    timestamp: Date.now(),
-                    createOperator: CreateOperatorAction.create({
-                        publicKey: optKeyPair.publicKey,
-                        task: task
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            expect(decodedState.operators.length).to.equal(1)
+            expect(decodedState.operators[0]).to.equal(operatorKeyPair.publicKey)
         })
     })
 
@@ -623,7 +614,7 @@ describe('User Actions', function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_CERTIFICATION_AUTHORITY,
-                    timestamp: Date.now(),
+                    timestamp: timestamp,
                     createCertificationAuthority: CreateCertificationAuthorityAction.create({
                         publicKey: caKeyPair.publicKey,
                         name: name,
