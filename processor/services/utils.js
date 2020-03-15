@@ -1,7 +1,7 @@
 'use strict'
 
 const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
-const {createHash} = require('crypto')
+const {isValidAddress} = require('./addressing')
 
 /**
  * A quick convenience function to throw an InvalidTransaction error with a joined message.
@@ -9,16 +9,6 @@ const {createHash} = require('crypto')
  */
 const reject = (...messages) => {
     throw new InvalidTransaction(messages.join(' '))
-}
-
-/**
- * Return the SHA-512 hex string calculated from an input string.
- * @param {String} input Input string where hash is calculated.
- */
-const calculateHash = (input) => {
-    return createHash('sha512')
-        .update(input)
-        .digest('hex')
 }
 
 /**
@@ -43,9 +33,30 @@ const isValidPublicKey = (publicKey) => {
     return RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey)
 }
 
+/**
+ * Check if at least one state address is not a valid address or is empty from an addresses lists.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String[]} addresses The state addresses to verify.
+ * @param {String} start The starting string used to check a particular subset of state objects.
+ * @param {String} object The name of the state object.
+ */
+const checkStateAddresses = async (context, addresses, start, object) => {
+    for (const address of addresses) {
+        // Validation: At least one state address is not a valid address.
+        if (!isValidAddress(address) || !address.startsWith(start))
+            reject(`${object} is not a valid 70-char hex string address: ${address}`)
+
+        const state = await context.getState([address])
+
+        // Validation: At least one specified address is empty.
+        if (state[address].length === 0)
+            reject(`Specified ${object} does not exist: ${address}`)
+    }
+}
+
 module.exports = {
     reject,
-    calculateHash,
     getActionField,
-    isValidPublicKey
+    isValidPublicKey,
+    checkStateAddresses
 }

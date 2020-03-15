@@ -1,10 +1,22 @@
 'use strict'
 
-const {calculateHash} = require('./utils')
+const {createHash} = require('crypto')
+
+/**
+ * Return the SHA-512 hex string calculated from an input string sliced from 0 to len characters.
+ * @param {String} input Input string where hash is calculated.
+ * @param {Number} len The length of the output hash string.
+ */
+const hashAndSlice = (input, len) => {
+    return createHash('sha512')
+        .update(input)
+        .digest('hex')
+        .slice(0, len)
+}
 
 // SawChain Family metadata.
 const FAMILY_NAME = 'SawChain'
-const NAMESPACE = calculateHash(FAMILY_NAME).slice(0, 6)
+const NAMESPACE = hashAndSlice(FAMILY_NAME, 6)
 const VERSION = '0.1'
 
 // Addressing state object prefixes.
@@ -47,7 +59,7 @@ const FULL_PREFIXES = Object.keys(PREFIXES).reduce((prefixes, key) => {
  * @param {String} publicKey The user public key.
  */
 const getUserAddress = (prefix, publicKey) =>
-    FULL_PREFIXES.USERS + prefix + calculateHash(publicKey).slice(0, 60)
+    FULL_PREFIXES.USERS + prefix + hashAndSlice(publicKey, 60)
 
 /**
  * Return a state full-address from a type prefix.
@@ -55,7 +67,7 @@ const getUserAddress = (prefix, publicKey) =>
  * @param {String} id The unique identifier associated to the type.
  */
 const getTypeAddress = (prefix, id) =>
-    FULL_PREFIXES.TYPES + prefix + calculateHash(id).slice(0, 60)
+    FULL_PREFIXES.TYPES + prefix + hashAndSlice(id, 60)
 
 /**
  * Return the state full-address of the System Admin.
@@ -133,7 +145,7 @@ const getPropertyTypeAddress = id => {
  * @param {String} id The Company unique identifier.
  */
 const getCompanyAddress = id => {
-    return FULL_PREFIXES.COMPANY + calculateHash(id).slice(0, 62)
+    return FULL_PREFIXES.COMPANY + hashAndSlice(id, 62)
 }
 
 /**
@@ -142,7 +154,7 @@ const getCompanyAddress = id => {
  * @param {String} company The Company unique identifier.
  */
 const getFieldAddress = (id, company) => {
-    return FULL_PREFIXES.FIELD + calculateHash(id).slice(0, 42) + calculateHash(company).slice(0, 20)
+    return FULL_PREFIXES.FIELD + hashAndSlice(id, 42) + hashAndSlice(company, 20)
 }
 
 /**
@@ -150,7 +162,7 @@ const getFieldAddress = (id, company) => {
  * @param {String} id The Batch unique identifier.
  */
 const getBatchAddress = (id) => {
-    return FULL_PREFIXES.BATCH + calculateHash(id).slice(0, 62)
+    return FULL_PREFIXES.BATCH + hashAndSlice(id, 62)
 }
 
 /**
@@ -185,5 +197,6 @@ module.exports = {
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
-    isValidAddress
+    isValidAddress,
+    hashAndSlice
 }
