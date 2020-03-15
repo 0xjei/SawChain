@@ -238,10 +238,10 @@ const mockCreatePropertyType = async (
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
  * @param {String} name The Company name.
- * @param {String} description A short description.
- * @param {String} website The Company official website.
- * @param {String} companyAdminPublicKey The Company Admin public key.
- * @param {String[]} enabledProductTypes List of ids of Product Types whose creation is enabled in the Company.
+ * @param {String} description A short description of the Company.
+ * @param {String} website The Company website.
+ * @param {String} admin The Company Admin's public key.
+ * @param {String[]} enabledProductTypes A list of enabled Product Types addresses used in the Company.
  */
 const mockCreateCompany = async (
     context,
@@ -250,7 +250,7 @@ const mockCreateCompany = async (
     name,
     description,
     website,
-    companyAdminPublicKey,
+    admin,
     enabledProductTypes
 ) => {
     const txn = new Txn(
@@ -261,7 +261,7 @@ const mockCreateCompany = async (
                 name: name,
                 description: description,
                 website: website,
-                admin: companyAdminPublicKey,
+                admin: admin,
                 enabledProductTypes: enabledProductTypes
             })
         }),
@@ -277,10 +277,10 @@ const mockCreateCompany = async (
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} companyAdminPrivateKey The Company Admin private key.
  * @param {String} id The Field unique identifier.
- * @param {String} description A short description.
- * @param {String} product The Product Type identifier which refers to the product grown in the Field.
- * @param {float} productQuantity The maximum production quantity of the Field.
- * @param {Object} location The approximate location in coordinates of the Field.
+ * @param {String} description A short description of the Field.
+ * @param {String} product The Product Type address of the cultivable product.
+ * @param {Number} quantity The predicted maximum production quantity.
+ * @param {Object} location The Field approximate location coordinates.
  */
 const mockCreateField = async (
     context,
@@ -289,7 +289,7 @@ const mockCreateField = async (
     id,
     description,
     product,
-    productQuantity,
+    quantity,
     location
 ) => {
     const txn = new Txn(
@@ -300,7 +300,7 @@ const mockCreateField = async (
                 id: id,
                 description: description,
                 product: product,
-                quantity: productQuantity,
+                quantity: quantity,
                 location: location
             })
         }),

@@ -1,14 +1,14 @@
-'use_strict';
+'use_strict'
 
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions');
-const {expect} = require('chai');
-const Txn = require('./services/mock_txn');
-const Context = require('./services/mock_context');
-const SawChainHandler = require('./services/handler_wrapper');
+const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
+const {expect} = require('chai')
+const Txn = require('./services/mock_txn')
+const Context = require('./services/mock_context')
+const SawChainHandler = require('./services/handler_wrapper')
 const {
     mockCreateSystemAdmin,
     populateStateWithMockData
-} = require('./services/mock_entities');
+} = require('./services/mock_entities')
 const {
     SCPayload,
     SCPayloadActions,
@@ -18,70 +18,103 @@ const {
     Location,
     CreateCompanyAction,
     CreateFieldAction
-} = require('../services/proto');
+} = require('../services/proto')
 const {
+    getProductTypeAddress,
     getCompanyAdminAddress,
     getCompanyAddress,
     getFieldAddress,
-    hashAndSlice
-} = require('../services/addressing');
+    hashAndSlice,
+    getTaskTypeAddress,
+    getEventParameterTypeAddress
+} = require('../services/addressing')
 const {createNewKeyPair} = require('./services/mock_utils')
-describe('Entities Company Actions', function () {
-    let handler = null;
-    let context = null;
-    let txn = null;
-    let state = null;
 
-    const enabledProductTypes = ["prd1", "prd2", "prd3"];
+describe('Company Actions', function () {
+    let handler = null
+    let context = null
 
-    let sysAdminKeyPair = null;
-    let cmpAdminKeyPair = null;
+    let txn = null
+    let state = null
+    let decodedState = null
+    let submission = null
 
-    let companyId = null;
-    let companyAddress = null;
+    let systemAdminKeyPair = null
+    let companyAdminKeyPair = null
+
+    // Company and Field identifiers.
+    let companyId = null
+    let fieldId = "FDL1"
+
+    // Company and Field addresses.
+    let companyAddress = null
+    let fieldAddress = null
+    let companyAdminAddress = null
+
+    // Invalid addresses for testing purpose.
+    let invalidTaskTypeAddress = null
+    let invalidProductTypeAddress = null
+    let invalidEventParameterAddress = null
 
     before(async function () {
-        handler = new SawChainHandler();
-        context = new Context();
+        // Create a new SawChain Handler and state Context objects.
+        handler = new SawChainHandler()
+        context = new Context()
 
-        // Record the System Admin and get key pair.
-        sysAdminKeyPair = createNewKeyPair()
-        await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey);
+        // Create the System Admin.
+        systemAdminKeyPair = createNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, systemAdminKeyPair.privateKey)
 
-        // Populate the state with mock types.
-        await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey);
+        // Populate the state with mock types data.
+        await populateStateWithMockData(context, handler, systemAdminKeyPair.privateKey)
 
         // Company Admin key pair.
-        cmpAdminKeyPair = createNewKeyPair();
-        companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
+        companyAdminKeyPair = createNewKeyPair()
+        companyAdminAddress = getCompanyAdminAddress(companyAdminKeyPair.publicKey)
 
-        // Company address.
-        companyAddress = getCompanyAddress(hashAndSlice(cmpAdminKeyPair.publicKey, 10))
-    });
+        // Calculate Company id from Company Admin's public key.
+        companyId = hashAndSlice(companyAdminKeyPair.publicKey, 10)
+
+        // Get Company and Field addresses.
+        companyAddress = getCompanyAddress(companyId)
+        fieldAddress = getFieldAddress(fieldId, companyId)
+
+        // Create invalid data for testing purpose.
+        invalidTaskTypeAddress = getTaskTypeAddress('TKT0')
+        invalidProductTypeAddress = getProductTypeAddress('PDT0')
+        invalidEventParameterAddress = getEventParameterTypeAddress('EPT0')
+
+    })
 
     describe('Create Company', async function () {
-        let name = "mock-companyName";
-        let description = "mock-companyDescription";
-        let website = "mock-companyWebsite";
+        // Mock data.
+        let name = "name1"
+        let description = "description1"
+        let website = "website1"
 
-        let companyAdminAddress = null;
+        let enabledProductTypes = null
 
         before(async function () {
-            companyAdminAddress = getCompanyAdminAddress(cmpAdminKeyPair.publicKey)
-        });
+            // Create Product Type list.
+            enabledProductTypes = [
+                getProductTypeAddress("PDT1"),
+                getProductTypeAddress("PDT2"),
+                getProductTypeAddress("PDT3")
+            ]
+        })
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
-            return expect(submission).to.be.rejectedWith(InvalidTransaction);
-        });
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
@@ -89,31 +122,30 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now()
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if no name is given', async function () {
+        it('Should reject if no name specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
                     timestamp: Date.now(),
                     createCompany: CreateCompanyAction.create({})
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-
-        it('Should reject if no description is given', async function () {
+        it('Should reject if no description specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -122,15 +154,15 @@ describe('Entities Company Actions', function () {
                         name: name
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if no website is given', async function () {
+        it('Should reject if no website specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -140,34 +172,15 @@ describe('Entities Company Actions', function () {
                         description: description
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if no public key is given', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_COMPANY,
-                    timestamp: Date.now(),
-                    createCompany: CreateCompanyAction.create({
-                        name: name,
-                        description: description,
-                        website: website
-                    })
-                }),
-                sysAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if public key is public key field doesn\'t contains a valid public key', async function () {
+        it('Should reject if the admin field doesn\'t contain a valid public key', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -176,18 +189,18 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey.slice(0, 65)
+                        admin: companyAdminKeyPair.publicKey.slice(0, 65)
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if no enabled product types list is given', async function () {
+        it('Should reject if the signer is not the System Admin', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -196,19 +209,18 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey
+                        admin: companyAdminKeyPair.publicKey
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-
-        it('Should reject if transaction signer is not the System Admin', async function () {
+        it('Should reject if the public key belongs to another authorized user', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -217,19 +229,18 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey,
-                        enabledProductTypes: enabledProductTypes
+                        admin: systemAdminKeyPair.publicKey
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if given public key match with the System Admin one', async function () {
+        it('Should reject if at least one Product Type state address is not valid', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -238,19 +249,21 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: sysAdminKeyPair.publicKey,
-                        enabledProductTypes: enabledProductTypes
+                        admin: companyAdminKeyPair.publicKey,
+                        enabledProductTypes: [
+                            invalidProductTypeAddress.slice(0, 30)
+                        ]
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
-        it('Should reject if at least one of the provided Product Types values for enable product types doesn\'t match a valid Product Type', async function () {
+        it('Should reject if at least one specified Product Type doesn\'t exist', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_COMPANY,
@@ -259,20 +272,22 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey,
-                        enabledProductTypes: ["prd0"]
+                        admin: companyAdminKeyPair.publicKey,
+                        enabledProductTypes: [
+                            invalidProductTypeAddress
+                        ]
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should create the Company and Company Admin', async function () {
-            let timestamp = Date.now();
+            let timestamp = Date.now()
 
             txn = new Txn(
                 SCPayload.create({
@@ -282,90 +297,76 @@ describe('Entities Company Actions', function () {
                         name: name,
                         description: description,
                         website: website,
-                        admin: cmpAdminKeyPair.publicKey,
+                        admin: companyAdminKeyPair.publicKey,
                         enabledProductTypes: enabledProductTypes
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                systemAdminKeyPair.privateKey
+            )
 
-            await handler.apply(txn, context);
+            await handler.apply(txn, context)
 
             // Company.
-            state = context._state[companyAddress];
+            state = context._state[companyAddress]
+            decodedState = Company.decode(state)
 
-            expect(state).to.not.be.null;
-            expect(Company.decode(state).id).to.equal(companyId);
-            expect(Company.decode(state).name).to.equal(name);
-            expect(Company.decode(state).description).to.equal(description);
-            expect(Company.decode(state).website).to.equal(website);
-            expect(parseInt(Company.decode(state).timestamp)).to.equal(timestamp);
-            expect(Company.decode(state).adminPublicKey).to.equal(cmpAdminKeyPair.publicKey);
-            expect(Company.decode(state).enabledProductTypes.length).to.equal(enabledProductTypes.length);
-            expect(Company.decode(state).operators).to.be.empty;
-            expect(Company.decode(state).fields).to.be.empty;
-            expect(Company.decode(state).batches).to.be.empty;
+            expect(state).to.not.be.null
+            expect(decodedState.id).to.equal(companyId)
+            expect(decodedState.name).to.equal(name)
+            expect(decodedState.description).to.equal(description)
+            expect(decodedState.website).to.equal(website)
+            expect(decodedState.adminPublicKey).to.equal(companyAdminKeyPair.publicKey)
+            expect(decodedState.enabledProductTypes.length).to.equal(enabledProductTypes.length)
+            expect(decodedState.enabledProductTypes.length[0]).to.equal(enabledProductTypes.length[0])
+            expect(decodedState.enabledProductTypes.length[1]).to.equal(enabledProductTypes.length[1])
+            expect(decodedState.enabledProductTypes.length[2]).to.equal(enabledProductTypes.length[2])
+            expect(decodedState.operators).to.be.empty
+            expect(decodedState.fields).to.be.empty
+            expect(decodedState.batches).to.be.empty
+            expect(parseInt(decodedState.timestamp)).to.equal(timestamp)
 
             // Company Admin.
-            state = context._state[companyAdminAddress];
+            state = context._state[companyAdminAddress]
+            decodedState = CompanyAdmin.decode(state)
 
-            expect(state).to.not.be.null;
-            expect(CompanyAdmin.decode(state).publicKey).to.equal(cmpAdminKeyPair.publicKey);
-            expect(CompanyAdmin.decode(state).company).to.equal(companyId);
-            expect(parseInt(CompanyAdmin.decode(state).timestamp)).to.equal(timestamp);
-        });
-
-        it('Should reject if there is a user already associated to given public key', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_COMPANY,
-                    timestamp: Date.now(),
-                    createCompany: CreateCompanyAction.create({
-                        name: name,
-                        description: description,
-                        website: website,
-                        admin: cmpAdminKeyPair.publicKey,
-                        enabledProductTypes: enabledProductTypes
-                    })
-                }),
-                sysAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-    });
+            expect(state).to.not.be.null
+            expect(decodedState.publicKey).to.equal(companyAdminKeyPair.publicKey)
+            expect(decodedState.company).to.equal(companyAddress)
+            expect(parseInt(decodedState.timestamp)).to.equal(timestamp)
+        })
+    })
 
     describe('Create Field', async function () {
-        const id = "field1";
-        const description = "desc1";
-        const product = "prd3";
-        const productQuantity = 150000;
+        const description = "description1"
+        const quantity = 150000
         const location = Location.create({
             latitude: 39.23054,
             longitude: 9.11917
-        });
+        })
 
-        let fieldAddress = null;
+        let product = null
+        let notEnabledProductTypeAddress = null
 
         before(async function () {
-            fieldAddress = getFieldAddress(id, companyId);
-        });
+            // Create Product Type.
+            product = getProductTypeAddress("PDT3")
+
+            // Not enabled Product Type address.
+            notEnabledProductTypeAddress = getProductTypeAddress("PDT4")
+        })
 
         it('Should reject if no timestamp is given', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_FIELD
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
-            return expect(submission).to.be.rejectedWith(InvalidTransaction);
-        });
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
 
         it('Should reject if no action data field is given', async function () {
             txn = new Txn(
@@ -373,13 +374,13 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now()
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should reject if no id is given', async function () {
             txn = new Txn(
@@ -388,13 +389,13 @@ describe('Entities Company Actions', function () {
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({})
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should reject if no description is given', async function () {
             txn = new Txn(
@@ -402,34 +403,16 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
-                        id: id
+                        id: fieldId
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if no product is given', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_FIELD,
-                    timestamp: Date.now(),
-                    createField: CreateFieldAction.create({
-                        id: id,
-                        description: description
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should reject if no location is given', async function () {
             txn = new Txn(
@@ -437,19 +420,17 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
-                        id: id,
-                        description: description,
-                        product: product,
-                        quantity: productQuantity
+                        id: fieldId,
+                        description: description
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should reject if transaction signer is not the Company Admin', async function () {
             txn = new Txn(
@@ -457,83 +438,99 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
-                        id: id,
+                        id: fieldId,
                         description: description,
+                        location: location
+                    })
+                }),
+                systemAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if at least one Product Type state address is not valid', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: fieldId,
+                        description: description,
+                        location: location,
+                        product: invalidProductTypeAddress.slice(0, 30)
+                    })
+                }),
+                companyAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if at least one specified Product Type doesn\'t exist', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: fieldId,
+                        description: description,
+                        location: location,
+                        product: invalidProductTypeAddress
+                    })
+                }),
+                companyAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if the product field doesn\'t match an enabled Company Product Type address', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: fieldId,
+                        description: description,
+                        location: location,
+                        product: notEnabledProductTypeAddress
+                    })
+                }),
+                companyAdminKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if specified quantity is not greater than zero', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.CREATE_FIELD,
+                    timestamp: Date.now(),
+                    createField: CreateFieldAction.create({
+                        id: fieldId,
+                        description: description,
+                        location: location,
                         product: product,
-                        quantity: productQuantity,
-                        location: location
+                        quantity: 0
                     })
                 }),
-                sysAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if the provided value for product doesn\'t match a valid Product Type', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_FIELD,
-                    timestamp: Date.now(),
-                    createField: CreateFieldAction.create({
-                        id: id,
-                        description: description,
-                        product: "error",
-                        quantity: productQuantity,
-                        location: location
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject the provided Product Type value for product doesn\'t match an enabled Company Product Type', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_FIELD,
-                    timestamp: Date.now(),
-                    createField: CreateFieldAction.create({
-                        id: id,
-                        description: description,
-                        product: "prd4",
-                        quantity: productQuantity,
-                        location: location
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-        it('Should reject if given quantity is lower than or equal to zero', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.CREATE_FIELD,
-                    timestamp: Date.now(),
-                    createField: CreateFieldAction.create({
-                        id: id,
-                        description: description,
-                        product: product,
-                        quantity: 0,
-                        location: location
-                    })
-                }),
-                cmpAdminKeyPair.privateKey
-            );
-
-            const submission = handler.apply(txn, context);
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
+        })
 
         it('Should create the Field', async function () {
             txn = new Txn(
@@ -541,58 +538,60 @@ describe('Entities Company Actions', function () {
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
-                        id: id,
+                        id: fieldId,
                         description: description,
+                        location: location,
                         product: product,
-                        quantity: productQuantity,
-                        location: location
+                        quantity: quantity
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            await handler.apply(txn, context);
+            await handler.apply(txn, context)
 
             // Field.
-            state = context._state[fieldAddress];
+            state = context._state[fieldAddress]
+            decodedState = Field.decode(state)
 
-            expect(state).to.not.be.null;
-            expect(Field.decode(state).id).to.equal(id);
-            expect(Field.decode(state).description).to.equal(description);
-            expect(Field.decode(state).company).to.equal(companyId);
-            expect(Field.decode(state).product).to.equal(product);
-            expect(Field.decode(state).quantity).to.equal(productQuantity);
-            expect(parseInt(Field.decode(state).location.latitude)).to.equal(parseInt(location.latitude.toString()));
-            expect(parseInt(Field.decode(state).location.longitude)).to.equal(parseInt(location.longitude.toString()));
-            expect(Field.decode(state).events).to.be.empty;
+            expect(state).to.not.be.null
+            expect(decodedState.id).to.equal(fieldId)
+            expect(decodedState.description).to.equal(description)
+            expect(decodedState.company).to.equal(companyAddress)
+            expect(decodedState.product).to.equal(product)
+            expect(decodedState.quantity).to.equal(quantity)
+            expect(parseInt(decodedState.location.latitude)).to.equal(parseInt(location.latitude.toString()))
+            expect(parseInt(decodedState.location.longitude)).to.equal(parseInt(location.longitude.toString()))
+            expect(decodedState.events).to.be.empty
 
             // Company.
-            state = context._state[companyAddress];
+            state = context._state[companyAddress]
+            decodedState = Company.decode(state)
 
-            expect(state).to.not.be.null;
-            expect(Company.decode(state).fields.length).to.equal(1);
-        });
+            expect(state).to.not.be.null
+            expect(decodedState.fields.length).to.equal(1)
+            expect(decodedState.fields[0]).to.equal(fieldAddress)
+        })
 
-        it('Should reject if there is already a Field with the provided id into the Company', async function () {
+        it('Should reject if the id belongs to another company Field', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.CREATE_FIELD,
                     timestamp: Date.now(),
                     createField: CreateFieldAction.create({
-                        id: id,
+                        id: fieldId,
                         description: description,
+                        location: location,
                         product: product,
-                        quantity: productQuantity,
-                        location: location
+                        quantity: quantity
                     })
                 }),
-                cmpAdminKeyPair.privateKey
-            );
+                companyAdminKeyPair.privateKey
+            )
 
-            const submission = handler.apply(txn, context);
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        });
-
-    });
-});
+        })
+    })
+})
