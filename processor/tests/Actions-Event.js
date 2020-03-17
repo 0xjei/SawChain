@@ -1134,6 +1134,7 @@ describe('Event Actions', function () {
 
                 expect(state).not.to.be.null
                 expect(decodedState.id).to.equal(outputBatchId)
+                expect(decodedState.company).to.equal(companyAddress)
                 expect(decodedState.quantity).to.equal(quantities[0] * conversionRate)
                 expect(decodedState.parentFields.length).to.equal(1)
                 expect(decodedState.parentFields[0]).to.equal(fieldAddress)
@@ -1397,6 +1398,7 @@ describe('Event Actions', function () {
 
                 expect(state).not.to.be.null
                 expect(decodedState.id).to.equal(outputBatchId)
+                expect(decodedState.company).to.equal(companyAddress2)
                 expect(decodedState.quantity).to.equal(quantities[0] * conversionRate)
                 expect(decodedState.parentFields).to.be.empty
                 expect(decodedState.parentBatches.length).to.equal(1)

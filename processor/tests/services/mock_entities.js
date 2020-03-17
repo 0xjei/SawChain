@@ -345,11 +345,10 @@ const mockCreateOperator = async (
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} systemAdminPrivateKey The System Admin private key.
- * @param {Object} publicKey The Certification Authority public key.
+ * @param {String} publicKey The Certification Authority public key.
  * @param {String} name The Certification Authority name.
- * @param {String} website The Certification Authority official website.
- * @param {String[]} products List of ids of Product Types where the Certification Authority is enabled to issue
- *     certificates.
+ * @param {String} website The Certification Authority website.
+ * @param {String[]} enabledProductTypes List of identifiers of Product Types where the certificate can be recorded.
  */
 const mockCreateCertificationAuthority = async (
     context,
@@ -358,7 +357,7 @@ const mockCreateCertificationAuthority = async (
     publicKey,
     name,
     website,
-    products
+    enabledProductTypes
 ) => {
     const txn = new Txn(
         SCPayload.create({
@@ -368,7 +367,7 @@ const mockCreateCertificationAuthority = async (
                 publicKey: publicKey,
                 name: name,
                 website: website,
-                products: products
+                enabledProductTypes: enabledProductTypes
             })
         }),
         systemAdminPrivateKey
