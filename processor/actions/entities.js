@@ -1,78 +1,38 @@
-'use strict';
+'use strict'
 
 const {
     SystemAdmin,
     CompanyAdmin,
     Operator,
     CertificationAuthority,
-    ProductType,
-    EventParameterType,
-    EventType,
     PropertyType,
     Company,
     Field,
     Batch,
-    Event,
-    Proposal,
     TypeData
-} = require('../services/proto');
+} = require('../services/proto')
 const {
     reject,
     isValidPublicKey,
     isPublicKeyUsed,
-    checkStateAddresses
-} = require('../services/utils');
+    checkStateAddresses,
+    isPresent
+} = require('../services/utils')
 const {
     getSystemAdminAddress,
     getCompanyAdminAddress,
     getOperatorAddress,
-    getEventParameterTypeAddress,
-    getEventTypeAddress,
-    getProductTypeAddress,
     getPropertyTypeAddress,
     getCompanyAddress,
     getFieldAddress,
     getBatchAddress,
-    getTaskTypeAddress,
     getCertificationAuthorityAddress,
     hashAndSlice,
     FULL_PREFIXES,
     TYPE_PREFIXES
-} = require('../services/addressing');
+} = require('../services/addressing')
 
-/**
- * Check if a value for a parameter is valid.
- * @param {Object} parameter EventParameterType pre-defined object.
- * @param {Object} parameterValue ParameterValue object provided by the Operator.
- * @param {Object} parameterType EventParameterType information type (Number, String or Bytes).
- */
-const checkParameterValue = (parameter, parameterValue, parameterType) => {
-    switch (parameterType) {
-        // Number Event Parameter Type.
-        case TypeData.Type.NUMBER:
-            // Validation: The provided number is lower than the minimum value constraint.
-            if (parameterValue.floatValue !== 0.0 && parameterValue.floatValue < parameter.minValue)
-                reject(`Provided value ${parameterValue.floatValue} is lower than the minimum value constraint ${parameter.minValue}!`);
 
-            // Validation: The provided number is greater than the maximum value constraint.
-            if (parameterValue.floatValue !== 0.0 && parameterValue.floatValue > parameter.maxValue)
-                reject(`Provided value ${parameterValue.floatValue} is greater than the maximum value constraint ${parameter.maxValue}!`);
-
-            break;
-
-        // String Event Parameter Type.
-        case TypeData.Type.STRING:
-            // Validation: The provided string length is lower than the minimum length constraint.
-            if (parameterValue.stringValue !== "" && parameterValue.stringValue.length < parameter.minLength)
-                reject(`Provided value length ${parameterValue.stringValue.length} is lower than the minimum length constraint ${parameter.minLength}!`);
-
-            // Validation: The provided string length is greater than the maximum length constraint.
-            if (parameterValue.stringValue !== "" && parameterValue.stringValue.length > parameter.maxLength)
-                reject(`Provided value length ${parameterValue.stringValue.length} is greater than the maximum length constraint ${parameter.maxLength}!`);
-
-            break;
-    }
-};
 
 /**
  * Check if a value for a property is valid.
@@ -85,36 +45,35 @@ const checkField = (value, type) => {
         case TypeData.Type.NUMBER:
             // Validation: No correct value field is provided for temperature type property.
             if (value.floatValue === 0.0)
-                reject(`No correct value field is provided for property of type ${type}!`);
+                reject(`No correct value field is provided for property of type ${type}!`)
 
-            break;
+            break
 
         // String Property.
         case TypeData.Type.STRING:
             // Validation: No correct value field is provided for location type property.
             if (value.stringValue.length === 0)
-                reject(`No correct value field is provided for property of type ${type}!`);
+                reject(`No correct value field is provided for property of type ${type}!`)
 
-            break;
+            break
 
         // String Property.
         case TypeData.Type.BYTES:
             // Validation: No correct value field is provided for location type property.
             if (!value.bytesValue.length > 0)
-                reject(`No correct value field is provided for property of type ${type}!`);
+                reject(`No correct value field is provided for property of type ${type}!`)
 
-            break;
+            break
 
         // String Property.
         case TypeData.Type.LOCATION:
             // Validation: No correct value field is provided for location type property.
             if (!value.locationValue)
-                reject(`No correct value field is provided for property of type ${type}!`);
+                reject(`No correct value field is provided for property of type ${type}!`)
 
-            break;
+            break
     }
-};
-
+}
 
 /**
  * Record a new Company and related Company Admin into the state.
@@ -149,11 +108,11 @@ async function createCompany(
     if (!isValidPublicKey(admin))
         reject(`The admin field doesn't contain a valid public key`)
 
-    const systemAdminAddress = getSystemAdminAddress();
+    const systemAdminAddress = getSystemAdminAddress()
 
-    const state = await context.getState([systemAdminAddress]);
+    const state = await context.getState([systemAdminAddress])
 
-    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress]);
+    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
     // Validation: The signer is not the System Admin.
     if (systemAdminState.publicKey !== signerPublicKey)
@@ -171,7 +130,7 @@ async function createCompany(
     )
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     // Calculate Company id from Company Admin's public key.
     const id = hashAndSlice(admin, 10)
@@ -182,7 +141,7 @@ async function createCompany(
         publicKey: admin,
         company: companyAddress,
         timestamp: timestamp
-    }).finish();
+    }).finish()
 
     // Recording Company.
     updates[companyAddress] = Company.encode({
@@ -196,7 +155,7 @@ async function createCompany(
         operators: [],
         batches: [],
         timestamp: timestamp,
-    }).finish();
+    }).finish()
 
     await context.setState(updates)
 }
@@ -220,24 +179,24 @@ async function createField(
 ) {
     // Validation: No id specified.
     if (!id)
-        reject(`No id specified`);
+        reject(`No id specified`)
 
     // Validation: No description specified.
     if (!description)
-        reject(`No description specified`);
+        reject(`No description specified`)
 
     // Validation: No location specified.
     if (!location)
-        reject(`No location specified`);
+        reject(`No location specified`)
 
-    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
+    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey)
 
     let state = await context.getState([
         companyAdminAddress,
         product
-    ]);
+    ])
 
-    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
+    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress])
 
     // Validation: The signer is not a Company Admin.
     if (companyAdminState.publicKey !== signerPublicKey)
@@ -251,18 +210,17 @@ async function createField(
         "Product Type"
     )
 
-    const fieldAddress = getFieldAddress(id, hashAndSlice(signerPublicKey, 10));
+    const fieldAddress = getFieldAddress(id, hashAndSlice(signerPublicKey, 10))
 
     state = await context.getState([
         fieldAddress,
         companyAdminState.company
     ])
 
-    const companyState = Company.decode(state[companyAdminState.company]);
+    const companyState = Company.decode(state[companyAdminState.company])
 
     // Validation: Product field doesn't match an enabled Company Product Type address.
-    if (companyState.enabledProductTypes.indexOf(product) === -1)
-        reject(`The product field doesn't match an enabled Company Product Type address`);
+    await isPresent(companyState.enabledProductTypes, product, "an enabled Company Product")
 
     // Validation: Quantity must be greater than zero.
     if (!quantity > 0)
@@ -273,7 +231,7 @@ async function createField(
         reject(`The id ${id} belongs to another company Field`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     // Record field.
     updates[fieldAddress] = Field.encode({
@@ -284,382 +242,11 @@ async function createField(
         quantity: quantity,
         location: location,
         events: []
-    }).finish();
+    }).finish()
 
     // Update company.
-    companyState.fields.push(fieldAddress);
-    updates[companyAdminState.company] = Company.encode(companyState).finish();
-
-    await context.setState(updates);
-}
-
-/**
- * Handle a Create Description Event transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The System Admin public key.
- * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} eventTypeId EventType unique identifier.
- * @param {String} batch Input batch where Event will be recorded.
- * @param {String} field Input field where Event will be recorded.
- * @param {Object[]} values Unique identifiers and values of different EventParameterValues.
- */
-async function createDescriptionEvent(
-    context,
-    signerPublicKey,
-    timestamp,
-    {eventTypeId, batch, field, values}
-) {
-    // Validation: Event Type id is not set.
-    if (!eventTypeId)
-        reject(`Event Type id is not set!`);
-
-    // Validation: Batch or Field is not set.
-    if ((!batch && !field) || (batch && field))
-        reject(`You must set a Batch or a Field where you\'re going to record the event!`);
-
-    const operatorAddress = getOperatorAddress(signerPublicKey);
-
-    let state = await context.getState([
-        operatorAddress
-    ]);
-
-    const operatorState = Operator.decode(state[operatorAddress]);
-
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
-
-    const companyAddress = getCompanyAddress(operatorState.company);
-    const eventTypeAddress = getEventTypeAddress(eventTypeId);
-    const fieldAddress = getFieldAddress(field, operatorState.company);
-    const batchAddress = getBatchAddress(batch);
-
-    state = await context.getState([
-        operatorAddress,
-        companyAddress,
-        eventTypeAddress,
-        fieldAddress,
-        batchAddress
-    ]);
-
-    const companyState = Company.decode(state[companyAddress]);
-    const eventTypeState = EventType.decode(state[eventTypeAddress]);
-    const fieldState = Field.decode(state[fieldAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
-
-    // Validation: Provided value for field does not match with a Company Field.
-    if (field && companyState.fields.indexOf(field) === -1)
-        reject(`The provided field ${field} is not a Company Field!`);
-
-    // Validation: Provided value for batch does not match with a Company Batch.
-    if (batch && companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
-
-    // Validation: Provided value for eventTypeId does not match with a valid Event Type.
-    if (!state[eventTypeAddress])
-        reject(`The provided Event Type ${eventTypeId} doesn't match a valid Event Type!`);
-
-    // Validation: Provided Event Type doesn't match a valid description Event Type.
-    if (eventTypeState.typology !== 0)
-        reject(`The provided Event Type ${eventTypeId} is not a description event!`);
-
-    // Validation: Operator's task doesn't match one of the enabled Task Types for the Event Type.
-    if (!(eventTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
-        reject(`You cannot record this Event with a ${operatorState.task} task!`);
-
-    // Validation: Field Product Type doesn't match one of the enabled Product Types for the Event Type.
-    if (field && eventTypeState.enabledProductTypes.indexOf(fieldState.product) === -1)
-        reject(`You cannot record this Event on ${field} Field!`);
-
-    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
-    if (batch && eventTypeState.enabledProductTypes.indexOf(batchState.product) === -1)
-        reject(`You cannot record this Event on ${field} Batch!`);
-
-    // Validation: No values are provided for required Event Parameters.
-    if (!values.length > 0 && eventTypeState.parameters.some(param => param.required === true))
-        reject(`You must provide values for each required Event Parameter!`);
-
-    // Validation: Check if each provided ParameterValue for EventParameters is valid.
-    for (const param of eventTypeState.parameters) {
-        let paramAddress = getEventParameterTypeAddress(param.parameterTypeId);
-
-        let state = await context.getState([
-            paramAddress
-        ]);
-
-        const parameterTypeState = EventParameterType.decode(state[paramAddress]);
-
-        for (const paramValue of values) {
-            // Check if a value is provided for a parameter.
-            if (param.parameterTypeId === paramValue.parameterTypeId) {
-                if (param.required)
-                    checkField(paramValue, parameterTypeState.type);
-
-                // ParameterValue validation.
-                checkParameterValue(param, paramValue, parameterTypeState.type);
-            }
-        }
-    }
-
-    // State update.
-    const updates = {};
-
-    // Create an Event.
-    const event = Event.create({
-        eventTypeId: eventTypeId,
-        reporter: signerPublicKey,
-        values: values,
-        timestamp: timestamp
-    });
-
-    // Record Event on Field.
-    if (field) {
-        fieldState.events.push(event);
-        updates[fieldAddress] = Field.encode(fieldState).finish();
-    }
-
-    // Record Event on Batch.
-    if (batch) {
-        batchState.events.push(event);
-        updates[batchAddress] = Batch.encode(batchState).finish();
-    }
-
-    await context.setState(updates);
-}
-
-/**
- * Handle a Create Transformation Event transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The System Admin public key.
- * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} eventTypeId EventType unique identifier.
- * @param {String[]} batches Input batches to transform.
- * @param {String[]} fields Input fields to transform.
- * @param {float[]} quantities Input quantities to subtract from fields or batches.
- * @param {String} derivedProduct Output Product Type for the output Batch.
- * @param {String} outputBatchId Output Batch identifier.
- */
-
-async function createTransformationEvent(
-    context,
-    signerPublicKey,
-    timestamp,
-    {eventTypeId, batches, fields, quantities, derivedProduct, outputBatchId}
-) {
-    // Validation: Event Type id is not set.
-    if (!eventTypeId)
-        reject(`Event Type id is not set!`);
-
-    // Validation: A list of Batch or a list of Field is not set.
-    if ((!batches.length > 0 && !fields.length > 0) || (batches.length > 0 && fields.length > 0))
-        reject(`You must set a list of Batch or a list of Field to transform!`);
-
-    // Validation: A list of quantities not set.
-    if (!quantities.length > 0)
-        reject(`Quantities list is not set!`);
-
-    // Validation: Derived product is not set.
-    if (!derivedProduct)
-        reject(`Derived product is not set!`);
-
-    // Validation: Output Batch identifier is not set.
-    if (!outputBatchId)
-        reject(`Output Batch identifier is not set!`);
-
-    const operatorAddress = getOperatorAddress(signerPublicKey);
-
-    let state = await context.getState([
-        operatorAddress
-    ]);
-
-    const operatorState = Operator.decode(state[operatorAddress]);
-
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
-
-    const companyAddress = getCompanyAddress(operatorState.company);
-    const eventTypeAddress = getEventTypeAddress(eventTypeId);
-    const outputBatchAddress = getBatchAddress(outputBatchId);
-
-    state = await context.getState([
-        companyAddress,
-        eventTypeAddress,
-        outputBatchAddress
-    ]);
-
-    const companyState = Company.decode(state[companyAddress]);
-    const eventTypeState = EventType.decode(state[eventTypeAddress]);
-
-    // Validation: Provided value for eventTypeId does not match with a valid Event Type.
-    if (!state[eventTypeAddress])
-        reject(`The provided Event Type ${eventTypeId} doesn't match a valid Event Type!`);
-
-    const fieldsState = [];
-    const batchesState = [];
-
-    // Validation: At least one of the provided values for fields doesn't match a Company Field.
-    for (const field of fields) {
-        // Validation: Provided value for field does not match with a Company Field.
-        if (companyState.fields.indexOf(field) === -1)
-            reject(`The provided field ${field} is not a Company Field!`);
-
-        // Fields decoding.
-        const companyFieldAddress = getFieldAddress(field, operatorState.company);
-
-        state = await context.getState([
-            companyFieldAddress
-        ]);
-
-        fieldsState.push(Field.decode(state[companyFieldAddress]));
-    }
-
-    // Validation: At least one of the provided values for batches doesn't match a Company Batch.
-    for (const batch of batches) {
-        // Validation: Provided value for batch does not match with a Company Batch.
-        if (companyState.batches.indexOf(batch) === -1)
-            reject(`The provided batch ${batch} is not a Company Batch!`);
-
-        // Batches decoding.
-        const companyBatchAddress = getBatchAddress(batch);
-
-        state = await context.getState([
-            companyBatchAddress
-        ]);
-
-        batchesState.push(Batch.decode(state[companyBatchAddress]));
-    }
-
-    // Validation: Provided Event Type doesn't match a valid transformation Event Type.
-    if (eventTypeState.typology !== 1)
-        reject(`The provided Event Type ${eventTypeId} is not a transformation event!`);
-
-    // Validation: Operator's task doesn't match one of the enabled Task Types for the Event Type.
-    if (!(eventTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
-        reject(`You cannot record this Event with a ${operatorState.task} task!`);
-
-    // Validation: At least a provided field doesn't match other Field's Product Type.
-    if (fieldsState.length > 0 && fieldsState.some(field => field.product !== fieldsState[fieldsState.length - 1].product))
-        reject(`You cannot transform fields with different products!`);
-
-    // Validation: At least a provided batch doesn't match other Batch's Product Type.
-    if (batchesState.length > 0 && batchesState.some(batch => batch.product !== batchesState[batchesState.length - 1].product))
-        reject(`You cannot transform batches with different products!`);
-
-    // Validation: Field Product Type doesn't match one of the enabled Product Types for the Event Type.
-    if (fieldsState.length > 0 && eventTypeState.enabledProductTypes.indexOf(fieldsState[fieldsState.length - 1].product) === -1)
-        reject(`You cannot record this Event on fields with product ${fieldsState[fieldsState.length - 1].product}!`);
-
-    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
-    if (batchesState.length > 0 && eventTypeState.enabledProductTypes.indexOf(batchesState[batchesState.length - 1].product) === -1)
-        reject(`You cannot record this Event on batches with product ${batchesState[batchesState.length - 1].product}!`);
-
-    // Validation: Derived product doesn't match one of the derived Product Types for the Event Type.
-    if (!(eventTypeState.derivedProductTypes.indexOf(derivedProduct) > -1))
-        reject(`You cannot transform with ${eventTypeId} event in order to create a Batch with ${derivedProduct} product!`);
-
-    // Validation: Derived product doesn't match one of the enabled Product Types for the Company.
-    if (!(companyState.enabledProductTypes.indexOf(derivedProduct) > -1))
-        reject(`You cannot transform with ${eventTypeId} event in order to create a Batch with ${derivedProduct} product!`);
-
-    /// Validation: At least one of the given quantities is less or equal to zero.
-    if (quantities.some(quantity => quantity <= 0))
-        reject(`At least one of the given quantities is less or equal to zero!`);
-
-    // Validation: The quantity to be subtracted cannot be greater than the current quantity of the Batch or Field.
-    quantities.forEach((quantity, index) => {
-        // Validation: Provided quantity greater than field quantity.
-        if (fieldsState.length > 0 && fieldsState[index].quantity - quantity < 0)
-            reject(`The provided quantity ${quantity} cannot be greater than the current ${fieldsState[index].id} Field quantity ${fieldsState[index].quantity}`);
-
-        // Validation: Provided quantity greater than batch quantity.
-        if (batchesState.length > 0 && batchesState[index].quantity - quantity < 0)
-            reject(`The provided quantity ${quantity} cannot be greater than the current ${batchesState[index].id} Batch quantity ${batchesState[index].quantity}`);
-    });
-
-    /// Validation: The provided output batch identifier is already used for another Company Batch.
-    if (companyState.batches.some(batch => batch === outputBatchId))
-        reject(`The provided output batch identifier ${outputBatchId} is already used for another Company Batch`);
-
-    // Retrieve conversion rate for derived product from Batch or Field product.
-    let productTypeAddress;
-    let inputProduct;
-
-    if (fields.length > 0) {
-        inputProduct = fieldsState[fieldsState.length - 1].product;
-        productTypeAddress = getProductTypeAddress(inputProduct);
-    } else {
-        inputProduct = batchesState[batchesState.length - 1].product;
-        productTypeAddress = getProductTypeAddress(inputProduct);
-    }
-
-    state = await context.getState([
-        productTypeAddress
-    ]);
-
-    const conversionRate = ProductType.decode(state[productTypeAddress])
-        .derivedProducts.filter(
-            drvPrd => drvPrd.derivedProductType === derivedProduct
-        )[0].conversionRate;
-
-    // State update.
-    const updates = {};
-
-    // Record Event on each input Field.
-    if (fields.length > 0) {
-        for (let i = 0; i < fieldsState.length; i++) {
-            const fieldAddress = getFieldAddress(fieldsState[i].id, operatorState.company);
-
-            fieldsState[i].events.push(Event.create({
-                eventTypeId: eventTypeId,
-                reporter: signerPublicKey,
-                values: [],
-                quantity: quantities[i],
-                timestamp: timestamp
-            }));
-
-            fieldsState[i].quantity -= quantities[i];
-            updates[fieldAddress] = Field.encode(fieldsState[i]).finish();
-        }
-    }
-
-    // Record Event on each input Batch.
-    if (batches.length > 0) {
-        for (let i = 0; i < batchesState.length; i++) {
-            const batchAddress = getBatchAddress(batchesState[i].id);
-
-            batchesState[i].events.push(Event.create({
-                eventTypeId: eventTypeId,
-                reporter: signerPublicKey,
-                values: [],
-                quantity: quantities[i],
-                timestamp: timestamp
-            }));
-
-            batchesState[i].quantity -= quantities[i];
-            updates[batchAddress] = Batch.encode(batchesState[i]).finish();
-        }
-    }
-
-    // Create output Batch.
-    updates[outputBatchAddress] = Batch.encode({
-        id: outputBatchId,
-        company: operatorState.company,
-        product: derivedProduct,
-        quantity: quantities.reduce((tot, sum) => {
-            return tot + sum
-        }) * conversionRate,
-        parentFields: fields,
-        parentBatches: batches,
-        events: [],
-        certificates: [],
-        properties: [],
-        timestamp: timestamp
-    }).finish();
-
-    // Update Company.
-    companyState.batches.push(outputBatchId);
-    updates[companyAddress] = Company.encode(companyState).finish();
+    companyState.fields.push(fieldAddress)
+    updates[companyAdminState.company] = Company.encode(companyState).finish()
 
     await context.setState(updates)
 }
@@ -683,56 +270,56 @@ async function addBatchCertificate(
 
     // Validation: Batch is not set.
     if (!batch)
-        reject(`Batch is not set!`);
+        reject(`Batch is not set!`)
 
     // Validation: Company is not set.
     if (!company)
-        reject(`Company is not set!`);
+        reject(`Company is not set!`)
 
     // Validation: Link is not set.
     if (!link)
-        reject(`Link is not set!`);
+        reject(`Link is not set!`)
 
     // Validation: Hash is not set.
     if (!hash)
-        reject(`Hash is not set!`);
+        reject(`Hash is not set!`)
 
     // Validation: Hash is not a valid SHA-512 value.
     if (!RegExp(`^[0-9A-Fa-f]{128}$`).test(hash))
-        reject(`Provided hash doesn't contain a valid SHA-512 value!`);
+        reject(`Provided hash doesn't contain a valid SHA-512 value!`)
 
-    const certificationAuthorityAddress = getCertificationAuthorityAddress(signerPublicKey);
-    const companyAddress = getCompanyAddress(company);
-    const batchAddress = getBatchAddress(batch);
+    const certificationAuthorityAddress = getCertificationAuthorityAddress(signerPublicKey)
+    const companyAddress = getCompanyAddress(company)
+    const batchAddress = getBatchAddress(batch)
 
     const state = await context.getState([
         certificationAuthorityAddress,
         companyAddress,
         batchAddress
-    ]);
+    ])
 
-    const certificationAuthorityState = CertificationAuthority.decode(state[certificationAuthorityAddress]);
-    const companyState = Company.decode(state[companyAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
+    const certificationAuthorityState = CertificationAuthority.decode(state[certificationAuthorityAddress])
+    const companyState = Company.decode(state[companyAddress])
+    const batchState = Batch.decode(state[batchAddress])
 
     // Validation: Transaction signer is not a Certification Authority.
     if (!state[certificationAuthorityAddress].length)
-        reject(`You must be a Certification Authority to certify a Batch!`);
+        reject(`You must be a Certification Authority to certify a Batch!`)
 
     // Validation: Provided value for company does not match with a Company.
     if (!state[companyAddress].length)
-        reject(`The provided company ${company} is not a Company!`);
+        reject(`The provided company ${company} is not a Company!`)
 
     // Validation: Provided value for batch does not match with a Company Batch.
     if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
+        reject(`The provided batch ${batch} is not a Company Batch!`)
 
     // Validation: Certification Authority's products list doesn't contains one the Product Type of the Batch.
     if (certificationAuthorityState.products.indexOf(batchState.product) === -1)
-        reject(`You cannot record this certification on a batch with ${batchState.product} product!`);
+        reject(`You cannot record this certification on a batch with ${batchState.product} product!`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     // Record Certificate on Batch.
     batchState.certificates.push(Batch.Certificate.create({
@@ -740,10 +327,10 @@ async function addBatchCertificate(
         link: link,
         hash: hash,
         timestamp: timestamp
-    }));
+    }))
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish();
+    updates[batchAddress] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
@@ -766,69 +353,69 @@ async function recordBatchProperty(
 ) {
     // Validation: Batch is not set.
     if (!batch)
-        reject(`Batch is not set!`);
+        reject(`Batch is not set!`)
 
     // Validation: Property is not set.
     if (!property)
-        reject(`Property is not set!`);
+        reject(`Property is not set!`)
 
     // Validation: PropertyValue is not set.
     if (!propertyValue)
-        reject(`Property Value is not set!`);
+        reject(`Property Value is not set!`)
 
-    const operatorAddress = getOperatorAddress(signerPublicKey);
+    const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
         operatorAddress
-    ]);
+    ])
 
-    const operatorState = Operator.decode(state[operatorAddress]);
+    const operatorState = Operator.decode(state[operatorAddress])
 
     // Validation: Transaction signer is not an Operator for a Company.
     if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
+        reject(`You must be an Operator for a Company!`)
 
-    const companyAddress = getCompanyAddress(operatorState.company);
-    const batchAddress = getBatchAddress(batch);
-    const propertyTypeAddress = getPropertyTypeAddress(property);
+    const companyAddress = getCompanyAddress(operatorState.company)
+    const batchAddress = getBatchAddress(batch)
+    const propertyTypeAddress = getPropertyTypeAddress(property)
 
     state = await context.getState([
         propertyTypeAddress,
         companyAddress,
         batchAddress
-    ]);
+    ])
 
-    const propertyTypeState = PropertyType.decode(state[propertyTypeAddress]);
-    const companyState = Company.decode(state[companyAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
+    const propertyTypeState = PropertyType.decode(state[propertyTypeAddress])
+    const companyState = Company.decode(state[companyAddress])
+    const batchState = Batch.decode(state[batchAddress])
 
     // Validation: Provided value for batch does not match with a Company Batch.
     if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
+        reject(`The provided batch ${batch} is not a Company Batch!`)
 
     // Validation: Provided value for property type id in property value doesn't match with a valid Property Type.
     if (!state[propertyTypeAddress].length > 0)
-        reject(`Provided Property Type id ${property} doesn't match with a valid Property Type!`);
+        reject(`Provided Property Type id ${property} doesn't match with a valid Property Type!`)
 
     // Validation: Operator's task doesn't match one of the enabled Task Types for the Property Type.
     if (!(propertyTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
-        reject(`You cannot record this Property with a ${operatorState.task} task!`);
+        reject(`You cannot record this Property with a ${operatorState.task} task!`)
 
     // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Property Type.
     if (propertyTypeState.enabledProductTypes.indexOf(batchState.product) === -1)
-        reject(`You cannot record this Property on ${batch} Batch!`);
+        reject(`You cannot record this Property on ${batch} Batch!`)
 
     // Validation: Check property value.
-    checkField(propertyValue, propertyTypeState.type);
+    checkField(propertyValue, propertyTypeState.type)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     if (!batchState.properties.some(propertyObj => propertyObj.propertyTypeId === property))
         batchState.properties.push(Batch.Property.create({
             propertyTypeId: property,
             values: [propertyValue]
-        }));
+        }))
     else {
         for (const propertyList of batchState.properties) {
             if ((propertyList).propertyTypeId === property) {
@@ -838,7 +425,7 @@ async function recordBatchProperty(
     }
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish();
+    updates[batchAddress] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
@@ -861,56 +448,56 @@ async function createProposal(
 ) {
     // Validation: Batch is not set.
     if (!batch)
-        reject(`Batch is not set!`);
+        reject(`Batch is not set!`)
 
     // Validation: Receiver Company is not set.
     if (!receiverCompany)
-        reject(`Receiver company is not set!`);
+        reject(`Receiver company is not set!`)
 
-    const operatorAddress = getOperatorAddress(signerPublicKey);
+    const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
         operatorAddress
-    ]);
+    ])
 
-    const operatorState = Operator.decode(state[operatorAddress]);
+    const operatorState = Operator.decode(state[operatorAddress])
 
     // Validation: Transaction signer is not an Operator for a Company.
     if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
+        reject(`You must be an Operator for a Company!`)
 
-    const senderCompanyAddress = getCompanyAddress(operatorState.company);
-    const receiverCompanyAddress = getCompanyAddress(receiverCompany);
-    const batchAddress = getBatchAddress(batch);
+    const senderCompanyAddress = getCompanyAddress(operatorState.company)
+    const receiverCompanyAddress = getCompanyAddress(receiverCompany)
+    const batchAddress = getBatchAddress(batch)
 
     state = await context.getState([
         senderCompanyAddress,
         receiverCompanyAddress,
         batchAddress
-    ]);
+    ])
 
-    const senderCompanyState = Company.decode(state[senderCompanyAddress]);
-    const receiverCompanyState = Company.decode(state[receiverCompanyAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
+    const senderCompanyState = Company.decode(state[senderCompanyAddress])
+    const receiverCompanyState = Company.decode(state[receiverCompanyAddress])
+    const batchState = Batch.decode(state[batchAddress])
 
     // Validation: Provided value for batch does not match with a Company Batch.
     if (senderCompanyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
+        reject(`The provided batch ${batch} is not a Company Batch!`)
 
     // Validation: Provided value for receiverCompany does not match with a valid Company.
     if (!state[receiverCompanyAddress].length > 0)
-        reject(`The provided company ${receiverCompany} is not a Company!`);
+        reject(`The provided company ${receiverCompany} is not a Company!`)
 
     // Validation: Batch Product Type doesn't match one of the enabled Product Types for the receiver Company.
     if (!(receiverCompanyState.enabledProductTypes.indexOf(batchState.product) > -1))
-        reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`);
+        reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`)
 
     // Validation: Provided batch already has a issued Proposal.
     if (batchState.proposals.some(proposal => proposal.status === Batch.Proposal.Status.ISSUED))
-        reject(`The provided batch ${batch} already has an issued Proposal!`);
+        reject(`The provided batch ${batch} already has an issued Proposal!`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     batchState.proposals.push(Batch.Proposal.create({
         senderCompany: operatorState.company,
@@ -918,10 +505,10 @@ async function createProposal(
         status: Batch.Proposal.Status.ISSUED,
         notes: notes,
         timestamp: timestamp
-    }));
+    }))
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish();
+    updates[batchAddress] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
@@ -946,103 +533,103 @@ async function answerProposal(
 ) {
     // Validation: Batch is not set.
     if (!batch)
-        reject(`Batch is not set!`);
+        reject(`Batch is not set!`)
 
     // Validation: Sender Company is not set.
     if (!senderCompany)
-        reject(`Sender company is not set!`);
+        reject(`Sender company is not set!`)
 
     // Validation: Receiver Company is not set.
     if (!receiverCompany)
-        reject(`Receiver company is not set!`);
+        reject(`Receiver company is not set!`)
 
     // Validation: Response is not set.
     if (!response)
-        reject(`Response is not set!`);
+        reject(`Response is not set!`)
 
-    const operatorAddress = getOperatorAddress(signerPublicKey);
+    const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
         operatorAddress
-    ]);
+    ])
 
-    const operatorState = Operator.decode(state[operatorAddress]);
+    const operatorState = Operator.decode(state[operatorAddress])
 
     // Validation: Transaction signer is not an Operator for a Company.
     if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
+        reject(`You must be an Operator for a Company!`)
 
-    const senderCompanyAddress = getCompanyAddress(senderCompany);
-    const receiverCompanyAddress = getCompanyAddress(receiverCompany);
-    const batchAddress = getBatchAddress(batch);
+    const senderCompanyAddress = getCompanyAddress(senderCompany)
+    const receiverCompanyAddress = getCompanyAddress(receiverCompany)
+    const batchAddress = getBatchAddress(batch)
 
     state = await context.getState([
         senderCompanyAddress,
         receiverCompanyAddress,
         batchAddress
-    ]);
+    ])
 
-    const senderCompanyState = Company.decode(state[senderCompanyAddress]);
-    const receiverCompanyState = Company.decode(state[receiverCompanyAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
+    const senderCompanyState = Company.decode(state[senderCompanyAddress])
+    const receiverCompanyState = Company.decode(state[receiverCompanyAddress])
+    const batchState = Batch.decode(state[batchAddress])
 
     // Validation: Provided value for senderCompany does not match with a valid Company.
     if (!state[senderCompanyAddress].length > 0)
-        reject(`The provided company ${senderCompany} is not a Company!`);
+        reject(`The provided company ${senderCompany} is not a Company!`)
 
     // Validation: Provided value for receiverCompany does not match with a valid Company.
     if (!state[receiverCompanyAddress].length > 0)
-        reject(`The provided company ${receiverCompany} is not a Company!`);
+        reject(`The provided company ${receiverCompany} is not a Company!`)
 
     // Validation: Provided value for batch does not match with a sender Company Batch.
     if (senderCompanyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
+        reject(`The provided batch ${batch} is not a Company Batch!`)
 
     // Validation: Provided value for response is not valid if Operator is not from sender Company.
     if (response === Batch.Proposal.Status.CANCELED && operatorState.company !== senderCompany)
-        reject(`You must be an Operator from the sender Company to cancel a Proposal!`);
+        reject(`You must be an Operator from the sender Company to cancel a Proposal!`)
 
     // Validation: Provided value for response is not valid if Operator is not from receiver Company.
     if ((response === Batch.Proposal.Status.ACCEPTED || response === Batch.Proposal.Status.REJECTED) && operatorState.company !== receiverCompany)
-        reject(`You must be an Operator from the receiver Company to accept or reject a Proposal!`);
+        reject(`You must be an Operator from the receiver Company to accept or reject a Proposal!`)
 
     // Validation: Provided batch doesn't have at least an issued Proposals.
     if (batchState.proposals.every(proposal => proposal.status !== Batch.Proposal.Status.ISSUED))
-        reject(`The provided batch ${batch} doesn't have at least an issued Proposals!`);
+        reject(`The provided batch ${batch} doesn't have at least an issued Proposals!`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     // Get issued proposal
-    let issuedProposal = null;
+    let issuedProposal = null
 
     for (const proposal of batchState.proposals) {
         if (proposal.senderCompany === senderCompany &&
             proposal.receiverCompany === receiverCompany &&
             proposal.status === Batch.Proposal.Status.ISSUED)
-            issuedProposal = proposal;
+            issuedProposal = proposal
     }
 
-    issuedProposal.status = response;
+    issuedProposal.status = response
 
     // If operator is from receiver company.
     if (operatorState.company === receiverCompany && response === Batch.Proposal.Status.ACCEPTED) {
         // Add
-        receiverCompanyState.batches.push(batch);
+        receiverCompanyState.batches.push(batch)
 
         // Remove
-        senderCompanyState.batches.splice(senderCompanyState.batches.indexOf(batch), 1);
+        senderCompanyState.batches.splice(senderCompanyState.batches.indexOf(batch), 1)
 
         // update batch.
-        batchState.company = receiverCompany;
+        batchState.company = receiverCompany
 
         // Update Companies.
-        updates[receiverCompanyAddress] = Company.encode(receiverCompanyState).finish();
-        updates[senderCompanyAddress] = Company.encode(senderCompanyState).finish();
+        updates[receiverCompanyAddress] = Company.encode(receiverCompanyState).finish()
+        updates[senderCompanyAddress] = Company.encode(senderCompanyState).finish()
 
     }
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish();
+    updates[batchAddress] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
@@ -1065,50 +652,50 @@ async function finalizeBatch(
 ) {
     // Validation: Batch is not set.
     if (!batch)
-        reject(`Batch is not set!`);
+        reject(`Batch is not set!`)
 
     // Validation: Provided value for reason doesn't match the types specified in the Finalization's Reason.
     if (!Object.values(Batch.Finalization.Reason).some((value) => value === reason))
-        reject(`Provided value for reason doesn't match any possible value!`);
+        reject(`Provided value for reason doesn't match any possible value!`)
 
-    const operatorAddress = getOperatorAddress(signerPublicKey);
+    const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
         operatorAddress
-    ]);
+    ])
 
-    const operatorState = Operator.decode(state[operatorAddress]);
+    const operatorState = Operator.decode(state[operatorAddress])
 
     // Validation: Transaction signer is not an Operator for a Company.
     if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`);
+        reject(`You must be an Operator for a Company!`)
 
-    const companyAddress = getCompanyAddress(operatorState.company);
-    const batchAddress = getBatchAddress(batch);
+    const companyAddress = getCompanyAddress(operatorState.company)
+    const batchAddress = getBatchAddress(batch)
 
     state = await context.getState([
         companyAddress,
         batchAddress
-    ]);
+    ])
 
-    const companyState = Company.decode(state[companyAddress]);
-    const batchState = Batch.decode(state[batchAddress]);
+    const companyState = Company.decode(state[companyAddress])
+    const batchState = Batch.decode(state[batchAddress])
 
     // Validation: Provided value for batch does not match with a sender Company Batch.
     if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`);
+        reject(`The provided batch ${batch} is not a Company Batch!`)
 
     // State update.
-    const updates = {};
+    const updates = {}
 
     batchState.finalization = Batch.Finalization.create({
         reason: reason,
         reporter: signerPublicKey,
         explanation: explanation
-    });
+    })
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish();
+    updates[batchAddress] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
@@ -1116,11 +703,9 @@ async function finalizeBatch(
 module.exports = {
     createCompany,
     createField,
-    createDescriptionEvent,
-    createTransformationEvent,
     addBatchCertificate,
     recordBatchProperty,
     createProposal,
     answerProposal,
     finalizeBatch
-};
+}

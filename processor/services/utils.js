@@ -97,10 +97,23 @@ const isPublicKeyUsed = async (context, publicKey) => {
         reject(`The public key belongs to a Certification Authority`)
 }
 
+/**
+ * Check if an address is contained in the given list.
+ * @param {String[]} list A list of state addresses.
+ * @param {String} address A state address.
+ * @param {String} object The name of the state object.
+ */
+const isPresent = async (list, address, object) => {
+    // Validation: Provided address is not in the list.
+    if (list.indexOf(address) === -1)
+        reject(`Provided address ${address} doesn't match ${object}`);
+}
+
 module.exports = {
     reject,
     getActionField,
     isValidPublicKey,
     checkStateAddresses,
-    isPublicKeyUsed
+    isPublicKeyUsed,
+    isPresent
 }

@@ -177,7 +177,7 @@ message CreateFieldAction {
     string product = 3;
 
     // The predicted maximum production quantity.
-    float quantity = 4;
+    double quantity = 4;
 
     // The Field approximate location coordinates.
     Location location = 5;
@@ -192,36 +192,36 @@ message CreateOperatorAction {
 }
 
 message CreateDescriptionEventAction {
-    // Event Type identifier.
-    string eventTypeId = 1;
+    // The Event Type address.
+    string eventType = 1;
 
-    // Company Batch for event recording.
+    // A company Batch address where recording the event.
     string batch = 2;
 
-    // Company Field for event recording.
+    // A company Field address where recording the event.
     string field = 3;
 
-    // Unique identifiers and values of necessary EventParameterValues.
-    repeated Event.EventParameterValue values = 4;
+    // A list of values for each Parameter Type.
+    repeated Event.ParameterValue values = 4;
 }
 
 message CreateTransformationEventAction {
-    // Event Type identifier.
-    string eventTypeId = 1;
+    // The Event Type address.
+    string eventType = 1;
 
-    // A list of Company Batches to transform.
+    // A list of company Batches addresses to transform.
     repeated string batches = 2;
 
-    // A list of Company Fields to transform.
+    // A list of company Fields addresses to transform.
     repeated string fields = 3;
 
-    // An ordered list of quantities to subtract from input resources (Batch/Field).
-    repeated float quantities = 4;
+    // A list of corresponding quantities for transformation.
+    repeated double quantities = 4;
 
-    // Output Batch Product Type.
+    // The output Product Type address.
     string derivedProduct = 5;
 
-    // Output Batch identifier.
+    // The output Batch unique identifier.
     string outputBatchId = 6;
 }
 

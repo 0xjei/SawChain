@@ -26,10 +26,12 @@ const {
     createPropertyType
 } = require('./actions/typeEntities')
 const {
+    createDescriptionEvent,
+    createTransformationEvent
+} = require('./actions/events')
+const {
     createCompany,
     createField,
-    createDescriptionEvent,
-    createTransformationEvent,
     addBatchCertificate,
     recordBatchProperty,
     createProposal,
