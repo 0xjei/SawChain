@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package sawchain;
+
+import "event.proto";
+import "shared.proto";
+
+message Batch {
+    message Finalization {
+        enum Reason {
+            WITHDRAWN = 0;
+            SOLD = 1;
+            EXPIRED = 2;
+        }
+
+        Reason reason = 1;
+
+        string reporter = 2;
+
+        string explanation = 3;
+    }
+
+    // A list of value for a PropertyType recorded on Batch.
+    message Property {
+        // Property Type identifier.
+        string propertyTypeId = 1;
+
+        // List of PropertyValue for a PropertyType.
+        repeated PropertyValue values = 2;
+    }
+
+    // Property Type value.
+    message PropertyValue {
+        // Values fields. Only one of these fields should be used,
+        // and it should match the type specified Type in EventParameterType.
+        double numberValue = 2;
+        string stringValue = 3;
+        bytes bytesValue = 4;
+        Location locationValue = 5;
+
+        uint64 timestamp = 6;
+    }
+
+    // Batch unique identifier.
+    string id = 1;
+
+    // Company unique identifier.
+    string company = 2;
+
+    // Product Type identifier.
+    string product = 3;
+
+    // Batch quantity.
+    double quantity = 4;
+
+    // List of parent fields where Batch is transformed.
+    repeated string parentFields = 5;
+
+    // List of parent batches where Batch is transformed.
+    repeated string parentBatches = 6;
+
+    // List of recorded Events.
+    repeated Event events = 7;
+
+    // Batch certification.
+    repeated Certificate certificates = 8;
+
+    // Batch properties.
+    repeated Property properties = 9;
+
+    // Batch proposals.
+    repeated Proposal proposals = 10;
+
+    Finalization finalization = 11;
+
+    uint64 timestamp = 12;
+}
+
+// Change batch ownership proposal.
+message Proposal {
+    enum Status {
+        ISSUED = 0;
+        CANCELED = 1;
+        ACCEPTED = 2;
+        REJECTED = 3;
+    }
+
+    string senderCompany = 1;
+
+    string receiverCompany = 2;
+
+    Status status = 3;
+
+    string notes = 4;
+
+    string motivation = 5;
+
+    uint64 timestamp = 6;
+}
+
+// Certificate issued by a recorded Certification Authority.
+message Certificate {
+    // Certification Authority public key.
+    string authority = 1;
+
+    // Certificate external link.
+    string link = 2;
+
+    // Certificate file hash.
+    string hash = 3;
+
+    // Date and time when certificate is issued.
+    uint64 timestamp = 4;
+}

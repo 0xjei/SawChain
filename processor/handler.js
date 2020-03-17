@@ -31,13 +31,15 @@ const {
 } = require('./actions/events')
 const {
     createCompany,
-    createField,
+    createField
+} = require('./actions/entities')
+const {
     addBatchCertificate,
     recordBatchProperty,
     createProposal,
     answerProposal,
     finalizeBatch
-} = require('./actions/entities')
+} = require('./actions/batches')
 
 /**
  * Extension of TransactionHandler class in order to implement the SawChain Transaction Processor logic.

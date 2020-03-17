@@ -4,6 +4,8 @@ package sawchain;
 
 import "types.proto";
 import "entities.proto";
+import "event.proto";
+import "batch.proto";
 
 message SCPayload {
     enum Action {
@@ -266,7 +268,7 @@ message AnswerProposalAction {
 
     string receiverCompany = 3;
 
-    Batch.Proposal.Status response = 4;
+    Proposal.Status response = 4;
 
     string motivation = 5;
 }

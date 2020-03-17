@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package sawchain;
+
+message Location {
+    // Coordinates are expected to be in millionths of a degree
+    sint64 latitude = 1;
+
+    sint64 longitude = 2;
+}
+
+message TypeData {
+    // Possible values for unit of measure.
+    enum UnitOfMeasure {
+        KILOS = 0;
+        LITRE = 1;
+        METRE = 2;
+        UNIT = 3;
+    }
+
+    enum DataType {
+        NUMBER = 0;
+        STRING = 1;
+        BYTES = 2;
+        LOCATION = 3;
+    }
+}

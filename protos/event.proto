@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package sawchain;
+
+message Event {
+    message ParameterValue {
+        // The Event Parameter Type address.
+        string parameterType = 1;
+
+        // Only one of these fields should be used according to Type.
+        double numberValue = 2;
+        string stringValue = 3;
+        bytes bytesValue = 4;
+    }
+
+    // The Event Type address.
+    string eventType = 1;
+
+    // The public key of the Operator.
+    string reporter = 2;
+
+    // A list of values for each Parameter Type.
+    repeated ParameterValue values = 3;
+
+    // The quantity used when transform.
+    double quantity = 4;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 5;
+}
