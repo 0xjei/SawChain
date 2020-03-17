@@ -32,7 +32,7 @@ const {
 const {
     createCompany,
     createField
-} = require('./actions/entities')
+} = require('./actions/company')
 const {
     addBatchCertificate,
     recordBatchProperty,

@@ -400,7 +400,7 @@ async function createTransformationEvent(
     // Record output Batch.
     updates[outputBatchAddress] = Batch.encode({
         id: outputBatchId,
-        company: companyState.id,
+        company: companyAddress,
         product: derivedProduct,
         quantity: quantities.reduce((tot, sum) => {
             return tot + sum
