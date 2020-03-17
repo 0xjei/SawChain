@@ -19,7 +19,7 @@ const {
     SCPayloadActions,
     Company,
     Batch,
-    Location,
+    Shared,
     Proposal,
     AddBatchCertificateAction,
     RecordBatchPropertyAction,
@@ -110,7 +110,7 @@ describe('Batch Actions', function () {
         await mockCreateField(
             context, handler, companyAdminKeyPair.privateKey,
             fieldId, "description1", getProductTypeAddress("PDT3"), 15000,
-            Location.create({latitude: 39.23054, longitude: 9.11917})
+            Shared.Location.create({latitude: 39.23054, longitude: 9.11917})
         )
 
         // Create an Operator.
@@ -404,7 +404,7 @@ describe('Batch Actions', function () {
             })
 
             propertyValueLocation = Batch.PropertyValue.create({
-                locationValue: Location.create({latitude: 39.23054, longitude: 9.11917}),
+                locationValue: Shared.Location.create({latitude: 39.23054, longitude: 9.11917}),
                 timestamp: Date.now()
             })
         })
@@ -703,8 +703,7 @@ describe('Batch Actions', function () {
         })
     })
 
-    /// todo refactoring
-    describe('Change Batch Ownership Actions', function () {
+    describe('Batch Ownership Actions', function () {
         let cmpAdminKeyPair2 = null
         let cmpAdminKeyPair3 = null
         let optKeyPair2 = null

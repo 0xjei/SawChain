@@ -31,7 +31,7 @@ message ProductType {
     string description = 3;
 
     // The unit of measure used for the product quantity.
-    TypeData.UnitOfMeasure measure = 4;
+    Shared.UnitOfMeasure measure = 4;
 
     // A list of derived Product Types with a quantity conversion rate.
     repeated DerivedProductType derivedProductTypes = 5;
@@ -45,7 +45,7 @@ message EventParameterType {
     string name = 2;
 
     // The Event Parameter Type information data type.
-    TypeData.DataType dataType = 3;
+    Shared.DataType dataType = 3;
 }
 
 message EventType {
@@ -101,7 +101,7 @@ message PropertyType {
     string name = 2;
 
     // The Property Type information data type.
-    TypeData.DataType dataType = 3;
+    Shared.DataType dataType = 3;
 
     // A list of enabled Task Types addresses for recording the property.
     repeated string enabledTaskTypes = 4;

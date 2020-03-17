@@ -7,17 +7,16 @@ import "shared.proto";
 
 message Batch {
     message Finalization {
-        // The possible set of finalization reasons.
         enum Reason {
             WITHDRAWN = 0;
             SOLD = 1;
             EXPIRED = 2;
         }
 
-        // The reason why the Batch is finalized.
+        // The Batch finalization reason.
         Reason reason = 1;
 
-        // The public key of the reporter.
+        // The reporter Operator public key.
         string reporter = 2;
 
         // A short explanation for the finalization.
@@ -37,7 +36,7 @@ message Batch {
         double numberValue = 1;
         string stringValue = 2;
         bytes bytesValue = 3;
-        Location locationValue = 4;
+        Shared.Location locationValue = 4;
 
         uint64 timestamp = 5;
     }
@@ -79,7 +78,6 @@ message Batch {
     uint64 timestamp = 12;
 }
 
-// Change batch ownership proposal.
 message Proposal {
     enum Status {
         ISSUED = 0;
@@ -88,16 +86,22 @@ message Proposal {
         REJECTED = 3;
     }
 
+    // The sender Company state address.
     string senderCompany = 1;
 
+    // The receiver Company state address.
     string receiverCompany = 2;
 
+    // The Proposal current status.
     Status status = 3;
 
+    // A note for issuing the Proposal.
     string notes = 4;
 
+    // A note to motivate the answer.
     string motivation = 5;
 
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 6;
 }
 

@@ -7,7 +7,7 @@ const {
     Company,
     Batch,
     Certificate,
-    TypeData
+    Shared
 } = require('../services/proto')
 const {
     reject,
@@ -34,7 +34,7 @@ const {
 const isCorrectFieldSet = async (propertyValue, dataType) => {
     switch (dataType) {
         // Number data type.
-        case TypeData.DataType.NUMBER:
+        case Shared.DataType.NUMBER:
             // Validation: The number value field is not specified.
             if (propertyValue.stringValue.length > 0 ||
                 propertyValue.bytesValue.length > 0 ||
@@ -44,7 +44,7 @@ const isCorrectFieldSet = async (propertyValue, dataType) => {
             break
 
         // String data type.
-        case TypeData.DataType.STRING:
+        case Shared.DataType.STRING:
             // Validation: The string value field is not specified.
             if (propertyValue.numberValue > 0 ||
                 propertyValue.numberValue < 0 ||
@@ -55,7 +55,7 @@ const isCorrectFieldSet = async (propertyValue, dataType) => {
             break
 
         // Bytes data type.
-        case TypeData.DataType.BYTES:
+        case Shared.DataType.BYTES:
             // Validation: The bytes value field is not specified.
             if (propertyValue.numberValue > 0 ||
                 propertyValue.numberValue < 0 ||
@@ -66,7 +66,7 @@ const isCorrectFieldSet = async (propertyValue, dataType) => {
             break
 
         // Location data type.
-        case TypeData.DataType.LOCATION:
+        case Shared.DataType.LOCATION:
             // Validation: The location value field is not specified.
             if (propertyValue.numberValue > 0 ||
                 propertyValue.numberValue < 0 ||
@@ -156,8 +156,8 @@ async function addBatchCertificate(
 
 /**
  * Handle Record of a Batch Property transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The Operator public key.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey The Certification Authority public key.
  * @param {Object} timestamp Date and time when transaction is sent.
  * @param {String} batch The Batch state address where record the Property.
  * @param {String} propertyType The Property Type state address.
@@ -240,12 +240,12 @@ async function recordBatchProperty(
 
 /**
  * Handle Create Proposal transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The Operator public key.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey The Certification Authority public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} batch Batch identifier.
- * @param {String} receiverCompany Receiver Company identifier.
- * @param {String} notes An optional text.
+ * @param {String} batch The Batch state address.
+ * @param {String} receiverCompany The receiver Company state address.
+ * @param {String} notes A note for issuing the Proposal.
  */
 
 async function createProposal(

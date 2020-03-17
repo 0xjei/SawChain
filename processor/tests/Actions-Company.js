@@ -15,7 +15,7 @@ const {
     CompanyAdmin,
     Company,
     Field,
-    Location,
+    Shared,
     CreateCompanyAction,
     CreateFieldAction
 } = require('../services/proto')
@@ -339,7 +339,7 @@ describe('Company Actions', function () {
     describe('Create Field', async function () {
         const description = "description1"
         const quantity = 150000
-        const location = Location.create({
+        const location = Shared.Location.create({
             latitude: 39.23054,
             longitude: 9.11917
         })

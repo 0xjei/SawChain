@@ -24,6 +24,10 @@ Any individual is able to read data from the state of the ledger to reconstruct 
         * [Field](#field)
         * [Event](#event)
         * [Batch](#batch)
+    * [Others](#others)
+        * [Certificate](#certificate)
+        * [Proposal](#proposal)
+        * [Finalization](#finalization)
 - [Addressing](#addressing)
 - [Transactions](#transactions)
     * [Transaction Payload](#transaction-payload)
@@ -488,6 +492,86 @@ message Batch {
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 12;
+}
+```
+
+## Others
+### Certificate
+A Certificate is a digital representation of a certification document issued by a Certification Authority to evaluate the quality of a Batch.
+The document is stored in to the system via its hash and a download link.
+
+```protobuf
+message Certificate {
+    // The Certification Authority public key.
+    string authority = 1;
+
+    // The Certificate external resource link.
+    string link = 2;
+
+    // The Certificate external resource hash.
+    string hash = 3;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 4;
+}
+```
+
+### Proposal
+The Proposal allows an Operator to submit a request for the passage of a Batch from his Company to another Company.
+The Proposal takes place in two steps: the first is for issuing the proposal request and the second for responding to this request.
+Both in the issue and response phase it is possible to release short motivational notes.
+A Proposal can be canceled even before the reply, or rejected by the receiver.
+
+```protobuf
+message Proposal {
+    enum Status {
+        ISSUED = 0;
+        CANCELED = 1;
+        ACCEPTED = 2;
+        REJECTED = 3;
+    }
+
+    // The sender Company state address.
+    string senderCompany = 1;
+
+    // The receiver Company state address.
+    string receiverCompany = 2;
+
+    // The Proposal current status.
+    Status status = 3;
+
+    // A note for issuing the Proposal.
+    string notes = 4;
+
+    // A note to motivate the answer.
+    string motivation = 5;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 6;
+}
+```
+
+### Finalization
+There may be several reasons why the events recording on a batch should be blocked: 
+zero quantity, withdrawn of the batch by external control entities, or sale of the lot.
+A Finalization object allows an Operator to block the batch by providing a short explanation.
+
+```protobuf
+message Finalization {
+    enum Reason {
+        WITHDRAWN = 0;
+        SOLD = 1;
+        EXPIRED = 2;
+    }
+
+    // The Batch finalization reason.
+    Reason reason = 1;
+
+    // The reporter Operator public key.
+    string reporter = 2;
+
+    // A short explanation for the finalization.
+    string explanation = 3;
 }
 ```
 
@@ -1053,18 +1137,32 @@ message RecordBatchPropertyAction {
 
 A Record Batch Property transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* .
-* .
-* .
-* .
-* .
-* .
-* .
-* .
-* .
-* .
+* The signer is not an Operator.
+* Batch doesn't match a Company Batch address.
+* The Company address is not well-formatted or not exists.
+* Operator task doesn't match an enabled Task Type for the Property Type.
+* Batch product doesn't match an enabled Product Type for the Property Type.
+* The correct Property Value field is not set.
+
 
 ## Create Proposal
+
+```protobuf
+message RecordBatchPropertyAction {
+    // The Batch state address where record the Property.
+    string batch = 1;
+
+    // The Property Type state address.
+    string propertyType = 2;
+
+    // The Property Value used to update the Property on Batch.
+    Batch.PropertyValue propertyValue = 3;
+}
+```
+* .
+* .
+* .
+* .
 
 ## Answer Proposal
 

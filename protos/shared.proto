@@ -2,15 +2,16 @@ syntax = "proto3";
 
 package sawchain;
 
-message Location {
-    // Coordinates are expected to be in millionths of a degree
-    sint64 latitude = 1;
+message Shared {
+    message Location {
+        // Latitude coordinate.
+        sint64 latitude = 1;
 
-    sint64 longitude = 2;
-}
+        // Longitude coordinate.
+        sint64 longitude = 2;
+    }
 
-message TypeData {
-    // Possible values for unit of measure.
+    // Possible values for Unit of Measure.
     enum UnitOfMeasure {
         KILOS = 0;
         LITRE = 1;
@@ -18,6 +19,7 @@ message TypeData {
         UNIT = 3;
     }
 
+    // Possible values for DataType.
     enum DataType {
         NUMBER = 0;
         STRING = 1;

@@ -54,7 +54,7 @@ message Field {
     double quantity = 5;
 
     // The Field approximate location coordinates.
-    Location location = 6;
+    Shared.Location location = 6;
 
     // A list of Events state objects.
     repeated Event events = 7;

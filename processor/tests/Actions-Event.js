@@ -20,7 +20,7 @@ const {
     Field,
     Event,
     Batch,
-    Location,
+    Shared,
     CreateDescriptionEventAction,
     CreateTransformationEventAction
 } = require('../services/proto')
@@ -107,7 +107,7 @@ describe('Event Actions', function () {
         await mockCreateField(
             context, handler, companyAdminKeyPair.privateKey,
             fieldId, "description1", getProductTypeAddress("PDT3"), 15000,
-            Location.create({latitude: 39.23054, longitude: 9.11917})
+            Shared.Location.create({latitude: 39.23054, longitude: 9.11917})
         )
 
         // Create an Operator.
@@ -712,14 +712,14 @@ describe('Event Actions', function () {
                 context, handler, companyAdminKeyPair.privateKey,
                 fieldIdDiffProd, "description",
                 getProductTypeAddress("PDT4"), 15000,
-                Location.create({latitude: 39.23054, longitude: 9.11917})
+                Shared.Location.create({latitude: 39.23054, longitude: 9.11917})
             )
 
             await mockCreateField(
                 context, handler, companyAdminKeyPair.privateKey,
                 fieldIdDiffDeriv, "description",
                 getProductTypeAddress("PDT2"), 15000,
-                Location.create({latitude: 39.23054, longitude: 9.11917})
+                Shared.Location.create({latitude: 39.23054, longitude: 9.11917})
             )
 
             fieldDiffProdAddress = getFieldAddress(fieldIdDiffProd, companyId)
@@ -1218,7 +1218,7 @@ describe('Event Actions', function () {
                 await mockCreateField(
                     context, handler, companyAdminKeyPair2.privateKey,
                     fieldId, "description", getProductTypeAddress("PDT3"), 15000,
-                    Location.create({latitude: 39.23054, longitude: 9.11917})
+                    Shared.Location.create({latitude: 39.23054, longitude: 9.11917})
                 )
 
                 await mockCreateOperator(

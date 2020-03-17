@@ -45,8 +45,7 @@ const Event = root.lookup('Event')
 const Batch = root.lookup('Batch')
 
 // Other messages lookup.
-const TypeData = root.lookup('TypeData')
-const Location = root.lookup('Location')
+const Shared = root.lookup('Shared')
 const Proposal = root.lookup('Proposal')
 const Certificate = root.lookup('Certificate')
 
@@ -87,10 +86,9 @@ module.exports = {
     Field,
     Event,
     Batch,
-    TypeData,
-    Location,
     Proposal,
     Certificate,
+    Shared,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,

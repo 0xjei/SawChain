@@ -14,12 +14,13 @@ const {
     EventParameterType,
     EventType,
     PropertyType,
+    Shared,
     CreateTaskTypeAction,
     CreateProductTypeAction,
     CreateEventParameterTypeAction,
     CreateEventTypeAction,
     CreatePropertyTypeAction,
-    TypeData
+    DataType
 } = require('../services/proto')
 const {
     getTaskTypeAddress,
@@ -206,11 +207,11 @@ describe('Type Actions', function () {
         // Mock data.
         const name1 = "name1"
         const description1 = "description1"
-        const measure1 = TypeData.UnitOfMeasure.KILOS
+        const measure1 = Shared.UnitOfMeasure.KILOS
 
         const name2 = "name2"
         const description2 = "description2"
-        const measure2 = TypeData.UnitOfMeasure.LITRE
+        const measure2 = Shared.UnitOfMeasure.LITRE
 
         let productTypeAddress1 = null
         let productTypeAddress2 = null
@@ -488,7 +489,7 @@ describe('Type Actions', function () {
     describe('Create Event Parameter Type', function () {
         // Mock data.
         const name = "name1"
-        const dataType = TypeData.DataType.STRING
+        const dataType = Shared.DataType.STRING
 
         let eventParameterTypeAddress = null
 
@@ -1178,7 +1179,7 @@ describe('Type Actions', function () {
 
     describe('Create Property Type', function () {
         const name = "name1"
-        const dataType = TypeData.DataType.LOCATION
+        const dataType = Shared.DataType.LOCATION
 
         let propertyTypeAddress = null
         let enabledTaskTypes = null

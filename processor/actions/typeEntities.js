@@ -7,7 +7,8 @@ const {
     EventParameterType,
     EventType,
     PropertyType,
-    TypeData
+    DataType,
+    Shared
 } = require('../services/proto')
 const {
     reject,
@@ -97,7 +98,7 @@ async function createProductType(
         reject(`No name specified`)
 
     // Validation: Measure doesn't match one any possible value.
-    if (!Object.values(TypeData.UnitOfMeasure).some(value => value === measure))
+    if (!Object.values(Shared.UnitOfMeasure).some(value => value === measure))
         reject(`Provided value for measure doesn't match any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()
@@ -170,7 +171,7 @@ async function createEventParameterType(
         reject(`No name specified`)
 
     // Validation: DataType doesn't match one any possible value.
-    if (!Object.values(TypeData.DataType).some((value) => value === dataType))
+    if (!Object.values(Shared.DataType).some((value) => value === dataType))
         reject(`Provided value for dataType doesn't match any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()
@@ -367,7 +368,7 @@ async function createPropertyType(
         reject(`No name specified`)
 
     // Validation: Data type doesn't match one any possible value.
-    if (!Object.values(TypeData.DataType).some((value) => value === dataType))
+    if (!Object.values(Shared.DataType).some((value) => value === dataType))
         reject(`Provided value for data type doesn't match any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()

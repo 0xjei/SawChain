@@ -9,7 +9,7 @@ const {
     Field,
     Batch,
     Event,
-    TypeData
+    Shared
 } = require('../services/proto')
 const {
     reject,
@@ -32,7 +32,7 @@ const {
  */
 const checkParameterValue = (parameter, value, dataType) => {
     // Number data type.
-    if (dataType === TypeData.DataType.NUMBER) {
+    if (dataType === Shared.DataType.NUMBER) {
         // Validation: The value is lower than the Parameter minimum value constraint.
         if (value.numberValue < parameter.minValue)
             reject(`The value ${value.numberValue} is lower than the Parameter minimum value constraint ${parameter.minValue}`)
@@ -43,7 +43,7 @@ const checkParameterValue = (parameter, value, dataType) => {
 
     }
     // String data type.
-    else if (dataType === TypeData.DataType.STRING) {
+    else if (dataType === Shared.DataType.STRING) {
         // Validation: The value length is lower than the Parameter minimum length constraint.
         if (value.stringValue.length < parameter.minLength)
             reject(`The value length ${value.stringValue.length} is lower than the Parameter minimum length constraint ${parameter.minLength}`)
