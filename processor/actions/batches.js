@@ -6,6 +6,7 @@ const {
     PropertyType,
     Company,
     Batch,
+    Proposal,
     Certificate,
     Shared
 } = require('../services/proto')
@@ -196,7 +197,7 @@ async function recordBatchProperty(
     // Validation: Batch doesn't match a Company Batch address.
     await isPresent(companyState.batches, batch, "a Company Batch")
 
-    // Validation: The Company address is not well-formatted or not exists.
+    // Validation: The Property Type address is not well-formatted or not exists.
     await checkStateAddresses(
         context,
         [propertyType],
@@ -220,9 +221,9 @@ async function recordBatchProperty(
     if (!batchState.properties.some(property => property.propertyType === propertyType))
         // Create a new Property and record on the Batch for the first time.
         batchState.properties.push(Batch.Property.create({
-                propertyType: propertyType,
-                values: [propertyValue]
-            }))
+            propertyType: propertyType,
+            values: [propertyValue]
+        }))
     else {
         // Search for the Property.
         for (const property of batchState.properties) {
@@ -254,14 +255,6 @@ async function createProposal(
     timestamp,
     {batch, receiverCompany, notes}
 ) {
-    // Validation: Batch is not set.
-    if (!batch)
-        reject(`Batch is not set!`)
-
-    // Validation: Receiver Company is not set.
-    if (!receiverCompany)
-        reject(`Receiver company is not set!`)
-
     const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
@@ -270,37 +263,38 @@ async function createProposal(
 
     const operatorState = Operator.decode(state[operatorAddress])
 
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`)
+    // Validation: The signer is not an Operator.
+    if (operatorState.publicKey !== signerPublicKey)
+        reject(`The signer is not an Operator`)
 
-    const senderCompanyAddress = getCompanyAddress(operatorState.company)
-    const receiverCompanyAddress = getCompanyAddress(receiverCompany)
-    const batchAddress = getBatchAddress(batch)
+    const senderCompanyAddress = operatorState.company
+    const batchAddress = batch
 
     state = await context.getState([
-        senderCompanyAddress,
-        receiverCompanyAddress,
-        batchAddress
+        batch,
+        receiverCompany,
+        senderCompanyAddress
     ])
 
     const senderCompanyState = Company.decode(state[senderCompanyAddress])
-    const receiverCompanyState = Company.decode(state[receiverCompanyAddress])
-    const batchState = Batch.decode(state[batchAddress])
+    const receiverCompanyState = Company.decode(state[receiverCompany])
+    const batchState = Batch.decode(state[batch])
 
-    // Validation: Provided value for batch does not match with a Company Batch.
-    if (senderCompanyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`)
+    // Validation: Batch doesn't match a sender Company Batch address.
+    await isPresent(senderCompanyState.batches, batch, "a sender Company Batch")
 
-    // Validation: Provided value for receiverCompany does not match with a valid Company.
-    if (!state[receiverCompanyAddress].length > 0)
-        reject(`The provided company ${receiverCompany} is not a Company!`)
+    // Validation: The receiver Company address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [receiverCompany],
+        FULL_PREFIXES.COMPANY,
+        "receiver Company"
+    )
 
-    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the receiver Company.
-    if (!(receiverCompanyState.enabledProductTypes.indexOf(batchState.product) > -1))
-        reject(`You cannot create a proposal for provided receiver Company on ${batch} Batch!`)
+    // Validation: Batch product doesn't match an enabled Product Type for the receiver Company.
+    await isPresent(receiverCompanyState.enabledProductTypes, batchState.product, "an enabled Product Type for the receiver Company")
 
-    // Validation: Provided batch already has a issued Proposal.
+    // Validation: Batch already has an issued Proposal.
     if (batchState.proposals.some(proposal => proposal.status === Proposal.Status.ISSUED))
         reject(`The provided batch ${batch} already has an issued Proposal!`)
 
@@ -308,7 +302,7 @@ async function createProposal(
     const updates = {}
 
     batchState.proposals.push(Proposal.create({
-        senderCompany: operatorState.company,
+        senderCompany: senderCompanyAddress,
         receiverCompany: receiverCompany,
         status: Proposal.Status.ISSUED,
         notes: notes,

@@ -1146,23 +1146,27 @@ A Record Batch Property transaction is invalid if one of the following condition
 
 
 ## Create Proposal
+The Operator must specify the Batch to send, the receiver Company address and a short optional note for issuing the Proposal.
 
 ```protobuf
-message RecordBatchPropertyAction {
-    // The Batch state address where record the Property.
+message CreateProposalAction {
+    // The Batch state address.
     string batch = 1;
 
-    // The Property Type state address.
-    string propertyType = 2;
+    // The receiver Company state address.
+    string receiverCompany = 2;
 
-    // The Property Value used to update the Property on Batch.
-    Batch.PropertyValue propertyValue = 3;
+    // A note for issuing the Proposal.
+    string notes = 3;
 }
 ```
-* .
-* .
-* .
-* .
+A Create Proposal transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* The signer is not an Operator.
+* Batch doesn't match a sender Company Batch address.
+* The receiver Company address is not well-formatted or not exists.
+* Batch product doesn't match an enabled Product Type for the receiver Company.
+* Batch already has an issued Proposal.
 
 ## Answer Proposal
 
