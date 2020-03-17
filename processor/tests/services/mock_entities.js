@@ -382,17 +382,17 @@ const mockCreateCertificationAuthority = async (
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} operatorPrivateKey The Operator private key.
- * @param {String} eventTypeId The Event Type unique identifier.
- * @param {String} batch The input Batch identifier where the Event should be recorded.
- * @param {String} field The input Field identifier where the Event should be recorded.
- * @param {Object[]} values List of ids of Event Parameter Value objects used to fill in the input parameters.
+ * @param {String} eventType The Event Type address.
+ * @param {String} batch A company Batch address where recording the event.
+ * @param {String} field A company Field address where recording the event.
+ * @param {Object[]} values A list of values for each Parameter Type.
  *
  */
 const mockCreateDescriptionEvent = async (
     context,
     handler,
     operatorPrivateKey,
-    eventTypeId,
+    eventType,
     batch,
     field,
     values
@@ -402,7 +402,7 @@ const mockCreateDescriptionEvent = async (
             action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
             timestamp: Date.now(),
             createDescriptionEvent: CreateDescriptionEventAction.create({
-                eventTypeId: eventTypeId,
+                eventType: eventType,
                 field: field,
                 batch: batch,
                 values: values
@@ -415,22 +415,22 @@ const mockCreateDescriptionEvent = async (
 }
 
 /**
- * Create and execute a create Transformation Event action.
+ * Create and execute a create Trasformation Event action.
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} operatorPrivateKey The Operator private key.
- * @param {String} eventTypeId The Event Type unique identifier.
- * @param {String[]} batches List of ids of Batch identifiers where the Event should be recorded.
- * @param {String[]} fields List of ids of Field identifiers where the Event should be recorded.
- * @param {float[]} quantities List of input quantities to subtract from input resources (batches/fields).
- * @param {String} derivedProduct The output Batch Product Type.
+ * @param {String} eventType The Event Type address.
+ * @param {String[]} batches A list of company Batches addresses to transform.
+ * @param {String[]} fields A list of company Fields addresses to transform.
+ * @param {Number[]} quantities A list of corresponding quantities for transformation.
+ * @param {String} derivedProduct The output Product Type address.
  * @param {String} outputBatchId The output Batch unique identifier.
  */
 const mockCreateTransformationEvent = async (
     context,
     handler,
     operatorPrivateKey,
-    eventTypeId,
+    eventType,
     batches,
     fields,
     quantities,
@@ -442,7 +442,7 @@ const mockCreateTransformationEvent = async (
             action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
             timestamp: Date.now(),
             createTransformationEvent: CreateTransformationEventAction.create({
-                eventTypeId: eventTypeId,
+                eventType: eventType,
                 fields: fields,
                 batches: batches,
                 quantities: quantities,
@@ -537,8 +537,7 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
         'desc1',
         [
             param1,
-            param2,
-            param3
+            param2
         ],
         [
             getTaskTypeAddress('TKT1')
@@ -635,10 +634,9 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
         []
     )
 
-    // Transformation events.
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
         'EVT7',
-        EventType.Typology.TRANSFORMATION,
+        EventType.Typology.DESCRIPTION,
         'name7',
         'desc7',
         [],
@@ -648,16 +646,34 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
         [
             getProductTypeAddress('PDT3')
         ],
+        []
+    )
+
+    // Transformation events.
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
+        'EVT8',
+        EventType.Typology.TRANSFORMATION,
+        'name8',
+        'desc8',
+        [],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT3'),
+            getProductTypeAddress('PDT4')
+
+        ],
         [
             getProductTypeAddress('PDT2')
         ]
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'EVT8',
+        'EVT9',
         EventType.Typology.TRANSFORMATION,
-        'name8',
-        'desc8',
+        'name9',
+        'desc9',
         [],
         [
             getTaskTypeAddress('TKT2')
@@ -671,10 +687,44 @@ const populateStateWithMockData = async (context, handler, systemAdminPrivateKey
     )
 
     await mockCreateEventType(context, handler, systemAdminPrivateKey,
-        'EVT9',
+        'EVT10',
         EventType.Typology.TRANSFORMATION,
-        'name9',
-        'desc9',
+        'name10',
+        'desc10',
+        [],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ],
+        [
+            getProductTypeAddress('PDT1')
+        ]
+    )
+
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
+        'EVT11',
+        EventType.Typology.TRANSFORMATION,
+        'name11',
+        'desc11',
+        [],
+        [
+            getTaskTypeAddress('TKT1')
+        ],
+        [
+            getProductTypeAddress('PDT4')
+        ],
+        [
+            getProductTypeAddress('PDT2')
+        ]
+    )
+
+    await mockCreateEventType(context, handler, systemAdminPrivateKey,
+        'EVT12',
+        EventType.Typology.TRANSFORMATION,
+        'name12',
+        'desc12',
         [],
         [
             getTaskTypeAddress('TKT1')
