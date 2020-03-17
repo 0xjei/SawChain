@@ -41,6 +41,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
     * [Create Description Event](#create-description-event)
     * [Create Trasformation Event](#create-transformation-event)
     * [Add Batch Certificate](#add-batch-certificate)
+    * [Record Batch Property](#record-batch-property)
     
 ## State
 Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
@@ -270,7 +271,7 @@ message EventType {
 ```
 
 ### Property Type
-A property is a particular feature that you want to update over time, such as temperature or location.
+A property is a particular feature which is upgradeable over time, such as temperature or location.
 A Property Type allow to define one of these particular properties to extend the events that can be recorded by operators on production batches. 
 They perfectly marry the possibility of recording updates through non-human operators (ie. IoT sensors).
 
@@ -1007,7 +1008,7 @@ A Create Transformation Event transaction is invalid if one of the following con
 * Output Batch id is already used for another Company Batch.
 
 ## Add Batch Certificate
-The Certification Authority must specify the Batch and related Company state addresses, and the external resource link with its hash.
+The Certification Authority must specify the Batch and related Company state addresses, and the external resource link with its hash in order to add a Certificate on the Batch.
 
 ```protobuf
 message AddBatchCertificateAction {
@@ -1024,23 +1025,44 @@ message AddBatchCertificateAction {
     string hash = 4;
 }
 ```
+
 An Add Batch Certificate transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-* 
-
+* No link specified.
+* Hash is not a valid SHA-512 string.
+* The signer is not a Certification Authority.
+* The Company address is not well-formatted or not exists.
+* Batch doesn't match a Company Batch address.
+* Batch product doesn't match an enabled Certification Authority Product Type.
 
 ## Record Batch Property
+The Operator must specify the Batch where record the Property, a Property Type address and the Property Value in order to update the Property on the Batch.
+
+```protobuf
+message RecordBatchPropertyAction {
+    // The Batch state address where record the Property.
+    string batch = 1;
+
+    // The Property Type state address.
+    string propertyType = 2;
+
+    // The Property Value used to update the Property on Batch.
+    Batch.PropertyValue propertyValue = 3;
+}
+```
+
+A Record Batch Property transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* .
+* .
+* .
+* .
+* .
+* .
+* .
+* .
+* .
+* .
 
 ## Create Proposal
 

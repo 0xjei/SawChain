@@ -22,46 +22,58 @@ const {
     getCompanyAddress,
     getBatchAddress,
     getCertificationAuthorityAddress,
-    FULL_PREFIXES
+    FULL_PREFIXES,
+    TYPE_PREFIXES
 } = require('../services/addressing')
 
 /**
- * Check if a value for a property is valid.
- * @param {Object} value PropertyValue object provided by the Operator.
- * @param {Object} type PropertyType type (Temperature, Location).
+ * Check it the correct field for Property Value is set.
+ * @param {Object} propertyValue The Property Value object to verify.
+ * @param {Number} dataType The data type used for the parameter information.
  */
-const checkField = (value, type) => {
-    switch (type) {
-        // Number Property.
-        case TypeData.Type.NUMBER:
-            // Validation: No correct value field is provided for temperature type property.
-            if (value.floatValue === 0.0)
-                reject(`No correct value field is provided for property of type ${type}!`)
-
+const isCorrectFieldSet = async (propertyValue, dataType) => {
+    switch (dataType) {
+        // Number data type.
+        case TypeData.DataType.NUMBER:
+            // Validation: The number value field is not specified.
+            if (propertyValue.stringValue.length > 0 ||
+                propertyValue.bytesValue.length > 0 ||
+                propertyValue.locationValue
+            )
+                reject(`The number value field is not specified`)
             break
 
-        // String Property.
-        case TypeData.Type.STRING:
-            // Validation: No correct value field is provided for location type property.
-            if (value.stringValue.length === 0)
-                reject(`No correct value field is provided for property of type ${type}!`)
-
+        // String data type.
+        case TypeData.DataType.STRING:
+            // Validation: The string value field is not specified.
+            if (propertyValue.numberValue > 0 ||
+                propertyValue.numberValue < 0 ||
+                propertyValue.bytesValue.length > 0 ||
+                propertyValue.locationValue
+            )
+                reject(`The string value field is not specified`)
             break
 
-        // String Property.
-        case TypeData.Type.BYTES:
-            // Validation: No correct value field is provided for location type property.
-            if (!value.bytesValue.length > 0)
-                reject(`No correct value field is provided for property of type ${type}!`)
-
+        // Bytes data type.
+        case TypeData.DataType.BYTES:
+            // Validation: The bytes value field is not specified.
+            if (propertyValue.numberValue > 0 ||
+                propertyValue.numberValue < 0 ||
+                propertyValue.stringValue.length > 0 ||
+                propertyValue.locationValue
+            )
+                reject(`The bytes value field is not specified`)
             break
 
-        // String Property.
-        case TypeData.Type.LOCATION:
-            // Validation: No correct value field is provided for location type property.
-            if (!value.locationValue)
-                reject(`No correct value field is provided for property of type ${type}!`)
-
+        // Location data type.
+        case TypeData.DataType.LOCATION:
+            // Validation: The location value field is not specified.
+            if (propertyValue.numberValue > 0 ||
+                propertyValue.numberValue < 0 ||
+                propertyValue.stringValue.length > 0 ||
+                propertyValue.bytesValue.length > 0
+            )
+                reject(`The location value field is not specified`)
             break
     }
 }
@@ -106,7 +118,7 @@ async function addBatchCertificate(
     if (certificationAuthorityState.publicKey !== signerPublicKey)
         reject(`The signer is not a Certification Authority`)
 
-    // Validation: At least one Company address is not well-formatted or not exists.
+    // Validation: The Company address is not well-formatted or not exists.
     await checkStateAddresses(
         context,
         [company],
@@ -147,28 +159,16 @@ async function addBatchCertificate(
  * @param {Context} context Current state context.
  * @param {String} signerPublicKey The Operator public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} batch Batch identifier.
- * @param {String} property PropertyType identifier.
- * @param {Object} propertyValue A PropertyValue used to update the Property list of values.
+ * @param {String} batch The Batch state address where record the Property.
+ * @param {String} propertyType The Property Type state address.
+ * @param {Object} propertyValue The Property Value used to update the Property on Batch.
  */
 async function recordBatchProperty(
     context,
     signerPublicKey,
     timestamp,
-    {batch, property, propertyValue}
+    {batch, propertyType, propertyValue}
 ) {
-    // Validation: Batch is not set.
-    if (!batch)
-        reject(`Batch is not set!`)
-
-    // Validation: Property is not set.
-    if (!property)
-        reject(`Property is not set!`)
-
-    // Validation: PropertyValue is not set.
-    if (!propertyValue)
-        reject(`Property Value is not set!`)
-
     const operatorAddress = getOperatorAddress(signerPublicKey)
 
     let state = await context.getState([
@@ -177,61 +177,63 @@ async function recordBatchProperty(
 
     const operatorState = Operator.decode(state[operatorAddress])
 
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`)
+    // Validation: The signer is not an Operator.
+    if (operatorState.publicKey !== signerPublicKey)
+        reject(`The signer is not an Operator`)
 
-    const companyAddress = getCompanyAddress(operatorState.company)
-    const batchAddress = getBatchAddress(batch)
-    const propertyTypeAddress = getPropertyTypeAddress(property)
+    const companyAddress = operatorState.company
 
     state = await context.getState([
-        propertyTypeAddress,
         companyAddress,
-        batchAddress
+        propertyType,
+        batch
     ])
 
-    const propertyTypeState = PropertyType.decode(state[propertyTypeAddress])
+    const propertyTypeState = PropertyType.decode(state[propertyType])
     const companyState = Company.decode(state[companyAddress])
-    const batchState = Batch.decode(state[batchAddress])
+    const batchState = Batch.decode(state[batch])
 
-    // Validation: Provided value for batch does not match with a Company Batch.
-    if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`)
+    // Validation: Batch doesn't match a Company Batch address.
+    await isPresent(companyState.batches, batch, "a Company Batch")
 
-    // Validation: Provided value for property type id in property value doesn't match with a valid Property Type.
-    if (!state[propertyTypeAddress].length > 0)
-        reject(`Provided Property Type id ${property} doesn't match with a valid Property Type!`)
+    // Validation: The Company address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [propertyType],
+        FULL_PREFIXES.TYPES + TYPE_PREFIXES.PROPERTY_TYPE,
+        "Property Type"
+    )
 
-    // Validation: Operator's task doesn't match one of the enabled Task Types for the Property Type.
-    if (!(propertyTypeState.enabledTaskTypes.indexOf(operatorState.task) > -1))
-        reject(`You cannot record this Property with a ${operatorState.task} task!`)
+    // Validation: Operator task doesn't match an enabled Task Type for the Property Type.
+    await isPresent(propertyTypeState.enabledTaskTypes, operatorState.task, "an enabled Task Type for the Property Type")
 
-    // Validation: Batch Product Type doesn't match one of the enabled Product Types for the Property Type.
-    if (propertyTypeState.enabledProductTypes.indexOf(batchState.product) === -1)
-        reject(`You cannot record this Property on ${batch} Batch!`)
+    // Validation: Batch product doesn't match an enabled Product Type for the Property Type.
+    await isPresent(propertyTypeState.enabledProductTypes, batchState.product, "an enabled Product Type for the Property Type")
 
-    // Validation: Check property value.
-    checkField(propertyValue, propertyTypeState.type)
+    // Validation: The correct Property Value field is not set.
+    await isCorrectFieldSet(propertyValue, propertyTypeState.dataType)
 
     // State update.
     const updates = {}
 
-    if (!batchState.properties.some(propertyObj => propertyObj.propertyTypeId === property))
+    // Check if the Property Type it has been recorded on the Batch.
+    if (!batchState.properties.some(property => property.propertyType === propertyType))
+        // Create a new Property and record on the Batch for the first time.
         batchState.properties.push(Batch.Property.create({
-            propertyTypeId: property,
-            values: [propertyValue]
-        }))
+                propertyType: propertyType,
+                values: [propertyValue]
+            }))
     else {
-        for (const propertyList of batchState.properties) {
-            if ((propertyList).propertyTypeId === property) {
-                (propertyList).values.push(propertyValue)
-            }
+        // Search for the Property.
+        for (const property of batchState.properties) {
+            // Update the value.
+            if (property.propertyType === propertyType)
+                property.values.push(propertyValue)
         }
     }
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish()
+    updates[batch] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }

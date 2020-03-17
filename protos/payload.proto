@@ -242,12 +242,13 @@ message AddBatchCertificateAction {
 }
 
 message RecordBatchPropertyAction {
-    // Batch identifier.
+    // The Batch state address where record the Property.
     string batch = 1;
 
-    string property = 2;
+    // The Property Type state address.
+    string propertyType = 2;
 
-    // A Property Value to update the Property.
+    // The Property Value used to update the Property on Batch.
     Batch.PropertyValue propertyValue = 3;
 }
 
