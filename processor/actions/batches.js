@@ -6,6 +6,7 @@ const {
     PropertyType,
     Company,
     Batch,
+    Certificate,
     TypeData
 } = require('../services/proto')
 const {
@@ -20,7 +21,8 @@ const {
     getPropertyTypeAddress,
     getCompanyAddress,
     getBatchAddress,
-    getCertificationAuthorityAddress
+    getCertificationAuthorityAddress,
+    FULL_PREFIXES
 } = require('../services/addressing')
 
 /**
@@ -65,14 +67,14 @@ const checkField = (value, type) => {
 }
 
 /**
- * Handle an Add Certificate To Batch transaction action.
- * @param {Context} context Current state context.
+ * Add a new Certificate on a Batch.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {String} signerPublicKey The Certification Authority public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} batch Batch identifier.
- * @param {String} company Company identifier.
- * @param {String} link External reference to certification document.
- * @param {String} hash Bytes string of SHA-512 of the external certification document.
+ * @param {String} batch The Batch state address.
+ * @param {String} company The Company state address.
+ * @param {String} link The Certificate external resource link.
+ * @param {String} hash The Certificate external resource hash.
  */
 async function addBatchCertificate(
     context,
@@ -80,62 +82,53 @@ async function addBatchCertificate(
     timestamp,
     {batch, company, link, hash}
 ) {
-
-    // Validation: Batch is not set.
-    if (!batch)
-        reject(`Batch is not set!`)
-
-    // Validation: Company is not set.
-    if (!company)
-        reject(`Company is not set!`)
-
-    // Validation: Link is not set.
+    // Validation: No link specified.
     if (!link)
-        reject(`Link is not set!`)
+        reject(`No link specified`)
 
-    // Validation: Hash is not set.
-    if (!hash)
-        reject(`Hash is not set!`)
-
-    // Validation: Hash is not a valid SHA-512 value.
+    // Validation: Hash is not a valid SHA-512 string.
     if (!RegExp(`^[0-9A-Fa-f]{128}$`).test(hash))
-        reject(`Provided hash doesn't contain a valid SHA-512 value!`)
+        reject(`Hash is not a valid SHA-512 string`)
 
     const certificationAuthorityAddress = getCertificationAuthorityAddress(signerPublicKey)
-    const companyAddress = getCompanyAddress(company)
-    const batchAddress = getBatchAddress(batch)
 
     const state = await context.getState([
         certificationAuthorityAddress,
-        companyAddress,
-        batchAddress
+        company,
+        batch
     ])
 
     const certificationAuthorityState = CertificationAuthority.decode(state[certificationAuthorityAddress])
-    const companyState = Company.decode(state[companyAddress])
-    const batchState = Batch.decode(state[batchAddress])
+    const companyState = Company.decode(state[company])
+    const batchState = Batch.decode(state[batch])
 
-    // Validation: Transaction signer is not a Certification Authority.
-    if (!state[certificationAuthorityAddress].length)
-        reject(`You must be a Certification Authority to certify a Batch!`)
+    // Validation: The signer is not a Certification Authority.
+    if (certificationAuthorityState.publicKey !== signerPublicKey)
+        reject(`The signer is not a Certification Authority`)
 
-    // Validation: Provided value for company does not match with a Company.
-    if (!state[companyAddress].length)
-        reject(`The provided company ${company} is not a Company!`)
+    // Validation: At least one Company address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [company],
+        FULL_PREFIXES.COMPANY,
+        "Company"
+    )
 
-    // Validation: Provided value for batch does not match with a Company Batch.
-    if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`)
+    // Validation: Batch doesn't match a Company Batch address.
+    await isPresent(companyState.batches, batch, "a Company Batch")
 
-    // Validation: Certification Authority's products list doesn't contains one the Product Type of the Batch.
-    if (certificationAuthorityState.products.indexOf(batchState.product) === -1)
-        reject(`You cannot record this certification on a batch with ${batchState.product} product!`)
+    // Validation: Batch product doesn't match an enabled Certification Authority Product Type.
+    await isPresent(
+        certificationAuthorityState.enabledProductTypes,
+        batchState.product,
+        "an enabled Certification Authority Product Type"
+    )
 
     // State update.
     const updates = {}
 
-    // Record Certificate on Batch.
-    batchState.certificates.push(Batch.Certificate.create({
+    // Record Certificate on the Batch.
+    batchState.certificates.push(Certificate.create({
         authority: signerPublicKey,
         link: link,
         hash: hash,
@@ -143,7 +136,7 @@ async function addBatchCertificate(
     }))
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish()
+    updates[batch] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }

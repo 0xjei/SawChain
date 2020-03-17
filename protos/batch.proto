@@ -7,72 +7,75 @@ import "shared.proto";
 
 message Batch {
     message Finalization {
+        // The possible set of finalization reasons.
         enum Reason {
             WITHDRAWN = 0;
             SOLD = 1;
             EXPIRED = 2;
         }
 
+        // The reason why the Batch is finalized.
         Reason reason = 1;
 
+        // The public key of the reporter.
         string reporter = 2;
 
+        // A short explanation for the finalization.
         string explanation = 3;
     }
 
-    // A list of value for a PropertyType recorded on Batch.
     message Property {
-        // Property Type identifier.
-        string propertyTypeId = 1;
+        // The Property Type address.
+        string propertyType = 1;
 
-        // List of PropertyValue for a PropertyType.
+        // A list of values update for the Property Type.
         repeated PropertyValue values = 2;
     }
 
-    // Property Type value.
     message PropertyValue {
-        // Values fields. Only one of these fields should be used,
-        // and it should match the type specified Type in EventParameterType.
-        double numberValue = 2;
-        string stringValue = 3;
-        bytes bytesValue = 4;
-        Location locationValue = 5;
+        // Only one of these fields should be used according to Type.
+        double numberValue = 1;
+        string stringValue = 2;
+        bytes bytesValue = 3;
+        Location locationValue = 4;
 
-        uint64 timestamp = 6;
+        uint64 timestamp = 5;
     }
 
-    // Batch unique identifier.
+    // The Batch unique identifier.
     string id = 1;
 
-    // Company unique identifier.
+    // The Company state address.
     string company = 2;
 
-    // Product Type identifier.
+    // The Product Type state address.
     string product = 3;
 
-    // Batch quantity.
+    // The Batch current quantity.
     double quantity = 4;
 
-    // List of parent fields where Batch is transformed.
+    // A list of company parent Fields addresses.
     repeated string parentFields = 5;
 
-    // List of parent batches where Batch is transformed.
+    // A list of company parent Batches addresses.
     repeated string parentBatches = 6;
 
-    // List of recorded Events.
+    // A list of recorded Events.
     repeated Event events = 7;
 
-    // Batch certification.
+    // A list of recorded Certificates.
     repeated Certificate certificates = 8;
 
-    // Batch properties.
+    // A list of recorded Properties.
     repeated Property properties = 9;
 
-    // Batch proposals.
+    // A list of recorded Proposals.
     repeated Proposal proposals = 10;
 
+    // The Finalization status.
     Finalization finalization = 11;
 
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 12;
 }
 
@@ -98,17 +101,16 @@ message Proposal {
     uint64 timestamp = 6;
 }
 
-// Certificate issued by a recorded Certification Authority.
 message Certificate {
-    // Certification Authority public key.
+    // The Certification Authority public key.
     string authority = 1;
 
-    // Certificate external link.
+    // The Certificate external resource link.
     string link = 2;
 
-    // Certificate file hash.
+    // The Certificate external resource hash.
     string hash = 3;
 
-    // Date and time when certificate is issued.
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 4;
 }

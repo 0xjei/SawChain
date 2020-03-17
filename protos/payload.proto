@@ -228,16 +228,16 @@ message CreateTransformationEventAction {
 }
 
 message AddBatchCertificateAction {
-    // Batch identifier.
+    // The Batch state address.
     string batch = 1;
 
-    // Company identifier.
+    // The Company state address.
     string company = 2;
 
-    // Certificate external link.
+    // The Certificate external resource link.
     string link = 3;
 
-    // Certificate file hash.
+    // The Certificate external resource hash.
     string hash = 4;
 }
 

@@ -23,6 +23,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
         * [Company](#company)
         * [Field](#field)
         * [Event](#event)
+        * [Batch](#batch)
 - [Addressing](#addressing)
 - [Transactions](#transactions)
     * [Transaction Payload](#transaction-payload)
@@ -38,6 +39,8 @@ Any individual is able to read data from the state of the ledger to reconstruct 
     * [Create Field](#create-field)
     * [Create Operator](#create-operator)
     * [Create Description Event](#create-description-event)
+    * [Create Trasformation Event](#create-transformation-event)
+    * [Add Batch Certificate](#add-batch-certificate)
     
 ## State
 Each object is serialized using [Google Protocol Buffers](https://developers.google.com/protocol-buffers/) before being stored in state. 
@@ -402,54 +405,88 @@ message Event {
 ```
 
 ### Batch
-A production Batch represent an identified quantity of a certain product which is produced, processed, stored and moved along the supply-chain by a Company.
-A Batch is uniquely identified by a specific identifier inside the production Company. The quantity represents the unit, kilos or litre of product that are contained inside the Batch.
-The parent references is used to backtracking the history of the Batch, passing through its events and those of the parents.
+A production Batch represent a quantity of a certain Product Type which is produced, processed, stored and moved along the supply-chain by companies.
+The Batch identifier is used to identify the Batch along the entire supply chain.
+Each Batch refers to the blockchain address of each parent production entity (Field/Batch) allowing the reconstruction of its *history*. 
+The history is made up from the events from the individual parents of each Batch. 
+Any change in the quantity is stored in the transactions history.
 A Certification Authority can issue a certificate on a particular date, specifying links and hashes of the external document.
-The boolean value is used to end the possibility of Event recording over the Batch.
+The Operators from the owner Company can issue a Proposal for the Batch to send it to another Company.
+The Finalization is used to block other Events or Proposal recordings on the Batch.
 
 ```protobuf
 message Batch {
-    // Certificate issued by a recorded Certification Authority.
-    message Certificate {
-        // Certification Authority public key.
-        string authority = 1;
+    message Finalization {
+        // The possible set of finalization reasons.
+        enum Reason {
+            WITHDRAWN = 0;
+            SOLD = 1;
+            EXPIRED = 2;
+        }
 
-        // Certificate external link.
-        string link = 2;
+        // The reason why the Batch is finalized.
+        Reason reason = 1;
 
-        // Certificate file hash.
-        string hash = 3;
+        // The public key of the reporter.
+        string reporter = 2;
 
-        // Date and time when certificate is issued.
-        uint64 timestamp = 4;
+        // A short explanation for the finalization.
+        string explanation = 3;
     }
 
-    // Batch unique identifier.
+    message Property {
+        // The Property Type address.
+        string propertyType = 1;
+
+        // A list of values update for the Property Type.
+        repeated PropertyValue values = 2;
+    }
+
+    message PropertyValue {
+        // Only one of these fields should be used according to Type.
+        double numberValue = 1;
+        string stringValue = 2;
+        bytes bytesValue = 3;
+        Location locationValue = 4;
+
+        uint64 timestamp = 5;
+    }
+
+    // The Batch unique identifier.
     string id = 1;
 
-    // Product Type identifier.
-    string product = 2;
+    // The Company state address.
+    string company = 2;
 
-    // Batch quantity.
-    float quantity = 3;
+    // The Product Type state address.
+    string product = 3;
 
-    // List of parent fields where Batch is transformed.
-    repeated string parentFields = 4;
+    // The Batch current quantity.
+    double quantity = 4;
 
-    // List of parent batches where Batch is transformed.
-    repeated string parentBatches = 5;
+    // A list of company parent Fields addresses.
+    repeated string parentFields = 5;
 
-    // List of recorded Events.
-    repeated Event events = 6;
+    // A list of company parent Batches addresses.
+    repeated string parentBatches = 6;
 
-    // Batch certification.
-    Certificate certificate = 7;
+    // A list of recorded Events.
+    repeated Event events = 7;
 
-    // A binary value to check if the Batch is currently active (not sold, withdrawn, etc.).
-    bool finalized = 8;
+    // A list of recorded Certificates.
+    repeated Certificate certificates = 8;
 
-    uint64 timestamp = 9;
+    // A list of recorded Properties.
+    repeated Property properties = 9;
+
+    // A list of recorded Proposals.
+    repeated Proposal proposals = 10;
+
+    // The Finalization status.
+    Finalization finalization = 11;
+
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
+    uint64 timestamp = 12;
 }
 ```
 
@@ -968,3 +1005,45 @@ A Create Transformation Event transaction is invalid if one of the following con
 * Quantities length doesn't match fields/batches length.
 * A quantity is greater than current Field/Batch quantity.
 * Output Batch id is already used for another Company Batch.
+
+## Add Batch Certificate
+The Certification Authority must specify the Batch and related Company state addresses, and the external resource link with its hash.
+
+```protobuf
+message AddBatchCertificateAction {
+    // The Batch state address.
+    string batch = 1;
+
+    // The Company state address.
+    string company = 2;
+
+    // The Certificate external resource link.
+    string link = 3;
+
+    // The Certificate external resource hash.
+    string hash = 4;
+}
+```
+An Add Batch Certificate transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+
+
+## Record Batch Property
+
+## Create Proposal
+
+## Answer Proposal
+
+## Finalize Batch

@@ -17,8 +17,6 @@ const {
 const {
     SCPayload,
     SCPayloadActions,
-    Operator,
-    PropertyType,
     Company,
     Batch,
     Location,
@@ -34,9 +32,12 @@ const {
     getCertificationAuthorityAddress,
     getPropertyTypeAddress,
     getCompanyAddress,
+    getProductTypeAddress,
+    getTaskTypeAddress,
+    getEventTypeAddress,
+    getCompanyAdminAddress,
     getFieldAddress,
     getBatchAddress,
-    getProposalAddress,
     hashAndSlice
 } = require('../services/addressing')
 const {createNewKeyPair} = require('./services/mock_utils')
@@ -44,85 +45,123 @@ const {createNewKeyPair} = require('./services/mock_utils')
 describe('Batch Actions', function () {
     let handler = null
     let context = null
+
     let txn = null
     let state = null
+    let decodedState = null
+    let submission = null
 
-    let sysAdminKeyPair = null
-    let cmpAdminKeyPair = null
-    let optKeyPair = null
+    let systemAdminKeyPair = null
+    let companyAdminKeyPair = null
+    let operatorKeyPair = null
 
+    // Company, Field and Batch identifiers.
     let companyId = null
+    const fieldId = "FDL1"
+    const batchId = "BTC1"
 
+    // Addresses.
+    let companyAdminAddress = null
+    let operatorAddress = null
+    let companyAddress = null
     let fieldAddress = null
     let batchAddress = null
-    let companyAddress = null
-    let operatorAddress = null
-
-    // Field Data.
-    const fieldId = "field1"
-    const fieldProduct = "prd3"
-    const productQuantity = 150000
-    const location = Location.create({
-        latitude: 39.23054,
-        longitude: 9.11917
-    })
-
-    const batchId = "batch1"
 
     before(async function () {
+        // Create a new SawChain Handler and state Context objects.
         handler = new SawChainHandler()
         context = new Context()
 
-        // Record the System Admin and get key pair.
-        sysAdminKeyPair = createNewKeyPair()
-        await mockCreateSystemAdmin(context, handler, sysAdminKeyPair.privateKey)
+        // Create the System Admin.
+        systemAdminKeyPair = createNewKeyPair()
+        await mockCreateSystemAdmin(context, handler, systemAdminKeyPair.privateKey)
 
-        // Populate the state with mock types.
-        await populateStateWithMockData(context, handler, sysAdminKeyPair.privateKey)
+        // Populate the state with mock types data.
+        await populateStateWithMockData(context, handler, systemAdminKeyPair.privateKey)
 
         // Company Admin key pair.
-        cmpAdminKeyPair = createNewKeyPair()
-        companyId = hashAndSlice(cmpAdminKeyPair.publicKey, 10)
+        companyAdminKeyPair = createNewKeyPair()
+        companyAdminAddress = getCompanyAdminAddress(companyAdminKeyPair.publicKey)
 
-        // Company address.
+        // Calculate Company id from Company Admin's public key.
+        companyId = hashAndSlice(companyAdminKeyPair.publicKey, 10)
+
+        // Get Company and Field addresses.
         companyAddress = getCompanyAddress(companyId)
-
-        // Create Company.
-        await mockCreateCompany(context, handler, sysAdminKeyPair.privateKey, "company1", "desc1", "web1", cmpAdminKeyPair.publicKey, ["prd1", "prd2", "prd3"])
-
-        // Create Operator.
-        optKeyPair = createNewKeyPair()
-        operatorAddress = getOperatorAddress(optKeyPair.publicKey)
-        await mockCreateOperator(context, handler, cmpAdminKeyPair.privateKey, optKeyPair.publicKey, "task1")
-
-        // Create Field.
         fieldAddress = getFieldAddress(fieldId, companyId)
-        await mockCreateField(context, handler, cmpAdminKeyPair.privateKey, fieldId, "desc1", fieldProduct, productQuantity, location)
 
-        // Create Batch.
+        // Create Company and Field.
+        await mockCreateCompany(
+            context, handler, systemAdminKeyPair.privateKey,
+            "name1", "description1", "website1",
+            companyAdminKeyPair.publicKey,
+            [
+                getProductTypeAddress("PDT2"),
+                getProductTypeAddress("PDT3"),
+                getProductTypeAddress("PDT4")
+            ]
+        )
+
+        await mockCreateField(
+            context, handler, companyAdminKeyPair.privateKey,
+            fieldId, "description1", getProductTypeAddress("PDT3"), 15000,
+            Location.create({latitude: 39.23054, longitude: 9.11917})
+        )
+
+        // Create an Operator.
+        operatorKeyPair = createNewKeyPair()
+        operatorAddress = getOperatorAddress(operatorKeyPair.publicKey)
+
+        await mockCreateOperator(
+            context, handler, companyAdminKeyPair.privateKey, operatorKeyPair.publicKey, getTaskTypeAddress("TKT1")
+        )
+
+        // Create a Batch.
+        await mockCreateTransformationEvent(
+            context, handler, operatorKeyPair.privateKey,
+            getEventTypeAddress('EVT8'), [],
+            [fieldAddress],
+            [1000], getProductTypeAddress('PDT2'),
+            batchId
+        )
         batchAddress = getBatchAddress(batchId)
-        await mockCreateTransformationEvent(context, handler, optKeyPair.privateKey, "event7", [], [fieldId], [100], "prd2", batchId)
     })
 
-    describe('Add Certificate To Batch Action', function () {
+    describe('Add Batch Certificate Action', function () {
+        // Mock data.
         const link = "link1"
-        const hash = hashAndSlice("CertificationDocument", 256)
+        const hash = hashAndSlice("document", 256)
 
-        let caKeyPair = null
-        let ca2KeyPair = null
+        let certificationAuthorityKeyPair = null
+        let certificationAuthorityKeyPair2 = null
 
-        let caAddress = null
-        let ca2Address = null
+        let certificationAuthorityAddress = null
+        let certificationAuthorityAddress2 = null
+
+        // Invalid addresses for testing purpose.
+        let invalidCompanyAddress = null
+        let invalidBatchAddress = null
 
         before(async function () {
-            // Create two Certification Authorities.
-            caKeyPair = createNewKeyPair()
-            caAddress = getCertificationAuthorityAddress(caKeyPair.publicKey)
-            await mockCreateCertificationAuthority(context, handler, sysAdminKeyPair.privateKey, caKeyPair.publicKey, "ca1", "web1", ["prd2"])
+            // Create the Certification Authority.
+            certificationAuthorityKeyPair = createNewKeyPair()
+            certificationAuthorityAddress = getCertificationAuthorityAddress(certificationAuthorityKeyPair.publicKey)
+            await mockCreateCertificationAuthority(
+                context, handler,
+                systemAdminKeyPair.privateKey, certificationAuthorityKeyPair.publicKey,
+                "CA1", "website1", [getProductTypeAddress('PDT2')])
 
-            ca2KeyPair = createNewKeyPair()
-            ca2Address = getCertificationAuthorityAddress(ca2KeyPair.publicKey)
-            await mockCreateCertificationAuthority(context, handler, sysAdminKeyPair.privateKey, ca2KeyPair.publicKey, "ca2", "web2", ["prd1"])
+            // Create another Certification Authority for testing.
+            certificationAuthorityKeyPair2 = createNewKeyPair()
+            certificationAuthorityAddress2 = getCertificationAuthorityAddress(certificationAuthorityKeyPair2.publicKey)
+            await mockCreateCertificationAuthority(
+                context, handler,
+                systemAdminKeyPair.privateKey, certificationAuthorityKeyPair2.publicKey,
+                "CA2", "website2", [getProductTypeAddress('PDT1')])
+
+            // Create invalid data for testing purpose.
+            invalidCompanyAddress = getCompanyAddress('COMPANY_00')
+            invalidBatchAddress = getBatchAddress('BTC0')
         })
 
         it('Should reject if no timestamp is given', async function () {
@@ -130,10 +169,10 @@ describe('Batch Actions', function () {
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -144,99 +183,43 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now()
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no batch is given', async function () {
+        it('Should reject if no link specified', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({})
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if no company is given', async function () {
+        it('Should reject if hash is not a valid SHA-512 string', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId
-                    })
-                }),
-                optKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if no link is given', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
-                    timestamp: Date.now(),
-                    addCertificateToBatch: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId
-                    })
-                }),
-                caKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if no hash is given', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
-                    timestamp: Date.now(),
-                    addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
-                        link: link
-                    })
-                }),
-                caKeyPair.privateKey
-            )
-
-            const submission = handler.apply(txn, context)
-
-            return expect(submission).to.be.rejectedWith(InvalidTransaction)
-        })
-
-        it('Should reject if provided hash is not a valid SHA-512 value', async function () {
-            txn = new Txn(
-                SCPayload.create({
-                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
-                    timestamp: Date.now(),
-                    addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
                         link: link,
                         hash: hash.slice(0, 127)
                     })
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
@@ -247,81 +230,97 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
                         link: link,
                         hash: hash
                     })
                 }),
-                optKeyPair.privateKey
+                systemAdminKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if provided value for batch doesn\'t match with a company Batch', async function () {
+        it('Should reject if at least Company state address is not valid', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: "no-company",
                         link: link,
-                        hash: hash
+                        hash: hash,
+                        company: invalidCompanyAddress.slice(0, 30)
                     })
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if provided value for batch doesn\'t match with a company Batch', async function () {
+        it('Should reject if at least specified Company doesn\'t exist', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: "no-batch",
-                        company: companyId,
                         link: link,
-                        hash: hash
+                        hash: hash,
+                        company: invalidCompanyAddress
                     })
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should reject if Certification Authority\'s products list doesn\'t contains one the Product Type of the Batch', async function () {
+        it('Should reject if batch doesn\'t match a Company Batch address', async function () {
             txn = new Txn(
                 SCPayload.create({
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: Date.now(),
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
                         link: link,
-                        hash: hash
+                        hash: hash,
+                        company: companyAddress,
+                        batch: invalidBatchAddress
                     })
                 }),
-                ca2KeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
-            const submission = handler.apply(txn, context)
+            submission = handler.apply(txn, context)
 
             return expect(submission).to.be.rejectedWith(InvalidTransaction)
         })
 
-        it('Should add a Certificate to provided Company Batch', async function () {
+        it('Should reject if batch product doesn\'t match an enabled Certification Authority Product Type', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
+                    timestamp: Date.now(),
+                    addBatchCertificate: AddBatchCertificateAction.create({
+                        link: link,
+                        hash: hash,
+                        company: companyAddress,
+                        batch: batchAddress
+                    })
+                }),
+                certificationAuthorityKeyPair2.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should Add a Certificate on the Batch', async function () {
             let timestamp = Date.now()
 
             txn = new Txn(
@@ -329,28 +328,29 @@ describe('Batch Actions', function () {
                     action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
                     timestamp: timestamp,
                     addBatchCertificate: AddBatchCertificateAction.create({
-                        batch: batchId,
-                        company: companyId,
                         link: link,
-                        hash: hash
+                        hash: hash,
+                        company: companyAddress,
+                        batch: batchAddress
                     })
                 }),
-                caKeyPair.privateKey
+                certificationAuthorityKeyPair.privateKey
             )
 
             await handler.apply(txn, context)
 
             // Batch.
             state = context._state[batchAddress]
+            decodedState = Batch.decode(state)
 
             expect(state).to.not.be.null
-            expect(Batch.decode(state).id).to.equal(batchId)
-            expect(Batch.decode(state).company).to.equal(companyId)
-            expect(Batch.decode(state).certificates.length).to.equal(1)
-            expect(Batch.decode(state).certificates[0].authority).to.equal(caKeyPair.publicKey)
-            expect(Batch.decode(state).certificates[0].link).to.equal(link)
-            expect(Batch.decode(state).certificates[0].hash).to.equal(hash)
-            expect(parseInt(Batch.decode(state).certificates[0].timestamp)).to.equal(timestamp)
+            expect(decodedState.id).to.equal(batchId)
+            expect(decodedState.company).to.equal(companyAddress)
+            expect(decodedState.certificates.length).to.equal(1)
+            expect(decodedState.certificates[0].authority).to.equal(certificationAuthorityKeyPair.publicKey)
+            expect(decodedState.certificates[0].link).to.equal(link)
+            expect(decodedState.certificates[0].hash).to.equal(hash)
+            expect(parseInt(decodedState.certificates[0].timestamp)).to.equal(timestamp)
         })
     })
 
@@ -746,6 +746,7 @@ describe('Batch Actions', function () {
 
     })
 
+    /// todo refactoring
     describe('Change Batch Ownership Actions', function () {
         let cmpAdminKeyPair2 = null
         let cmpAdminKeyPair3 = null
