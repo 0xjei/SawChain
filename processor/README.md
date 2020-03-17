@@ -22,6 +22,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
     * [Entities](#entities)
         * [Company](#company)
         * [Field](#field)
+        * [Event](#event)
 - [Addressing](#addressing)
 - [Transactions](#transactions)
     * [Transaction Payload](#transaction-payload)
@@ -365,39 +366,37 @@ message Field {
 ```
 
 ### Event
-Different activities and transformations of production batches can be made during the supply-chain phases. The Event state object
-represent the unique source of information about these activities executed over fields and batches.
-Each Event refers to a recorded EventType to get the information about parameters, list for filtering purposes and typology, avoiding saving redundant data.
-Only the Operators can record an Event over fields e/o batches for the company for which they are authorized.
-If the given EventType identifier refers to an EventType that has a parameter list with at least one required parameter, a list of ParameterValue must be provided.
-For transformation typology events, the quantity used for the transformation activity must be provided and stored in the Event itself.
+The Event state object represent the unique source of information about the relevant activities that are executed over production entities (Field and Batch).
+Every Event will be stored inside a list of production entity events and not in separate state addresses because it's related only to the production entity.
+Each Event refers to a particular recorded Event Type in order to get the template of necessary information. 
+So, the Operator has to give values matching the constraints and requirements for each Parameter related to the Event (nb. description events only).
+The quantity indicates an amount of product that will be subtract from the current production entity after it has been multiplied with conversion rate (nb. transformation events only).
 
 ```protobuf
 message Event {
-    // Event Parameter value.
-    message EventParameterValue {
-        // Event Parameter identifier.
-        string parameterTypeId = 1;
+    message ParameterValue {
+        // The Event Parameter Type address.
+        string parameterType = 1;
 
-        // Values fields. Only one of these fields should be used,
-        // and it should match the type specified Type in EventParameterType.
+        // Only one of these fields should be used according to Type.
         float floatValue = 2;
         string stringValue = 3;
         bytes bytesValue = 4;
     }
 
-    // Event Type identifier.
-    string eventTypeId = 1;
+    // The Event Type address.
+    string eventType = 1;
 
-    // Public key of the transaction sender (Operator).
+    // The public key of the Operator.
     string reporter = 2;
 
-    // Unique identifiers of different EventParameterValues.
-    repeated EventParameterValue values = 3;
+    // A list of values for each Parameter Type.
+    repeated ParameterValue values = 3;
 
-    // Used transformation quantity.
+    // The quantity used when transform.
     float quantity = 4;
 
+    // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 5;
 }
 ```
@@ -882,114 +881,90 @@ message CreateOperatorAction {
 
 A Create Operator transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Public key is not set.
-* Task is not set.
-* Public key doesn't contain a valid public key.
-* Transaction signer is not a Company Admin or doesn't have a Company associated to his public key.
-* There is already a user with the operator's public key.
-* The provided Task Type value for task doesn't match a valid Task Type.
+* The public key field doesn't contain a valid public key.
+* The signer is not a Company Admin.
+* At least one Task Type address is not well-formatted or not exists.
+* The public key belongs to another authorized user.
 
 ## Create Description Event
-Currently, it's possible to define and record the configuration of the supply-chain and its participants into the state. 
-These records are the building blocks to deal with the main challenge which is the ability to record data about production entities,
-respecting the constraints imposed on quantities, event parameters, tasks, products, etc.
-Along the supply-chain different fundamentals activities are executed on the production fields and batches.
-A description Event allow a Company Operator to record and certify information data of the activities performed on a Field or Batch held by a Company into the state.
-This type of Event does not deal with the quantity of a Field or a Batch.
-The Operator must specify an EventType identifier, one Batch or Field where to record the Event and an optional list of EventParameterValue.
-The EventType identifier is used to retrieve the information about the EventType to validate the input data.
-The transaction creates a new description Event updating the Event list for the provided input Field or the Batch.
-The Event is stored inside the Batch or Field itself because each Event belongs uniquely to a Batch or Field which simplify the backtracking process.
+The Operator must specify the related Event Type, a production entity (Batch or Field) where the Event will be recorded and an optional list of values for event Parameters.
+The information regarding Event name, description, and so on, is gathered from the Event Type itself.
+The transaction creates a new Event updating the events list for the provided production entity (Field or Batch).
 
 ```protobuf
-message CreateDescriptionEvent {
-    // Event Type identifier.
-    string eventTypeId = 1;
+message CreateDescriptionEventAction {
+    // The Event Type address.
+    string eventType = 1;
 
-    // Company Batch for event recording.
+    // A company Batch address where recording the event.
     string batch = 2;
 
-    // Company Field for event recording.
+    // A company Field address where recording the event.
     string field = 3;
 
-    // Unique identifiers and values of necessary EventParameterValues.
-    repeated Event.EventParameterValue values = 4;
+    // A list of values for each Parameter Type.
+    repeated Event.ParameterValue values = 4;
 }
 ```
 
 A Create Description Event transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Event Type identifier is not set.
-* Batch or Field is not set.
-* Transaction signer is not an Operator for a Company.
-* Provided value for field does not match with a Company Field.
-* Provided value for batch does not match with a Company Batch.
-* Provided value for eventTypeId does not match with a valid Event Type.
-* Provided Event Type doesn't match a valid description Event Type.
-* Operator's task doesn't match one of the enabled Task Types for the Event Type.
-* Field Product Type doesn't match one of the enabled Product Types for the Event Type.
-* Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
-* No values are provided for required Event Parameters.
-* No correct value field is provided for required parameter of type number.
-* The provided number is lower than the minimum value constraint.
-* The provided number is greater than the maximum value constraint.
-* No correct value field is provided for required parameter of type string.
-* The provided string length is lower than the minimum length constraint.
-* The provided string length is greater than the maximum length constraint.
-* No correct value field is provided for required parameter of type bytes.
+* No Batch or Field specified.
+* Either Batch and Field specified.
+* The signer is not an Operator.
+* Field/Batch doesn't match a Company Field.
+* At least one Event Type address is not well-formatted or not exists.
+* The Event Type is not a description Event Type.
+* Operator task doesn't match an Event Type enabled task.
+* Field/Batch product doesn't match an Event Type enabled product.
+* No values specified for required Parameters.
+* At least one Parameter Value is not valid for its related Parameter.
 
 ## Create Transformation Event
-Production batches represent a quantity of a certain product which is produced, processed, stored and moved along the supply-chain.
-To avoid the creation of these batches from scratch it's used a transformation-events mechanism.
-A transformation Event allow a Company Operator to create and certify a production Batch for its company using Company Fields or Batches.
-The Operator must specify an EventType identifier, a list of input Batches or Fields, a list of product quantities to subtract from input resources (Batches/Fields) 
-the output product and a unique output Batch identifier.
-This type of Event deals with the quantity of the input Fields or Batches and doesn't need any parameter value. 
-The output Batch quantity will be converted using the correspondent conversion rate based on the given output product type and the input product type of Fields and Batches.
-The EventType identifier is used to retrieve the information about the EventType to validate the input data.
-The transaction creates a new transformation Event updating the Event list for each Field or Batch provided in input.
-The Event is stored inside each input Batch or Field itself because each Event belongs uniquely to a Batch or Field which simplify the backtracking process.
+The transformation Event mechanism is used to create Batches from resources previously recorded (Field or Batch) in order to maintain a link between this resources quantities. 
+The Operator must specify the related Event Type, a list of input production entities (Batches or Fields) to transform, 
+a list of quantities to subtract from inputs, the output Product Type and a unique identifier for the output Batch.
+The information regarding Event name, description, and so on, is gathered from the Event Type itself.
+The transaction creates a new Event updating the events list for each provided input production entities (Fields or Batches).
 
 ```protobuf
-message CreateTransformationEvent {
-    // Event Type identifier.
-    string eventTypeId = 1;
+message CreateTransformationEventAction {
+    // The Event Type address.
+    string eventType = 1;
 
-    // A list of Company Batches to transform.
+    // A list of company Batches addresses to transform.
     repeated string batches = 2;
 
-    // A list of Company Fields to transform.
+    // A list of company Fields addresses to transform.
     repeated string fields = 3;
 
-    // An ordered list of quantities to subtract from input resources (Batch/Field).
-    repeated float quantities = 4;
+    // A list of corresponding quantities for transformation.
+    repeated double quantities = 4;
 
-    // Output Batch Product Type.
+    // The output Product Type address.
     string derivedProduct = 5;
 
-    // Output Batch identifier.
+    // The output Batch unique identifier.
     string outputBatchId = 6;
 }
 ```
 
 A Create Transformation Event transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
-* Event Type identifier is not set.
-* A list of Batch or a list of Field is not set.
-* A list of quantities not set.
-* Derived product is not set.
-* Output Batch identifier is not set.
-* Transaction signer is not an Operator for a Company.
-* Provided value for eventTypeId does not match with a valid Event Type.
-* At least one of the provided values for fields doesn't match a Company Field.
-* At least one of the provided values for batches doesn't match a Company Batch.
-* Provided Event Type doesn't match a valid transformation Event Type.
-* Operator's task doesn't match one of the enabled Task Types for the Event Type.
-* At least a provided field doesn't match other Field's Product Type.
-* At least a provided batch doesn't match other Batch's Product Type.
-* Field Product Type doesn't match one of the enabled Product Types for the Event Type.
-* Batch Product Type doesn't match one of the enabled Product Types for the Event Type.
-* Derived product doesn't match one of the derived Product Types for the Event Type.
-* At least one of the given quantities is less or equal to zero.
-* The quantity to be subtracted cannot be greater than the current quantity of the Batch or Field.
-* The provided output batch identifier is already used for another Company Batch.
+* No Batches or Fields list specified.
+* Either Batches and Fields lists specified.
+* No quantities list specified.
+* No output batch id specified.
+* The signer is not an Operator.
+* At least one Field/Batch state address is not a Company Field/Batch.
+* At least one Event Type address is not well-formatted or not exists.
+* The Event Type is not a transformation Event Type.
+* Operator task doesn't match an Event Type enabled task.
+* At least a field/batch doesn't match other Field's/Batch's product Product Type.
+* Fields/Batches Product Type doesn't match an Event Type enabled product.
+* Derived Product Type doesn't match a derived Event Type enabled product.
+* Derived Product Type doesn't match a Company enabled product.
+* At least one quantity is not greater than zero.
+* Quantities length doesn't match fields/batches length.
+* A quantity is greater than current Field/Batch quantity.
+* Output Batch id is already used for another Company Batch.
