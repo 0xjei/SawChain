@@ -48,6 +48,7 @@ const Batch = root.lookup('Batch')
 const TypeData = root.lookup('TypeData')
 const Location = root.lookup('Location')
 const Proposal = root.lookup('Proposal')
+const Certificate = root.lookup('Certificate')
 
 // Actions lookup.
 const UpdateSystemAdminAction = root.lookup('UpdateSystemAdminAction')
@@ -89,6 +90,7 @@ module.exports = {
     TypeData,
     Location,
     Proposal,
+    Certificate,
     UpdateSystemAdminAction,
     CreateTaskTypeAction,
     CreateProductTypeAction,
