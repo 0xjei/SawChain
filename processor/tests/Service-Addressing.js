@@ -28,18 +28,15 @@ describe('Addressing Service', function () {
     let data = null
     let dataHash = null
 
-    describe('System Admin Address', function () {
+    describe('System Admin', function () {
 
-        before(function () {
+        before(async function () {
             address = getSystemAdminAddress()
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid System Admin address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid System Admin address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.USERS +
@@ -49,19 +46,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Company Admin Address', function () {
-        before(function () {
+    describe('Company Admin', function () {
+        before(async function () {
             data = randomBytes(32).toString('hex')
             address = getCompanyAdminAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Company Admin address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Company Admin address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.USERS +
@@ -71,19 +65,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Operator Address', function () {
-        before(function () {
+    describe('Operator', function () {
+        before(async function () {
             data = randomBytes(32).toString('hex')
             address = getOperatorAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Operator address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Operator address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.USERS +
@@ -93,19 +84,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Certification Authority Address', function () {
-        before(function () {
+    describe('Certification Authority', function () {
+        before(async function () {
             data = randomBytes(32).toString('hex')
             address = getCertificationAuthorityAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Operator address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Operator address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.USERS +
@@ -115,19 +103,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Task Type Address', function () {
-        before(function () {
+    describe('Task Type', function () {
+        before(async function () {
             data = "mock-taskType-id"
             address = getTaskTypeAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Task Type address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Task Type address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.TYPES +
@@ -137,19 +122,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Product Type Address', function () {
-        before(function () {
+    describe('Product Type', function () {
+        before(async function () {
             data = "mock-productType-id"
             address = getProductTypeAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Product Type address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Product Type address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.TYPES +
@@ -159,19 +141,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Event Parameter Type Address', function () {
-        before(function () {
+    describe('Event Parameter Type', function () {
+        before(async function () {
             data = "mock-eventParameterType-id"
             address = getEventParameterTypeAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Event Parameter Type address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Event Parameter Type address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.TYPES +
@@ -181,19 +160,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Event Type Address', function () {
-        before(function () {
+    describe('Event Type', function () {
+        before(async function () {
             data = "mock-eventType-id"
             address = getEventTypeAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Event Type address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Event Type address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.TYPES +
@@ -203,19 +179,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Property Type Address', function () {
-        before(function () {
+    describe('Property Type', function () {
+        before(async function () {
             data = "mock-propertyType-id"
             address = getPropertyTypeAddress(data)
             dataHash = hashAndSlice(data, 60)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Event Type address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Event Type address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.TYPES +
@@ -225,19 +198,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Company Address', function () {
-        before(function () {
+    describe('Company', function () {
+        before(async function () {
             data = "mock-company-id"
             address = getCompanyAddress(data)
             dataHash = hashAndSlice(data, 62)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Company address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Company address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.COMPANY +
@@ -246,22 +216,19 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Field Address', function () {
+    describe('Field', function () {
         let company = null
 
-        before(function () {
+        before(async function () {
             data = "mock-field-id"
             company = "mock-company-id"
             address = getFieldAddress(data, company)
             dataHash = hashAndSlice(data, 42) + hashAndSlice(company, 20)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Field address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Field address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.FIELD +
@@ -270,21 +237,16 @@ describe('Addressing Service', function () {
         })
     })
 
-    describe('Batch Address', function () {
-        let company = null
-
-        before(function () {
+    describe('Batch', function () {
+        before(async function () {
             data = "mock-batch-id"
             address = getBatchAddress(data)
             dataHash = hashAndSlice(data, 62)
         })
 
-        it('Should return a hexadecimal string', function () {
+        it('Should return a valid Batch address', function () {
             expect(address).to.be.a.hexString
             expect(isValidAddress(address)).to.be.true
-        })
-
-        it('Should return a valid Batch address', function () {
             expect(address).to.equal(
                 NAMESPACE +
                 PREFIXES.BATCH +
@@ -292,5 +254,4 @@ describe('Addressing Service', function () {
             )
         })
     })
-
 })

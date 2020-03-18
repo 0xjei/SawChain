@@ -106,7 +106,7 @@ const isPublicKeyUsed = async (context, publicKey) => {
 const isPresent = async (list, address, object) => {
     // Validation: Provided address is not in the list.
     if (list.indexOf(address) === -1)
-        reject(`Provided address ${address} doesn't match ${object}`);
+        reject(`Provided address ${address} doesn't match ${object}`)
 }
 
 module.exports = {

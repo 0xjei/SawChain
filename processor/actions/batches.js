@@ -12,16 +12,11 @@ const {
 } = require('../services/proto')
 const {
     reject,
-    isValidPublicKey,
-    isPublicKeyUsed,
     checkStateAddresses,
     isPresent
 } = require('../services/utils')
 const {
     getOperatorAddress,
-    getPropertyTypeAddress,
-    getCompanyAddress,
-    getBatchAddress,
     getCertificationAuthorityAddress,
     FULL_PREFIXES,
     TYPE_PREFIXES

@@ -7,7 +7,6 @@ const {
     EventParameterType,
     EventType,
     PropertyType,
-    DataType,
     Shared
 } = require('../services/proto')
 const {
@@ -21,7 +20,6 @@ const {
     getEventParameterTypeAddress,
     getEventTypeAddress,
     getPropertyTypeAddress,
-    isValidAddress,
     FULL_PREFIXES,
     TYPE_PREFIXES
 } = require('../services/addressing')

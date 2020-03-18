@@ -5,7 +5,6 @@ const {
     CompanyAdmin,
     Operator,
     CertificationAuthority,
-    ProductType,
     Company
 } = require('../services/proto')
 const {
@@ -19,10 +18,6 @@ const {
     getCompanyAdminAddress,
     getOperatorAddress,
     getCertificationAuthorityAddress,
-    getTaskTypeAddress,
-    getProductTypeAddress,
-    getCompanyAddress,
-    hashAndSlice,
     FULL_PREFIXES,
     TYPE_PREFIXES
 } = require('../services/addressing')
@@ -108,14 +103,14 @@ async function createOperator(
     if (!isValidPublicKey(publicKey))
         reject(`The public key field doesn't contain a valid public key`)
 
-    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey);
-    const operatorAddress = getOperatorAddress(publicKey);
+    const companyAdminAddress = getCompanyAdminAddress(signerPublicKey)
+    const operatorAddress = getOperatorAddress(publicKey)
 
     let state = await context.getState([
         companyAdminAddress
-    ]);
+    ])
 
-    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress]);
+    const companyAdminState = CompanyAdmin.decode(state[companyAdminAddress])
 
     // Validation: The signer is not a Company Admin.
     if (companyAdminState.publicKey !== signerPublicKey)

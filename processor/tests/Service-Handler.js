@@ -8,41 +8,46 @@ const Context = require('./services/mock_context')
 const {SCPayload} = require('../services/proto')
 const {createNewKeyPair} = require('./services/mock_utils')
 
-describe('Core Handler Behavior', function () {
+describe('Handler Behavior', function () {
     let handler = null
     let context = null
+
+    let txn = null
+    let submission = null
+
     let signerKeyPair = null
 
     before(function () {
+        // Create a new SawChain Handler and state Context objects.
         handler = new SawChainHandler()
+        context = new Context()
+
         signerKeyPair = createNewKeyPair()
     })
 
-    beforeEach(function () {
-        context = new Context()
-    })
-
-    it('Should return a Promise', function () {
-        const txn = new Txn(
+    it('Should return an InvalidTransaction error', async function () {
+        txn = new Txn(
             {
                 action: 'NO_ACTION'
             },
             signerKeyPair.privateKey
         )
-        const apply = handler.apply(txn, context)
 
-        return expect(apply).to.be.rejectedWith(InvalidTransaction)
+        submission = handler.apply(txn, context)
+
+        return expect(submission).to.be.rejectedWith(InvalidTransaction)
     })
 
     it('Should reject poorly encoded payloads', async function () {
-        const txn = new Txn(
+        txn = new Txn(
             SCPayload.create({
                 action: 'NO_ACTION'
             }),
             signerKeyPair.privateKey
         )
-        const rejected = handler.apply(txn, context)
 
-        return expect(rejected).to.be.rejectedWith(InvalidTransaction)
+        submission = handler.apply(txn, context)
+
+        return expect(submission).to.be.rejectedWith(InvalidTransaction)
     })
 })
