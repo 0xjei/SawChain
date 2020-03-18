@@ -1169,5 +1169,34 @@ A Create Proposal transaction is invalid if one of the following conditions occu
 * Batch already has an issued Proposal.
 
 ## Answer Proposal
+The Operator must specify the Batch with an status *issued* for Proposal, the sender Company address, the new Proposal status
+and a short motivation to answer the Proposal.
+The Operator can be a sender or receiver Company Operator: the first one can set only a status *cancelled*, and the second one
+can accept (status *accepted*) or reject (status *rejected)) the Proposal.
+
+```protobuf
+message AnswerProposalAction {
+    // The Batch state address.
+    string batch = 1;
+
+    // The sender Company state address.
+    string senderCompany = 2;
+
+    // The new Proposal status.
+    Proposal.Status response = 3;
+
+    // A motivation to answer the Proposal.
+    string motivation = 4;
+}
+```
+An Answer Proposal transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Response doesn't match one any possible value.
+* The signer is not an Operator.
+* The sender Company address is not well-formatted or not exists.
+* Batch doesn't match a sender Company Batch address.
+* Batch doesn't have an issued Proposals.
+* Operator from receiver Company cannot answer cancel status for Proposal.
+* Operator from sender Company cannot answer accepted or rejected status for Proposal.
 
 ## Finalize Batch

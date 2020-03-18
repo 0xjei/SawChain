@@ -264,16 +264,17 @@ message CreateProposalAction {
 }
 
 message AnswerProposalAction {
-    // Batch identifier.
+    // The Batch state address.
     string batch = 1;
 
+    // The sender Company state address.
     string senderCompany = 2;
 
-    string receiverCompany = 3;
+    // The new Proposal status.
+    Proposal.Status response = 3;
 
-    Proposal.Status response = 4;
-
-    string motivation = 5;
+    // A motivation to answer the Proposal.
+    string motivation = 4;
 }
 
 message FinalizeBatchAction {

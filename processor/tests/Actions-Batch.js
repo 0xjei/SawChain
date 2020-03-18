@@ -12,6 +12,7 @@ const {
     mockCreateCompany,
     mockCreateTransformationEvent,
     mockCreateCertificationAuthority,
+    mockCreateProposal,
     populateStateWithMockData
 } = require('./services/mock_entities')
 const {
@@ -708,6 +709,7 @@ describe('Batch Actions', function () {
         let companyAdminKeyPair2 = null
         let operatorKeyPair2 = null
 
+        let companyId2 = null
         let companyAddress2 = null
         let operatorAddress2 = null
         let proposalAddress = null
@@ -751,7 +753,8 @@ describe('Batch Actions', function () {
                     getProductTypeAddress('PDT3')
                 ]
             )
-            companyAddress2 = getCompanyAddress(hashAndSlice(companyAdminKeyPair2.publicKey, 10))
+            companyId2 = hashAndSlice(companyAdminKeyPair2.publicKey, 10)
+            companyAddress2 = getCompanyAddress(companyId2)
 
             // Create Operator.
             operatorKeyPair2 = createNewKeyPair()
@@ -926,13 +929,56 @@ describe('Batch Actions', function () {
         })
 
         describe('Answer Proposal Action', function () {
-            const cancelled = Proposal.Status.CANCELED
+            // Mock data.
+            const canceled = Proposal.Status.CANCELED
             const accepted = Proposal.Status.ACCEPTED
             const rejected = Proposal.Status.REJECTED
 
+            const batchToRejectId = 'BTC3'
+            const batchToCancelId = 'BTC4'
+            let batchNoProposalAddress = null
+            let batchToRejectAddress = null
+            let batchToCancelAddress = null
+
             before(async function () {
-                // Create a batch for company 1.
-                await mockCreateTransformationEvent(context, handler, optKeyPair.privateKey, "event7", [], [fieldId], [10], "prd2", "batch2")
+                // Create a Batch.
+                await mockCreateTransformationEvent(
+                    context, handler, operatorKeyPair.privateKey,
+                    getEventTypeAddress('EVT8'), [],
+                    [fieldAddress],
+                    [10], getProductTypeAddress('PDT2'),
+                    'BTC2'
+                )
+                batchNoProposalAddress = getBatchAddress('BTC2')
+
+                // Create a Batch and a Proposal.
+                await mockCreateTransformationEvent(
+                    context, handler, operatorKeyPair.privateKey,
+                    getEventTypeAddress('EVT8'), [],
+                    [fieldAddress],
+                    [10], getProductTypeAddress('PDT2'),
+                    batchToRejectId
+                )
+                batchToRejectAddress = getBatchAddress(batchToRejectId)
+
+                await mockCreateProposal(
+                    context, handler, operatorKeyPair.privateKey,
+                    batchToRejectAddress, companyAddress2, 'To reject'
+                )
+
+                await mockCreateTransformationEvent(
+                    context, handler, operatorKeyPair.privateKey,
+                    getEventTypeAddress('EVT8'), [],
+                    [fieldAddress],
+                    [10], getProductTypeAddress('PDT2'),
+                    batchToCancelId
+                )
+                batchToCancelAddress = getBatchAddress(batchToCancelId)
+
+                await mockCreateProposal(
+                    context, handler, operatorKeyPair.privateKey,
+                    batchToCancelAddress, companyAddress2, 'To cancel'
+                )
             })
 
             it('Should reject if no timestamp is given', async function () {
@@ -940,10 +986,10 @@ describe('Batch Actions', function () {
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
@@ -954,79 +1000,27 @@ describe('Batch Actions', function () {
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now()
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if no batch is given', async function () {
-                txn = new Txn(
-                    SCPayload.create({
-                        action: SCPayloadActions.ANSWER_PROPOSAL,
-                        timestamp: Date.now(),
-                        answerProposal: AnswerProposalAction.create({})
-                    }),
-                    optKeyPair.privateKey
-                )
-
-                const submission = handler.apply(txn, context)
-
-                return expect(submission).to.be.rejectedWith(InvalidTransaction)
-            })
-
-            it('Should reject if no sender company is given', async function () {
+            it('Should reject if response doesn\'t match one any possible value', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId
+                            response: -1
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
-
-                return expect(submission).to.be.rejectedWith(InvalidTransaction)
-            })
-
-            it('Should reject if no receiver company is given', async function () {
-                txn = new Txn(
-                    SCPayload.create({
-                        action: SCPayloadActions.ANSWER_PROPOSAL,
-                        timestamp: Date.now(),
-                        answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId
-                        })
-                    }),
-                    optKeyPair.privateKey
-                )
-
-                const submission = handler.apply(txn, context)
-
-                return expect(submission).to.be.rejectedWith(InvalidTransaction)
-            })
-
-            it('Should reject if no response is given', async function () {
-                txn = new Txn(
-                    SCPayload.create({
-                        action: SCPayloadActions.ANSWER_PROPOSAL,
-                        timestamp: Date.now(),
-                        answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: companyId2
-                        })
-                    }),
-                    optKeyPair.privateKey
-                )
-
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
@@ -1037,183 +1031,266 @@ describe('Batch Actions', function () {
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: cancelled
+                            response: accepted
                         })
                     }),
-                    cmpAdminKeyPair.privateKey
+                    companyAdminKeyPair.privateKey
                 )
-                const submission = handler.apply(txn, context)
+
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided value for sender company does not match with a valid Company', async function () {
+            it('Should reject if at least sender Company state address is not valid', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: "no-company",
-                            receiverCompany: companyId2,
-                            response: cancelled
+                            response: accepted,
+                            senderCompany: invalidCompanyAddress.slice(0, 30)
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided value for receiver company does not match with a valid Company', async function () {
+            it('Should reject if at least specified sender Company doesn\'t exist', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: "no-company",
-                            response: cancelled
+                            response: accepted,
+                            senderCompany: invalidCompanyAddress
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided value for batch does not match with a sender Company Batch', async function () {
+            it('Should reject if batch doesn\'t match a sender Company Batch address', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: "no-batch",
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: cancelled
+                            response: accepted,
+                            senderCompany: companyAddress,
+                            batch: invalidBatchAddress
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided value for response is not valid if Operator is not from sender Company', async function () {
+            it('Should reject if batch doesn\'t have Proposal with status issued', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: cancelled
+                            response: accepted,
+                            senderCompany: companyAddress,
+                            batch: batchNoProposalAddress
                         })
                     }),
-                    optKeyPair2.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided value for response is not valid if Operator is not from receiver Company', async function () {
+            it('Should reject if Operator from receiver Company cannot answer cancel status for Proposal', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: rejected
+                            response: canceled,
+                            senderCompany: companyAddress,
+                            batch: batchAddress
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair2.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should reject if provided batch doesn\'t have at least an issued Proposals', async function () {
+            it('Should reject if Operator from sender Company cannot answer accepted or rejected status for Proposal', async function () {
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: Date.now(),
                         answerProposal: AnswerProposalAction.create({
-                            batch: "batch2",
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: cancelled
+                            response: accepted,
+                            senderCompany: companyAddress,
+                            batch: batchAddress,
                         })
                     }),
-                    optKeyPair.privateKey
+                    operatorKeyPair.privateKey
                 )
 
-                const submission = handler.apply(txn, context)
+                submission = handler.apply(txn, context)
 
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
-            it('Should accept a Proposal', async function () {
+            it('Should accept the Proposal', async function () {
                 const timestamp = Date.now()
                 txn = new Txn(
                     SCPayload.create({
                         action: SCPayloadActions.ANSWER_PROPOSAL,
                         timestamp: timestamp,
                         answerProposal: AnswerProposalAction.create({
-                            batch: batchId,
-                            senderCompany: companyId,
-                            receiverCompany: companyId2,
-                            response: accepted
+                            response: accepted,
+                            senderCompany: companyAddress,
+                            batch: batchAddress
                         })
                     }),
-                    optKeyPair2.privateKey
+                    operatorKeyPair2.privateKey
                 )
+
                 await handler.apply(txn, context)
 
                 // Batch.
                 state = context._state[batchAddress]
+                decodedState = Batch.decode(state)
 
                 expect(state).to.not.be.null
-                expect(Batch.decode(state).id).to.equal(batchId)
-                expect(Batch.decode(state).company).to.equal(companyId2)
-                expect(Batch.decode(state).proposals.length).to.equal(1)
-                expect(Batch.decode(state).proposals[0].senderCompany).to.equal(companyId)
-                expect(Batch.decode(state).proposals[0].receiverCompany).to.equal(companyId2)
-                expect(Batch.decode(state).proposals[0].status).to.equal(Proposal.Status.ACCEPTED)
+                expect(decodedState.id).to.equal(batchId)
+                expect(decodedState.company).to.equal(companyAddress2)
+                expect(decodedState.proposals.length).to.equal(1)
+                expect(decodedState.proposals[0].senderCompany).to.equal(companyAddress)
+                expect(decodedState.proposals[0].receiverCompany).to.equal(companyAddress2)
+                expect(decodedState.proposals[0].status).to.equal(Proposal.Status.ACCEPTED)
 
                 // Sender company.
                 state = context._state[companyAddress]
+                decodedState = Company.decode(state)
 
                 expect(state).to.not.be.null
-                expect(Company.decode(state).id).to.equal(companyId)
-                expect(Company.decode(state).batches.length).to.equal(1)
+                expect(decodedState.id).to.equal(companyId)
+                expect(decodedState.batches.length).to.equal(3)
 
                 // Receiver company.
                 state = context._state[companyAddress2]
+                decodedState = Company.decode(state)
 
                 expect(state).to.not.be.null
-                expect(Company.decode(state).id).to.equal(companyId2)
-                expect(Company.decode(state).batches.length).to.equal(1)
+                expect(decodedState.id).to.equal(companyId2)
+                expect(decodedState.batches.length).to.equal(1)
             })
 
-            /// todo add tests for cancelled and rejected
+            it('Should reject the Proposal', async function () {
+                const timestamp = Date.now()
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.ANSWER_PROPOSAL,
+                        timestamp: timestamp,
+                        answerProposal: AnswerProposalAction.create({
+                            response: rejected,
+                            senderCompany: companyAddress,
+                            batch: batchToRejectAddress
+                        })
+                    }),
+                    operatorKeyPair2.privateKey
+                )
+
+                await handler.apply(txn, context)
+
+                // Batch.
+                state = context._state[batchToRejectAddress]
+                decodedState = Batch.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(batchToRejectId)
+                expect(decodedState.company).to.equal(companyAddress)
+                expect(decodedState.proposals.length).to.equal(1)
+                expect(decodedState.proposals[0].senderCompany).to.equal(companyAddress)
+                expect(decodedState.proposals[0].receiverCompany).to.equal(companyAddress2)
+                expect(decodedState.proposals[0].status).to.equal(Proposal.Status.REJECTED)
+
+                // Sender company.
+                state = context._state[companyAddress]
+                decodedState = Company.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(companyId)
+                expect(decodedState.batches.length).to.equal(3)
+
+                // Receiver company.
+                state = context._state[companyAddress2]
+                decodedState = Company.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(companyId2)
+                expect(decodedState.batches.length).to.equal(1)
+            })
+
+            it('Should cancel the Proposal', async function () {
+                const timestamp = Date.now()
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.ANSWER_PROPOSAL,
+                        timestamp: timestamp,
+                        answerProposal: AnswerProposalAction.create({
+                            response: canceled,
+                            senderCompany: companyAddress,
+                            batch: batchToCancelAddress
+                        })
+                    }),
+                    operatorKeyPair.privateKey
+                )
+
+                await handler.apply(txn, context)
+
+                // Batch.
+                state = context._state[batchToCancelAddress]
+                decodedState = Batch.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(batchToCancelId)
+                expect(decodedState.company).to.equal(companyAddress)
+                expect(decodedState.proposals.length).to.equal(1)
+                expect(decodedState.proposals[0].senderCompany).to.equal(companyAddress)
+                expect(decodedState.proposals[0].receiverCompany).to.equal(companyAddress2)
+                expect(decodedState.proposals[0].status).to.equal(Proposal.Status.CANCELED)
+
+                // Sender company.
+                state = context._state[companyAddress]
+                decodedState = Company.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(companyId)
+                expect(decodedState.batches.length).to.equal(3)
+
+                // Receiver company.
+                state = context._state[companyAddress2]
+                decodedState = Company.decode(state)
+
+                expect(state).to.not.be.null
+                expect(decodedState.id).to.equal(companyId2)
+                expect(decodedState.batches.length).to.equal(1)
+            })
         })
     })
 

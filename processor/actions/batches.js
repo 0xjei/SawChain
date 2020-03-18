@@ -316,38 +316,24 @@ async function createProposal(
 }
 
 /**
- * Handle Create Proposal transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The Operator public key.
+ * Handle Answer Proposal transaction action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey The Certification Authority public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} batch Batch identifier.
- * @param {String} senderCompany Sender Company identifier.
- * @param {String} receiverCompany Receiver Company identifier.
- * @param {Number} response status.
- * @param {String} motivation An optional text.
+ * @param {String} batch The Batch state address.
+ * @param {String} senderCompany The sender Company state address.
+ * @param {Number} response The new Proposal status.
+ * @param {String} motivation A motivation to answer the Proposal.
  */
-
 async function answerProposal(
     context,
     signerPublicKey,
     timestamp,
-    {batch, senderCompany, receiverCompany, response, motivation}
+    {batch, senderCompany, response, motivation}
 ) {
-    // Validation: Batch is not set.
-    if (!batch)
-        reject(`Batch is not set!`)
-
-    // Validation: Sender Company is not set.
-    if (!senderCompany)
-        reject(`Sender company is not set!`)
-
-    // Validation: Receiver Company is not set.
-    if (!receiverCompany)
-        reject(`Receiver company is not set!`)
-
-    // Validation: Response is not set.
-    if (!response)
-        reject(`Response is not set!`)
+    // Validation: Response doesn't match one any possible value.
+    if (!Object.values(Proposal.Status).some((status) => status === response))
+        reject(`Response doesn't match one any possible value`)
 
     const operatorAddress = getOperatorAddress(signerPublicKey)
 
@@ -357,81 +343,85 @@ async function answerProposal(
 
     const operatorState = Operator.decode(state[operatorAddress])
 
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`)
+    // Validation: The signer is not an Operator.
+    if (operatorState.publicKey !== signerPublicKey)
+        reject(`The signer is not an Operator`)
 
-    const senderCompanyAddress = getCompanyAddress(senderCompany)
-    const receiverCompanyAddress = getCompanyAddress(receiverCompany)
-    const batchAddress = getBatchAddress(batch)
+    const receiverCompanyAddress = operatorState.company
 
     state = await context.getState([
-        senderCompanyAddress,
+        senderCompany,
         receiverCompanyAddress,
-        batchAddress
+        batch
     ])
 
-    const senderCompanyState = Company.decode(state[senderCompanyAddress])
+    const senderCompanyState = Company.decode(state[senderCompany])
     const receiverCompanyState = Company.decode(state[receiverCompanyAddress])
-    const batchState = Batch.decode(state[batchAddress])
+    const batchState = Batch.decode(state[batch])
 
-    // Validation: Provided value for senderCompany does not match with a valid Company.
-    if (!state[senderCompanyAddress].length > 0)
-        reject(`The provided company ${senderCompany} is not a Company!`)
+    // Validation: The sender Company address is not well-formatted or not exists.
+    await checkStateAddresses(
+        context,
+        [senderCompany],
+        FULL_PREFIXES.COMPANY,
+        "sender Company"
+    )
 
-    // Validation: Provided value for receiverCompany does not match with a valid Company.
-    if (!state[receiverCompanyAddress].length > 0)
-        reject(`The provided company ${receiverCompany} is not a Company!`)
+    // Validation: Batch doesn't match a sender Company Batch address.
+    await isPresent(senderCompanyState.batches, batch, "a sender Company Batch")
 
-    // Validation: Provided value for batch does not match with a sender Company Batch.
-    if (senderCompanyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`)
-
-    // Validation: Provided value for response is not valid if Operator is not from sender Company.
-    if (response === Proposal.Status.CANCELED && operatorState.company !== senderCompany)
-        reject(`You must be an Operator from the sender Company to cancel a Proposal!`)
-
-    // Validation: Provided value for response is not valid if Operator is not from receiver Company.
-    if ((response === Proposal.Status.ACCEPTED || response === Proposal.Status.REJECTED) && operatorState.company !== receiverCompany)
-        reject(`You must be an Operator from the receiver Company to accept or reject a Proposal!`)
-
-    // Validation: Provided batch doesn't have at least an issued Proposals.
+    // Validation: Batch doesn't have an issued Proposals.
     if (batchState.proposals.every(proposal => proposal.status !== Proposal.Status.ISSUED))
-        reject(`The provided batch ${batch} doesn't have at least an issued Proposals!`)
+        reject(`Batch doesn't have an issued Proposals`)
+
+    // Validation: Operator from receiver Company cannot answer cancel status for Proposal.
+    if (response === Proposal.Status.CANCELED && receiverCompanyAddress !== senderCompany)
+        reject(`Operator from receiver Company answer cancel status for Proposal`)
+
+    // Validation: Operator from sender Company cannot answer accepted or rejected status for Proposal.
+    if ((response === Proposal.Status.ACCEPTED || response === Proposal.Status.REJECTED) && receiverCompanyAddress === senderCompany)
+        reject(`Operator from sender Company cannot answer accepted or rejected status for Proposal`)
 
     // State update.
     const updates = {}
 
-    // Get issued proposal
     let issuedProposal = null
 
-    for (const proposal of batchState.proposals) {
-        if (proposal.senderCompany === senderCompany &&
-            proposal.receiverCompany === receiverCompany &&
-            proposal.status === Proposal.Status.ISSUED)
-            issuedProposal = proposal
+    // Check if the Operator is from sender or receiver Company.
+    if (receiverCompanyAddress !== senderCompany) {
+        issuedProposal = batchState.proposals.filter(proposal =>
+            proposal.status === Proposal.Status.ISSUED &&
+            proposal.receiverCompany === receiverCompanyAddress &&
+            proposal.senderCompany === senderCompany
+        )[0]
+    } else {
+        issuedProposal = batchState.proposals.filter(proposal =>
+            proposal.status === Proposal.Status.ISSUED
+        )[0]
     }
 
+    // Update the Proposal status and motivation.
     issuedProposal.status = response
+    issuedProposal.motivation = motivation
 
     // If operator is from receiver company.
-    if (operatorState.company === receiverCompany && response === Proposal.Status.ACCEPTED) {
-        // Add
+    if (response === Proposal.Status.ACCEPTED) {
+        // Update the Batch Company reference address.
+        batchState.company = receiverCompanyAddress
+
+        // Add the Batch to the receiver Company.
         receiverCompanyState.batches.push(batch)
 
-        // Remove
+        // Remove the Batch from the sender Company
         senderCompanyState.batches.splice(senderCompanyState.batches.indexOf(batch), 1)
-
-        // update batch.
-        batchState.company = receiverCompany
 
         // Update Companies.
         updates[receiverCompanyAddress] = Company.encode(receiverCompanyState).finish()
-        updates[senderCompanyAddress] = Company.encode(senderCompanyState).finish()
-
+        updates[senderCompany] = Company.encode(senderCompanyState).finish()
     }
+
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish()
+    updates[batch] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
