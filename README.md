@@ -1,7 +1,7 @@
 # SawChain
 SawChain is a distributed application designed for improving food supply-chain management through blockchain technology.
 It enables different parties to rely on a unique source of information and trust along the entire supply-chain. 
-Leveraging smart contract technology is possible to perform sales of products, backtracking of events and non-anonymity of recordings.
+Smart contract technology makes possible to perform sales of products, backtracking of events and non-anonymity of recordings.
 A consortium can make up the whole configuration of the system using a customizable set of users and types in order to match their specific needs.
 The benefits of SawChain are equally distributed from supply-chain stakeholders to external individuals. The security of data relies
 on a transaction ledger which mitigates the lack of trust and transparency, satisfying the high-demand of information availability and integrity requested by customers.
@@ -19,23 +19,24 @@ on a transaction ledger which mitigates the lack of trust and transparency, sati
 # Why Hyperledger Sawtooth
 SawChain is designed to achieve data integrity and availability through a unique source of information between mutually-untrusted parties.
 The food supply-chain management involves different kind of parties, such as industries, certification authorities, customers and operators. 
-To guarantee interoperability with regulators a *permissioned-blockchain* seems to be the best fit because it locks the write permission to unauthorized individuals.
+To guarantee interoperability with regulators a *permissioned-blockchain* seems to be the best fit because forbids the write permission to unauthorized individuals.
 SawChain is based on [Hyperledger Sawtooth](https://www.hyperledger.org/projects/sawtooth) which gives an high-degree of customization, scalability and user permissions.
 Taking advantage from the core features of Sawtooth, a generic customizable infrastructure for users, types, products and events is defined.
-The system startup made from an external peer who acts as a system administrator who allows every authorized operator to execute I/O operations over batches of products for the company he works for.
+The system startup is made by an external peer who acts as a system administrator and allows every authorized operator to execute I/O operations on batches of products.
 Each record has to pass through time and quantity constraints that aims to mitigate the introduction of un-tracked products and to reduce error rate of the users. 
 Certification and control authorities are enabled to record a unique document fingerprint (hash) for their product certifications of quality.
-The huge volume of IoT transactions is easily handle exploiting the high-scalability of Sawtooth.
+The huge volume of IoT transactions is easily handled exploiting the high-scalability of Sawtooth.
 
 # Architecture 
 ![Architecture overview](./images/architecture.png)
 
-Running alongside the core components from Hyperledger Sawtooth, SawChain provides the smart contract or Transaction Processor (TP) in Sawtooth jargon
+Running alongside the core components from Hyperledger Sawtooth, SawChain provides the smart contract (or Transaction Processor (TP) in Sawtooth jargon)
 responsible for the entire supply-chain application logic. Each component will run in an individual "container" using [Docker](https://www.docker.com/products/container-runtime).
 The project main directory includes a [docker-compose](docker-compose.yaml) file that contains the instructions for Docker to make up multiple components and network them together. 
 The core pre-packaged Sawtooth components are downloaded from [DockerHub](https://hub.docker.com/search/?q=sawtooth&type=image).
 
 ### Components
+This table reports the endpoint connection, the download source and a short description for each component sketched in the architecture overview. 
 
 | Name                   | Endpoint              | Source    | Description
 | ---------------------- | --------------------- | --------- | ------------------------
@@ -45,8 +46,6 @@ The core pre-packaged Sawtooth components are downloaded from [DockerHub](https:
 | shell                  | --                    | DockerHub | Environment for running Sawtooth commands.
 | settings-tp            | --                    | DockerHub | Built-in Sawtooth transaction processor.
 
-This table reports the endpoint connection, the download source and a short description for each component sketched in the architecture overview. 
-
 # Getting Started
 This project use Docker to simplify dependencies and deployment.
 After cloning this repo, follow the instructions specific to your OS to install and run whatever components are required 
@@ -55,7 +54,7 @@ This is the only dependency required to run SawChain components because Docker t
 If you would like to locally test the SawChain TP functionalities without downloading and running every Docker container, you need to follow the instructions specific 
 to your OS to install and run [NodeJS](https://nodejs.org/en/download/).
 The [JavaScript SDK](https://github.com/hyperledger/sawtooth-sdk-javascript) it is the most consistent Sawtooth SDK and has been used to define the entire SawChain TP.
-The TDD process it was performed using either [Mocha](https://github.com/mochajs/mocha) and [Chai](https://github.com/chaijs/chai) libraries.
+The TDD process it was performed using both [Mocha](https://github.com/mochajs/mocha) and [Chai](https://github.com/chaijs/chai) libraries.
 
 In case that you're in troubles with [Docker](https://www.docker.com/sites/default/files/d8/2019-09/docker-cheat-sheet.pdf) or [Sawtooth](https://sawtooth.hyperledger.org/docs/core/releases/latest/introduction.html).
 
@@ -99,7 +98,7 @@ npm run test
 # Contributions
 Keep in mind that this work is a Proof of Concept (PoC) application. The project guidelines are defined according to a previous study which aim was to strengthened 
 food supply-chains with blockchain technology ([paper](https://bit.ly/36OYrvn)).
-The repo contains the contents of the paper which are the definition of each state entity, the TP logic and its tests. 
+The repo contains the definition of each state entity, the TP logic and its tests as reported in the paper. 
 If you would like to interact with the blockchain, you can use simple calls to Sawtooth's standard REST API module from any type of client.
 
 This project is NOT production ready by any means. 
