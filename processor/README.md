@@ -1189,6 +1189,7 @@ message AnswerProposalAction {
     string motivation = 4;
 }
 ```
+
 An Answer Proposal transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * Response doesn't match one any possible value.
@@ -1200,3 +1201,25 @@ An Answer Proposal transaction is invalid if one of the following conditions occ
 * Operator from sender Company cannot answer accepted or rejected status for Proposal.
 
 ## Finalize Batch
+The Operator must specify the Batch, the finalization Reason and a short explanation.
+
+```protobuf
+message FinalizeBatchAction {
+    // The Batch state address.
+    string batch = 1;
+
+    // The Batch finalization reason.
+    Batch.Finalization.Reason reason = 2;
+
+    // A short explanation for the finalization.
+    string explanation = 3;
+}
+```
+
+An Finalize Batch transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
+* Reason doesn't match one any possible value.
+* The signer is not an Operator.
+* Batch doesn't match a Company Batch address.
+* Cannot finalize a Batch with an issued Proposal.
+* The Batch has already been finalized.

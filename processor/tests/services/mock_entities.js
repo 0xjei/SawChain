@@ -17,7 +17,8 @@ const {
     CreateOperatorAction,
     CreateDescriptionEventAction,
     CreateTransformationEventAction,
-    CreateProposalAction
+    CreateProposalAction,
+    FinalizeBatchAction
 } = require('../../services/proto')
 const {
     getTaskTypeAddress,
@@ -491,6 +492,39 @@ const mockCreateProposal = async (
 }
 
 /**
+ * Create and execute a Finalize Batch action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} operatorPrivateKey The Operator private key.
+ * @param {String} batch The Batch state address.
+ * @param {Number} reason The Batch finalization reason.
+ * @param {String} explanation A short explanation for the finalization.
+ */
+const mockFinalizeBatch = async (
+    context,
+    handler,
+    operatorPrivateKey,
+    batch,
+    reason,
+    explanation
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.FINALIZE_BATCH,
+            timestamp: Date.now(),
+            finalizeBatch: FinalizeBatchAction.create({
+                reason: reason,
+                batch: batch,
+                explanation: explanation
+            })
+        }),
+        operatorPrivateKey.privateKey
+    )
+
+    await handler.apply(txn, context)
+}
+
+/**
  * Populate the state object recording a bunch of different combinations of types.
  * This function is made in order to speed up tests by a pre-defined set of types.
  * (nb. The information is for testing purposes only and is not intended for any production use).
@@ -859,5 +893,6 @@ module.exports = {
     mockCreateDescriptionEvent,
     mockCreateTransformationEvent,
     mockCreateProposal,
+    mockFinalizeBatch,
     populateStateWithMockData
 }

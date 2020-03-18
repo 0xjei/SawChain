@@ -278,10 +278,12 @@ message AnswerProposalAction {
 }
 
 message FinalizeBatchAction {
-    // Batch identifier.
+    // The Batch state address.
     string batch = 1;
 
+    // The Batch finalization reason.
     Batch.Finalization.Reason reason = 2;
 
+    // A short explanation for the finalization.
     string explanation = 3;
 }

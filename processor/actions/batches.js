@@ -427,28 +427,23 @@ async function answerProposal(
 }
 
 /**
- * Handle Create Proposal transaction action.
- * @param {Context} context Current state context.
- * @param {String} signerPublicKey The Operator public key.
+ * Handle a Finalize Batch action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {String} signerPublicKey The Certification Authority public key.
  * @param {Object} timestamp Date and time when transaction is sent.
- * @param {String} batch Batch identifier.
- * @param {Number} reason Reason.
- * @param {String} explanation explanation string.
+ * @param {String} batch The Batch state address.
+ * @param {Number} reason The Batch finalization reason.
+ * @param {String} explanation A short explanation for the finalization.
  */
-
 async function finalizeBatch(
     context,
     signerPublicKey,
     timestamp,
     {batch, reason, explanation}
 ) {
-    // Validation: Batch is not set.
-    if (!batch)
-        reject(`Batch is not set!`)
-
-    // Validation: Provided value for reason doesn't match the types specified in the Finalization's Reason.
+    // Validation: Reason doesn't match one any possible value.
     if (!Object.values(Batch.Finalization.Reason).some((value) => value === reason))
-        reject(`Provided value for reason doesn't match any possible value!`)
+        reject(`Reason doesn't match one any possible value`)
 
     const operatorAddress = getOperatorAddress(signerPublicKey)
 
@@ -458,24 +453,30 @@ async function finalizeBatch(
 
     const operatorState = Operator.decode(state[operatorAddress])
 
-    // Validation: Transaction signer is not an Operator for a Company.
-    if (!state[operatorAddress].length)
-        reject(`You must be an Operator for a Company!`)
+    // Validation: The signer is not an Operator.
+    if (operatorState.publicKey !== signerPublicKey)
+        reject(`The signer is not an Operator`)
 
-    const companyAddress = getCompanyAddress(operatorState.company)
-    const batchAddress = getBatchAddress(batch)
+    const companyAddress = operatorState.company
 
     state = await context.getState([
         companyAddress,
-        batchAddress
+        batch
     ])
 
     const companyState = Company.decode(state[companyAddress])
-    const batchState = Batch.decode(state[batchAddress])
+    const batchState = Batch.decode(state[batch])
 
-    // Validation: Provided value for batch does not match with a sender Company Batch.
-    if (companyState.batches.indexOf(batch) === -1)
-        reject(`The provided batch ${batch} is not a Company Batch!`)
+    // Validation: Batch doesn't match a Company Batch address.
+    await isPresent(companyState.batches, batch, "a Company Batch")
+
+    // Validation: Batch has an issued Proposal.
+    if (batchState.proposals.some(proposal => proposal.status === Proposal.Status.ISSUED))
+        reject(`You cannot finalize a Batch with an issued Proposal`)
+
+    // Validation: The Batch has already been finalized.
+    if (batchState.finalization)
+        reject(`The Batch has already been finalized`)
 
     // State update.
     const updates = {}
@@ -487,7 +488,7 @@ async function finalizeBatch(
     })
 
     // Update Batch.
-    updates[batchAddress] = Batch.encode(batchState).finish()
+    updates[batch] = Batch.encode(batchState).finish()
 
     await context.setState(updates)
 }
