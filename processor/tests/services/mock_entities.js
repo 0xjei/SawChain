@@ -518,7 +518,7 @@ const mockFinalizeBatch = async (
                 explanation: explanation
             })
         }),
-        operatorPrivateKey.privateKey
+        operatorPrivateKey
     )
 
     await handler.apply(txn, context)

@@ -137,6 +137,10 @@ async function addBatchCertificate(
         "an enabled Certification Authority Product Type"
     )
 
+    // Validation: The Batch is finalized.
+    if (batchState.finalization)
+        reject(`The Batch is finalized`)
+
     // State update.
     const updates = {}
 
@@ -210,6 +214,10 @@ async function recordBatchProperty(
 
     // Validation: Batch product doesn't match an enabled Product Type for the Property Type.
     await isPresent(propertyTypeState.enabledProductTypes, batchState.product, "an enabled Product Type for the Property Type")
+
+    // Validation: The Batch is finalized.
+    if (batchState.finalization)
+        reject(`The Batch is finalized`)
 
     // Validation: The correct Property Value field is not set.
     await isCorrectFieldSet(propertyValue, propertyTypeState.dataType)
@@ -293,6 +301,10 @@ async function createProposal(
 
     // Validation: Batch product doesn't match an enabled Product Type for the receiver Company.
     await isPresent(receiverCompanyState.enabledProductTypes, batchState.product, "an enabled Product Type for the receiver Company")
+
+    // Validation: The Batch is finalized.
+    if (batchState.finalization)
+        reject(`The Batch is finalized`)
 
     // Validation: Batch already has an issued Proposal.
     if (batchState.proposals.some(proposal => proposal.status === Proposal.Status.ISSUED))

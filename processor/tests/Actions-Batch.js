@@ -13,6 +13,7 @@ const {
     mockCreateTransformationEvent,
     mockCreateCertificationAuthority,
     mockCreateProposal,
+    mockFinalizeBatch,
     populateStateWithMockData
 } = require('./services/mock_entities')
 const {
@@ -60,6 +61,7 @@ describe('Batch Actions', function () {
     let companyId = null
     const fieldId = "FDL1"
     const batchId = "BTC1"
+    const finalizedBatchId = "BTC10"
 
     // Addresses.
     let companyAdminAddress = null
@@ -67,6 +69,7 @@ describe('Batch Actions', function () {
     let companyAddress = null
     let fieldAddress = null
     let batchAddress = null
+    let finalizedBatchAddress = null
 
     // Invalid addresses for testing purpose.
     let invalidCompanyAddress = null
@@ -131,6 +134,21 @@ describe('Batch Actions', function () {
             batchId
         )
         batchAddress = getBatchAddress(batchId)
+
+        // Create a Batch and Finalize it.
+        await mockCreateTransformationEvent(
+            context, handler, operatorKeyPair.privateKey,
+            getEventTypeAddress('EVT8'), [],
+            [fieldAddress],
+            [1000], getProductTypeAddress('PDT2'),
+            finalizedBatchId
+        )
+        finalizedBatchAddress = getBatchAddress(finalizedBatchId)
+
+        await mockFinalizeBatch(
+            context, handler, operatorKeyPair.privateKey,
+            finalizedBatchAddress, Batch.Finalization.Reason.WITHDRAWN, 'No notes'
+        )
 
         // Create invalid data for testing purpose.
         invalidCompanyAddress = getCompanyAddress('COMPANY_00')
@@ -316,6 +334,26 @@ describe('Batch Actions', function () {
                     })
                 }),
                 certificationAuthorityKeyPair2.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if batch is finalized', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.ADD_BATCH_CERTIFICATE,
+                    timestamp: Date.now(),
+                    addBatchCertificate: AddBatchCertificateAction.create({
+                        link: link,
+                        hash: hash,
+                        company: companyAddress,
+                        batch: finalizedBatchAddress
+                    })
+                }),
+                certificationAuthorityKeyPair.privateKey
             )
 
             submission = handler.apply(txn, context)
@@ -531,6 +569,24 @@ describe('Batch Actions', function () {
                     recordBatchProperty: RecordBatchPropertyAction.create({
                         batch: batchAddress,
                         propertyType: propertyTypeDiffProductAddress
+                    })
+                }),
+                operatorKeyPair.privateKey
+            )
+
+            submission = handler.apply(txn, context)
+
+            return expect(submission).to.be.rejectedWith(InvalidTransaction)
+        })
+
+        it('Should reject if the Batch is finalized', async function () {
+            txn = new Txn(
+                SCPayload.create({
+                    action: SCPayloadActions.RECORD_BATCH_PROPERTY,
+                    timestamp: Date.now(),
+                    recordBatchProperty: RecordBatchPropertyAction.create({
+                        batch: finalizedBatchAddress,
+                        propertyType: propertyTypeNumberAddress
                     })
                 }),
                 operatorKeyPair.privateKey
@@ -868,6 +924,24 @@ describe('Batch Actions', function () {
                 return expect(submission).to.be.rejectedWith(InvalidTransaction)
             })
 
+            it('Should reject if the Batch is finalized', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_PROPOSAL,
+                        timestamp: Date.now(),
+                        createProposal: CreateProposalAction.create({
+                            batch: finalizedBatchAddress,
+                            receiverCompany: companyAddress2
+                        })
+                    }),
+                    operatorKeyPair.privateKey
+                )
+
+                submission = handler.apply(txn, context)
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            })
+
             it('Should create a Proposal', async function () {
                 const timestamp = Date.now()
                 txn = new Txn(
@@ -1177,7 +1251,7 @@ describe('Batch Actions', function () {
 
                 expect(state).to.not.be.null
                 expect(decodedState.id).to.equal(companyId)
-                expect(decodedState.batches.length).to.equal(3)
+                expect(decodedState.batches.length).to.equal(4)
 
                 // Receiver company.
                 state = context._state[companyAddress2]
@@ -1223,7 +1297,7 @@ describe('Batch Actions', function () {
 
                 expect(state).to.not.be.null
                 expect(decodedState.id).to.equal(companyId)
-                expect(decodedState.batches.length).to.equal(3)
+                expect(decodedState.batches.length).to.equal(4)
 
                 // Receiver company.
                 state = context._state[companyAddress2]
@@ -1269,7 +1343,7 @@ describe('Batch Actions', function () {
 
                 expect(state).to.not.be.null
                 expect(decodedState.id).to.equal(companyId)
-                expect(decodedState.batches.length).to.equal(3)
+                expect(decodedState.batches.length).to.equal(4)
 
                 // Receiver company.
                 state = context._state[companyAddress2]

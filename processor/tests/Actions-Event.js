@@ -11,6 +11,7 @@ const {
     mockCreateField,
     mockCreateCompany,
     mockCreateTransformationEvent,
+    mockFinalizeBatch,
     populateStateWithMockData
 } = require('./services/mock_entities')
 const {
@@ -545,9 +546,11 @@ describe('Event Actions', function () {
 
         describe('Batch', async function () {
             const firstBatchId = "BTC1"
+            const finalizedBatchId = "BTC2"
 
             let firstBatchAddress = null
             let invalidBatchAddress = null
+            let finalizedBatchAddress = null
 
             before(async function () {
                 await mockCreateTransformationEvent(
@@ -557,12 +560,23 @@ describe('Event Actions', function () {
                 )
                 firstBatchAddress = getBatchAddress(firstBatchId)
 
+                await mockCreateTransformationEvent(
+                    context, handler, operatorKeyPair.privateKey, getEventTypeAddress('EVT8'),
+                    [], [fieldAddress], [100], getProductTypeAddress('PDT2'),
+                    finalizedBatchId
+                )
+                finalizedBatchAddress = getBatchAddress(finalizedBatchId)
+
+                await mockFinalizeBatch(
+                    context, handler, operatorKeyPair.privateKey,
+                    finalizedBatchAddress, Batch.Finalization.Reason.WITHDRAWN, ''
+                )
+
                 // Change
                 eventTypeDiffProduct = getEventTypeAddress('EVT7')
 
                 // Create invalid data for testing purpose.
                 invalidBatchAddress = getBatchAddress("BTC0")
-
             })
 
             it('Should reject if the batch doesn\'t match a Company Batch', async function () {
@@ -590,6 +604,24 @@ describe('Event Actions', function () {
                         createDescriptionEvent: CreateDescriptionEventAction.create({
                             batch: firstBatchAddress,
                             eventType: eventTypeDiffProduct
+                        })
+                    }),
+                    operatorKeyPair.privateKey
+                )
+
+                submission = handler.apply(txn, context)
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            })
+
+            it('Should reject if the Batch is finalized', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_DESCRIPTION_EVENT,
+                        timestamp: Date.now(),
+                        createDescriptionEvent: CreateDescriptionEventAction.create({
+                            batch: finalizedBatchAddress,
+                            eventType: eventTypeReqParam
                         })
                     }),
                     operatorKeyPair.privateKey
@@ -679,7 +711,7 @@ describe('Event Actions', function () {
         // Mock data.
         const quantities = [1000]
         const conversionRate = 0.7
-        const outputBatchId = "BTC2"
+        const outputBatchId = "BTC3"
         const fieldIdDiffProd = "FLD2"
         const fieldIdDiffDeriv = "FLD3"
 
@@ -1146,8 +1178,8 @@ describe('Event Actions', function () {
                 decodedState = Company.decode(state)
 
                 expect(state).not.to.be.null
-                expect(decodedState.batches.length).to.equal(2)
-                expect(decodedState.batches[1]).to.equal(outputBatchAddress)
+                expect(decodedState.batches.length).to.equal(3)
+                expect(decodedState.batches[2]).to.equal(outputBatchAddress)
             })
 
             it('Should reject if output batch id is already used for another Company Batch', async function () {
@@ -1174,9 +1206,10 @@ describe('Event Actions', function () {
 
         describe('Batch', async function () {
             // Mock data.
-            const outputBatchId = "BTC3"
+            const outputBatchId = "BTC4"
             const batchIdProd2 = "BTC1"
             const batchIdProd1 = "BTC2"
+            const finalizedBatchId = "BTC5"
             const quantities = [10]
             const conversionRate = 0.8
 
@@ -1187,6 +1220,7 @@ describe('Event Actions', function () {
             let companyAddress2 = null
             let batchProd2Address = null
             let batchProd1Address = null
+            let finalizedBatchAddress = null
             let derivedProduct = null
 
             before(async function () {
@@ -1234,7 +1268,6 @@ describe('Event Actions', function () {
                     [1000], getProductTypeAddress('PDT2'),
                     batchIdProd2
                 )
-
                 batchProd2Address = getBatchAddress(batchIdProd2)
 
                 // Transform the Batch in order to create a Batch with PDT1 product.
@@ -1246,6 +1279,19 @@ describe('Event Actions', function () {
                     batchIdProd1
                 )
                 batchProd1Address = getBatchAddress(batchIdProd1)
+
+                await mockCreateTransformationEvent(
+                    context, handler, operatorKeyPair2.privateKey, getEventTypeAddress('EVT8'),
+                    [], [getFieldAddress(fieldId, hashAndSlice(companyAdminKeyPair2.publicKey, 10))],
+                    [100], getProductTypeAddress('PDT2'),
+                    finalizedBatchId
+                )
+                finalizedBatchAddress = getBatchAddress(finalizedBatchId)
+
+                await mockFinalizeBatch(
+                    context, handler, operatorKeyPair2.privateKey,
+                    finalizedBatchAddress, Batch.Finalization.Reason.WITHDRAWN, ''
+                )
             })
 
             it('Should reject if at least one Batch state address is not a Company Batch', async function () {
@@ -1275,6 +1321,26 @@ describe('Event Actions', function () {
                         createTransformationEvent: CreateTransformationEventAction.create({
                             batches: [batchProd2Address, batchProd1Address],
                             quantities: [10, 10],
+                            outputBatchId: outputBatchId,
+                            eventType: eventTypeToRecord
+                        })
+                    }),
+                    operatorKeyPair2.privateKey
+                )
+
+                submission = handler.apply(txn, context)
+
+                return expect(submission).to.be.rejectedWith(InvalidTransaction)
+            })
+
+            it('Should reject if at least a Batch is finalized', async function () {
+                txn = new Txn(
+                    SCPayload.create({
+                        action: SCPayloadActions.CREATE_TRANSFORMATION_EVENT,
+                        timestamp: Date.now(),
+                        createTransformationEvent: CreateTransformationEventAction.create({
+                            batches: [finalizedBatchAddress],
+                            quantities: [10],
                             outputBatchId: outputBatchId,
                             eventType: eventTypeToRecord
                         })
@@ -1410,8 +1476,8 @@ describe('Event Actions', function () {
                 decodedState = Company.decode(state)
 
                 expect(state).not.to.be.null
-                expect(decodedState.batches.length).to.equal(3)
-                expect(decodedState.batches[2]).to.equal(outputBatchAddress)
+                expect(decodedState.batches.length).to.equal(4)
+                expect(decodedState.batches[3]).to.equal(outputBatchAddress)
             })
         })
     })

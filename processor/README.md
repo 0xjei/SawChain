@@ -1039,6 +1039,7 @@ A Create Description Event transaction is invalid if one of the following condit
 * The Event Type is not a description Event Type.
 * Operator task doesn't match an Event Type enabled task.
 * Field/Batch product doesn't match an Event Type enabled product.
+* The Batch is finalized.
 * No values specified for required Parameters.
 * At least one Parameter Value is not valid for its related Parameter.
 
@@ -1083,6 +1084,7 @@ A Create Transformation Event transaction is invalid if one of the following con
 * The Event Type is not a transformation Event Type.
 * Operator task doesn't match an Event Type enabled task.
 * At least a field/batch doesn't match other Field's/Batch's product Product Type.
+* At least a Batch is finalized.
 * Fields/Batches Product Type doesn't match an Event Type enabled product.
 * Derived Product Type doesn't match a derived Event Type enabled product.
 * Derived Product Type doesn't match a Company enabled product.
@@ -1118,6 +1120,7 @@ An Add Batch Certificate transaction is invalid if one of the following conditio
 * The Company address is not well-formatted or not exists.
 * Batch doesn't match a Company Batch address.
 * Batch product doesn't match an enabled Certification Authority Product Type.
+* The Batch is finalized.
 
 ## Record Batch Property
 The Operator must specify the Batch where record the Property, a Property Type address and the Property Value in order to update the Property on the Batch.
@@ -1142,6 +1145,7 @@ A Record Batch Property transaction is invalid if one of the following condition
 * The Company address is not well-formatted or not exists.
 * Operator task doesn't match an enabled Task Type for the Property Type.
 * Batch product doesn't match an enabled Product Type for the Property Type.
+* The Batch is finalized.
 * The correct Property Value field is not set.
 
 
@@ -1166,6 +1170,7 @@ A Create Proposal transaction is invalid if one of the following conditions occu
 * Batch doesn't match a sender Company Batch address.
 * The receiver Company address is not well-formatted or not exists.
 * Batch product doesn't match an enabled Product Type for the receiver Company.
+* The Batch is finalized.
 * Batch already has an issued Proposal.
 
 ## Answer Proposal

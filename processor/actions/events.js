@@ -136,6 +136,10 @@ async function createDescriptionEvent(
     if (batch.length > 0) {
         // Validation: Batch product doesn't match an Event Type enabled product.
         await isPresent(eventTypeState.enabledProductTypes, batchState.product, "an Event Type enabled product")
+
+        // Validation: The Batch is finalized.
+        if (batchState.finalization)
+            reject(`The Batch is finalized`)
     }
 
     // Validation: No values specified for required Parameters.
@@ -306,6 +310,10 @@ async function createTransformationEvent(
 
         // Validation: Batches Product Type doesn't match an Event Type enabled product.
         await isPresent(eventTypeState.enabledProductTypes, batchesState[batchesState.length - 1].product, "an Event Type enabled product")
+
+        // Validation: At least a Batch is finalized.
+        if (batchesState.some(batch => batch.finalization))
+            reject(`At least a Batch is finalized`)
     }
 
     // Validation: Derived Product Type doesn't match a derived Event Type enabled product.
