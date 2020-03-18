@@ -16,7 +16,8 @@ const {
     CreateFieldAction,
     CreateOperatorAction,
     CreateDescriptionEventAction,
-    CreateTransformationEventAction
+    CreateTransformationEventAction,
+    CreateProposalAction
 } = require('../../services/proto')
 const {
     getTaskTypeAddress,
@@ -414,7 +415,7 @@ const mockCreateDescriptionEvent = async (
 }
 
 /**
- * Create and execute a create Trasformation Event action.
+ * Create and execute a create Transformation Event action.
  * @param {Context} context Object used to write/read into Sawtooth ledger state.
  * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
  * @param {String} operatorPrivateKey The Operator private key.
@@ -447,6 +448,40 @@ const mockCreateTransformationEvent = async (
                 quantities: quantities,
                 derivedProduct: derivedProduct,
                 outputBatchId: outputBatchId
+            })
+        }),
+        operatorPrivateKey
+    )
+
+    await handler.apply(txn, context)
+}
+
+/**
+ * Create and execute a create Proposal action.
+ * @param {Context} context Object used to write/read into Sawtooth ledger state.
+ * @param {SawChainHandlerWrapper} handler Instance of SawChain Transaction Handler wrapper.
+ * @param {String} operatorPrivateKey The Operator private key.
+ * @param {String} batch The Batch state address.
+ * @param {String} receiverCompany The receiver Company state address.
+ * @param {String} notes A note for issuing the Proposal.
+ */
+
+const mockCreateProposal = async (
+    context,
+    handler,
+    operatorPrivateKey,
+    batch,
+    receiverCompany,
+    notes
+) => {
+    const txn = new Txn(
+        SCPayload.create({
+            action: SCPayloadActions.CREATE_PROPOSAL,
+            timestamp: Date.now(),
+            createProposal: CreateProposalAction.create({
+                batch: batch,
+                receiverCompany: receiverCompany,
+                notes: notes
             })
         }),
         operatorPrivateKey
@@ -823,5 +858,6 @@ module.exports = {
     mockCreateCertificationAuthority,
     mockCreateDescriptionEvent,
     mockCreateTransformationEvent,
+    mockCreateProposal,
     populateStateWithMockData
 }
