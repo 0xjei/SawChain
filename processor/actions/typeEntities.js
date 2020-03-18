@@ -97,7 +97,7 @@ async function createProductType(
 
     // Validation: Measure doesn't match one any possible value.
     if (!Object.values(Shared.UnitOfMeasure).some(value => value === measure))
-        reject(`Provided value for measure doesn't match any possible value`)
+        reject(`Measure doesn't match one any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()
     const productTypeAddress = getProductTypeAddress(id)
@@ -170,7 +170,7 @@ async function createEventParameterType(
 
     // Validation: DataType doesn't match one any possible value.
     if (!Object.values(Shared.DataType).some((value) => value === dataType))
-        reject(`Provided value for dataType doesn't match any possible value`)
+        reject(`Data type doesn't match one any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()
     const eventParameterTypeAddress = getEventParameterTypeAddress(id)
@@ -237,7 +237,7 @@ async function createEventType(
 
     // Validation: Typology doesn't match one any possible value.
     if (!Object.values(EventType.Typology).some((value) => value === typology))
-        reject(`Provided value for typology doesn't match any possible value`)
+        reject(`Typology doesn't match one any possible value`)
 
     // Validation: No name specified.
     if (!name)
@@ -367,7 +367,7 @@ async function createPropertyType(
 
     // Validation: Data type doesn't match one any possible value.
     if (!Object.values(Shared.DataType).some((value) => value === dataType))
-        reject(`Provided value for data type doesn't match any possible value`)
+        reject(`Data type doesn't match one any possible value`)
 
     const systemAdminAddress = getSystemAdminAddress()
     const propertyTypeAddress = getPropertyTypeAddress(id)

@@ -14,7 +14,7 @@ message CompanyAdmin {
     // The Company Admin's public key.
     string publicKey = 1;
 
-    // The Company address.
+    // The Company's state address.
     string company = 2;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
@@ -25,7 +25,7 @@ message Operator {
     // The Operator's public key.
     string publicKey = 1;
 
-    // The Company state address.
+    // The Company's state address.
     string company = 2;
 
     // The assigned Task Type address.
@@ -36,7 +36,7 @@ message Operator {
 }
 
 message CertificationAuthority {
-    // The Certification Authority public key.
+    // The Certification Authority's public key.
     string publicKey = 1;
 
     // The Certification Authority name.

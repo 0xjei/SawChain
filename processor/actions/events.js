@@ -86,7 +86,7 @@ async function createDescriptionEvent(
 
     // Validation: The signer is not an Operator.
     if (operatorState.publicKey !== signerPublicKey)
-        reject(`You must be an Operator to record a description Event`)
+        reject(`The signer is not an Operator`)
 
     const companyAddress = operatorState.company
 
@@ -229,7 +229,7 @@ async function createTransformationEvent(
 
     // Validation: The signer is not an Operator.
     if (operatorState.publicKey !== signerPublicKey)
-        reject(`You must be an Operator to record a description Event`)
+        reject(`The signer is not an Operator`)
 
     const companyAddress = operatorState.company
     const outputBatchAddress = getBatchAddress(outputBatchId)

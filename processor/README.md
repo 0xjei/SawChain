@@ -8,7 +8,7 @@ Any individual is able to read data from the state of the ledger to reconstruct 
 
 ## Contents
 - [State](#state)
-    * [Users](#users)
+    * [User](#users)
         * [System Admin](#system-admin)
         * [Company Admin](#company-admin)
         * [Operator](#operator)
@@ -19,15 +19,14 @@ Any individual is able to read data from the state of the ledger to reconstruct 
         * [Event Parameter Type](#event-parameter-type)
         * [Event Type](#event-type)
         * [Property Type](#property-type)
-    * [Entities](#entities)
-        * [Company](#company)
+    * [Company](#company)
         * [Field](#field)
-        * [Event](#event)
-        * [Batch](#batch)
-    * [Others](#others)
+    * [Event](#event)
+    * [Batch](#batch)
         * [Certificate](#certificate)
         * [Proposal](#proposal)
         * [Finalization](#finalization)
+    * [Shared](#shared)
 - [Addressing](#addressing)
 - [Transactions](#transactions)
     * [Transaction Payload](#transaction-payload)
@@ -53,7 +52,10 @@ Protocol Buffers are language-neutral, platform-neutral, extensible mechanism fo
 To improve the understanding of the relationships between state objects they have been grouped as follows:
 - **Users**: *System Admin*, *Company Admin*, *Operator*, and *Certification Authority*.
 - **Types**: *Task Type*, *Product Type*, *Event Parameter Type*, *Event Type*, and *Property Type*.
-- **Entities**: *Company*, *Field*, *Event* and *Batch* .
+- **Company**: *Company* and *Field*. 
+- **Event**: *Event*.
+- **Batch**: *Batch*, *Certificate*, *Proposal*, and *Finalization*.
+- **Shared**: *Shared*.
 
 As described in the [Addressing](#addressing) section below, these objects are stored in separate sub-namespaces under the SawChain namespace.
 
@@ -87,7 +89,7 @@ message CompanyAdmin {
     // The Company Admin's public key.
     string publicKey = 1;
 
-    // The Company address.
+    // The Company's state address.
     string company = 2;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp
@@ -104,7 +106,7 @@ message Operator {
     // The Operator's public key.
     string publicKey = 1;
 
-    // The Company state address.
+    // The Company's state address.
     string company = 2;
 
     // The assigned Task Type address.
@@ -123,7 +125,7 @@ They can certify each production batch of every company because they are recogni
 
 ```protobuf
 message CertificationAuthority {
-    // The Certification Authority public key.
+    // The Certification Authority's public key.
     string publicKey = 1;
 
     // The Certification Authority name.
@@ -161,10 +163,10 @@ message TaskType {
 ```
 
 ### Product Type
-Along a food supply-chain tons of different quantities of products are moved every day.
+Inside a food supply-chain tons of different quantities of products are moved every day.
 Each company has its own particular working process that involves only particular products.
-A Product Type is used to identify a particular type of product that can be produced, processed and sell along the supply chain.
-Multiple product types can derive from one type of product, each of which has its own quantity conversion rate, 
+A Product Type is used to identify a particular type of product that can be produced, processed and sold along the supply chain.
+Multiple product types can derive from one type of product, each of which has its own conversion rate for the quantity, 
 which varies from production process to product quality.
 
 ```protobuf
@@ -197,7 +199,7 @@ message ProductType {
 ### Event Parameter Type
 Even the same events may require different information based on the production process adopted by the company or the products involved.
 Due to the variety of supply-chain relevant events it's not possible to guess which information must be associated to the event.
-The Event Parameter Type allows to create a custom type of template information (named parameter) which can be attached 
+The Event Parameter Type allows to create a custom type of template information (parameter) which can be attached 
 to a multiple Event Type with additional features (ex. required, min/max values/length).
 
 ```protobuf
@@ -217,7 +219,7 @@ message EventParameterType {
 An Event Type represent an important production, processing or retailing activity performed on a production entity (Field/Batch).
 An Event Type is constructed using a list of previously defined Event Parameter Types.
 
-A Parameter can have different additional features (required, min/max value/length) to satisfy in order to record the Event correctly.
+A Parameter can have different additional features (required, min/max value/length) that must be satisfy in order to record the Event.
 For example, a parameter *Notes* can have a *required* property set to *true* and a *maxLength* property set to *80*.
 A value can be assigned to one of the 'values' fields (according to parameter DataType) only if it's a default value,
 otherwise, the Operator will provide a value during Event recording.
@@ -298,8 +300,7 @@ message PropertyType {
 }
 ```
 
-## Entities
-### Company
+## Company
 The supply chain is composed by different companies which compete to decrease costs and to maximize earnings.
 A direct consequence is the necessity of information integrity and reliability from untrusted parties without revealing any secret.
 A Company is uniquely identified by the hash of the first ten characters of the public key of its Company Admin.
@@ -341,10 +342,10 @@ message Company {
 ```
 
 ### Field
-The primary production phase is the most insecure due to the introduction of un-tracked materials and products.
-Whatever the system and technology is, it is impossible to eliminate these problems caused by the individuals.
-However, it's possible to limit the creation of production batches using a prediction of the maximum production quantity of the Field.
-For example, if someone introduce un-traced products without lowering the quantity of the Field, 
+The primary production phase is the most insecure due to the possibility of introduction of un-tracked materials and products.
+Whatever the system and technology is, it's not impossible to eliminate these problems caused by the individuals.
+However, it's possible to limit the creation of production batches using an upper bound on the production quantity of the Field.
+For example, if someone introduce un-traced products without subtracting the output quantity from the quantity of the Field, 
 they would not be recorded in the system and it would be not possible to reconstruct their history of events.
 The list of recorded Events related to the Field is stored inside the Field state object itself.
 
@@ -356,24 +357,24 @@ message Field {
     // A short description of the Field.
     string description = 2;
 
-    // The owner Company address.
+    // The owner Company unique identifier.
     string company = 3;
 
     // The Product Type address of the cultivable product.
     string product = 4;
 
     // The predicted maximum production quantity.
-    float quantity = 5;
+    double quantity = 5;
 
     // The Field approximate location coordinates.
-    Location location = 6;
+    Shared.Location location = 6;
 
     // A list of Events state objects.
     repeated Event events = 7;
 }
 ```
 
-### Event
+## Event
 The Event state object represent the unique source of information about the relevant activities that are executed over production entities (Field and Batch).
 Every Event will be stored inside a list of production entity events and not in separate state addresses because it's related only to the production entity.
 Each Event refers to a particular recorded Event Type in order to get the template of necessary information. 
@@ -387,7 +388,7 @@ message Event {
         string parameterType = 1;
 
         // Only one of these fields should be used according to Type.
-        float floatValue = 2;
+        double numberValue = 2;
         string stringValue = 3;
         bytes bytesValue = 4;
     }
@@ -402,14 +403,14 @@ message Event {
     repeated ParameterValue values = 3;
 
     // The quantity used when transform.
-    float quantity = 4;
+    double quantity = 4;
 
     // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 5;
 }
 ```
 
-### Batch
+## Batch
 A production Batch represent a quantity of a certain Product Type which is produced, processed, stored and moved along the supply-chain by companies.
 The Batch identifier is used to identify the Batch along the entire supply chain.
 Each Batch refers to the blockchain address of each parent production entity (Field/Batch) allowing the reconstruction of its *history*. 
@@ -422,17 +423,16 @@ The Finalization is used to block other Events or Proposal recordings on the Bat
 ```protobuf
 message Batch {
     message Finalization {
-        // The possible set of finalization reasons.
         enum Reason {
             WITHDRAWN = 0;
             SOLD = 1;
             EXPIRED = 2;
         }
 
-        // The reason why the Batch is finalized.
+        // The Batch finalization reason.
         Reason reason = 1;
 
-        // The public key of the reporter.
+        // The reporter Operator public key.
         string reporter = 2;
 
         // A short explanation for the finalization.
@@ -452,7 +452,7 @@ message Batch {
         double numberValue = 1;
         string stringValue = 2;
         bytes bytesValue = 3;
-        Location locationValue = 4;
+        Shared.Location locationValue = 4;
 
         uint64 timestamp = 5;
     }
@@ -495,14 +495,13 @@ message Batch {
 }
 ```
 
-## Others
 ### Certificate
 A Certificate is a digital representation of a certification document issued by a Certification Authority to evaluate the quality of a Batch.
 The document is stored in to the system via its hash and a download link.
 
 ```protobuf
 message Certificate {
-    // The Certification Authority public key.
+    // The Certification Authority's public key.
     string authority = 1;
 
     // The Certificate external resource link.
@@ -514,6 +513,7 @@ message Certificate {
     // Approximately when transaction was submitted, as a Unix UTC timestamp.
     uint64 timestamp = 4;
 }
+
 ```
 
 ### Proposal
@@ -575,10 +575,43 @@ message Finalization {
 }
 ```
 
+## Shared
+The Shared protobuf object contains a single source of protobuf messages that can be shared with the rest. 
+This allows consistent sharing and updating of objects (e.g. adding another UnitOfMeasure or DataType enum value).
+
+```protobuf
+message Shared {
+    message Location {
+        // Latitude coordinate.
+        sint64 latitude = 1;
+
+        // Longitude coordinate.
+        sint64 longitude = 2;
+    }
+
+    // Possible values for Unit of Measure.
+    enum UnitOfMeasure {
+        KILOS = 0;
+        LITRE = 1;
+        METRE = 2;
+        UNIT = 3;
+    }
+
+    // Possible values for DataType.
+    enum DataType {
+        NUMBER = 0;
+        STRING = 1;
+        BYTES = 2;
+        LOCATION = 3;
+    }
+}
+```
+
 ## Addressing
 SawChain state objects are stored under the namespace obtained by taking the first six characters of the SHA-512 hash of the string SawChain (**87f67d**).
 The addressing flexibility in Sawtooth allows to create an addressing scheme to organize the hexadecimal characters after the namespace.
-This is useful to make a pure scheme to retrieve information stored in the state (check [Sawtooth Addressing](https://sawtooth.hyperledger.org/docs/core/releases/latest/app_developers_guide/address_and_namespace.html?highlight=addressing) for more info.
+This is useful to make a pure scheme to retrieve information stored in the state 
+(check [Sawtooth Addressing](https://sawtooth.hyperledger.org/docs/core/releases/latest/app_developers_guide/address_and_namespace.html?highlight=addressing) for more info.
 
 The SawChain addressing scheme uses the next two hexadecimal characters after the namespace to group together addresses containing records with the same structure.
 
@@ -587,7 +620,6 @@ The SawChain addressing scheme uses the next two hexadecimal characters after th
 * Company: `02`
 * Field: `03`
 * Batch: `04`
-* Event: `05`
 
 The next hexadecimal characters are organized based on which type of record is going to be stored in the state.
 The remaining 62 characters of state addresses are determined as below:
@@ -737,35 +769,32 @@ If other Product Types derive from this one, the state address of these Product 
 
 ```protobuf
 message CreateProductTypeAction {
-    // Product Type unique identifier.
+    // The Product Type unique identifier.
     string id = 1;
 
-    // Product Type name.
+    // The product name.
     string name = 2;
 
-    // Product Type description.
+    // A short description of the product.
     string description = 3;
 
-    // Product Type unit of measure.
-    ProductType.UnitOfMeasure measure = 4;
+    // The unit of measure used for the product quantity.
+    Shared.UnitOfMeasure measure = 4;
 
-    // List of derived product types.
-    repeated ProductType.DerivedProduct derivedProducts = 5;
+    // A list of derived Product Types with a quantity conversion rate.
+    repeated ProductType.DerivedProductType derivedProductTypes = 5;
 }
 ```
-
-None of the provided PropertyValues match the types specified in the Record's RecordType.
 
 A Create Product Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * No id specified.
 * No name specified.
-* Provided value for measure doesn't match any possible value.
+* Measure doesn't match one any possible value.
 * The signer is not the System Admin.
-* There is a Product Type already associated to given id.
-* Derived Product Type address must be a 70-char hex string.
-* Specified derived Product Type does not exist.
-* Specified conversion rate is not greater than zero.
+* The id belongs to another Product Type.
+* At least one Product Type address is not well-formatted or not exists.
+* Conversion rate must be greater than zero.
 
 ### Create Event Parameter Type
 The System Admin must provide a unique id among Event Parameter Types, a name and the information data type in order to 
@@ -780,7 +809,7 @@ message CreateEventParameterTypeAction {
     string name = 2;
 
     // The Event Parameter Type information data type.
-    TypeData.DataType type = 3;
+    Shared.DataType dataType = 3;
 }
 ```
 
@@ -788,9 +817,9 @@ A Create Event Parameter Type transaction is invalid if one of the following con
 * Timestamp is not set.
 * No id specified.
 * No name specified.
-* Provided value for data type doesn't match any possible value.
+* DataType doesn't match one any possible value.
 * The signer is not the System Admin.
-* The id ${id} belongs to another Event Parameter Type.
+* The id belongs to another Event Parameter Type.
 
 ### Create Event Type
 The System Admin must provide a unique id among Event Types, a name, the typology, a short description and four different lists
@@ -814,14 +843,14 @@ message CreateEventTypeAction {
     // The Event Type description.
     string description = 4;
 
-    // A list of Event Parameters with additional features.
-    repeated EventType.Parameter parameters = 5;
-
     // A list of enabled Task Types addresses for recording the event.
-    repeated string enabledTaskTypes = 6;
+    repeated string enabledTaskTypes = 5;
 
-    // A list of enabled Product Types addresseswhere recording the event.
-    repeated string enabledProductTypes = 7;
+    // A list of enabled Product Types addresses where recording the event.
+    repeated string enabledProductTypes = 6;
+
+    // A list of Event Parameters with additional features.
+    repeated EventType.Parameter parameters = 7;
 
     // A list of enabled derived Product Types addresses for the transformation of the product.
     repeated string enabledDerivedProductTypes = 8;
@@ -831,20 +860,16 @@ message CreateEventTypeAction {
 A Create Event Type transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * No id specified.
-* Provided value for typology doesn't match any possible value.
+* Typology doesn't match one any possible value.
 * No name specified.
 * No description specified.
 * The signer is not the System Admin.
 * The id belongs to another Event Type.
-* At least one Task Type state address is not a valid Task Type address.
-* At least one specified Task Type doesn't exist.
-* At least one Product Type state address is not a valid Product Type address.
-* At least one specified Product Type doesn't exist.
-* At least one Event Parameter Type state address is not a valid Event Parameter Type address.
-* At least one specified Event Parameter Type doesn't exist.
+* At least one Task Type address is not well-formatted or not exists.
+* At least one Product Type address is not well-formatted or not exists.
+* At least one Event Parameter Type address is not well-formatted or not exists.
 * No derived products specified for an event with transformation typology.
-* At least one derived Product Type state address is not a valid Product Type address.
-* At least one specified derived Product Type doesn't exist.
+* At least one Product Type address is not well-formatted or not exists.
 * At least one derived Product Type doesn't match a valid derived product for enabled Product Types.
 
 ### Create Property Type
@@ -861,7 +886,7 @@ message CreatePropertyTypeAction {
     string name = 2;
 
     // The Property Type information data type.
-    TypeData.DataType dataType = 3;
+    Shared.DataType dataType = 3;
 
     // A list of enabled Task Types addresses for recording the property.
     repeated string enabledTaskTypes = 4;
@@ -875,14 +900,11 @@ A Create Property Type transaction is invalid if one of the following conditions
 * Timestamp is not set.
 * No id specified.
 * No name specified.
-* Provided value for data type doesn't match any possible value.
+* Data type doesn't match one any possible value.
 * The signer is not the System Admin.
 * The id belongs to another Property Type.
-* At least one Task Type state address is not a valid Task Type address.
-* At least one specified Task Type doesn't exist.
-* At least one Product Type state address is not a valid Product Type address.
-* At least one specified Product Type doesn't exist.
-
+* At least one Task Type address is not well-formatted or not exists.
+* At least one Product Type address is not well-formatted or not exists.
 
 ### Create Certification Authority
 The System Admin must provide a valid unused public key, a name, a website, and a list of Product Types 
@@ -906,13 +928,13 @@ message CreateCertificationAuthorityAction {
 ```
 
 A Create Certification Authority transaction is invalid if one of the following conditions occurs:
+* Timestamp is not set.
 * The public key field doesn't contain a valid public key.
 * No name specified.
 * No website specified.
 * The signer is not the System Admin.
 * The public key belongs to another authorized user.
-* At least one Product Type state address is not a valid Product Type address.
-* At least one specified Product Type doesn't exist.
+* At least one Product Type address is not well-formatted or not exists.
 
 ### Create Company
 The System Admin must provide a name, a website, a short description, the Company Admin's public key and a list
@@ -968,10 +990,10 @@ message CreateFieldAction {
     string product = 3;
 
     // The predicted maximum production quantity.
-    float quantity = 4;
+    double quantity = 4;
 
     // The Field approximate location coordinates.
-    Location location = 5;
+    Shared.Location location = 5;
 }
 ```
 
@@ -1094,7 +1116,8 @@ A Create Transformation Event transaction is invalid if one of the following con
 * Output Batch id is already used for another Company Batch.
 
 ## Add Batch Certificate
-The Certification Authority must specify the Batch and related Company state addresses, and the external resource link with its hash in order to add a Certificate on the Batch.
+The Certification Authority must specify the Batch and related Company state addresses, 
+and the external resource link with its hash in order to add a Certificate on the Batch.
 
 ```protobuf
 message AddBatchCertificateAction {
@@ -1123,7 +1146,8 @@ An Add Batch Certificate transaction is invalid if one of the following conditio
 * The Batch is finalized.
 
 ## Record Batch Property
-The Operator must specify the Batch where record the Property, a Property Type address and the Property Value in order to update the Property on the Batch.
+The Operator must specify the Batch where record the Property, a Property Type address and the Property Value in order 
+to update the Property on the Batch.
 
 ```protobuf
 message RecordBatchPropertyAction {
@@ -1148,7 +1172,6 @@ A Record Batch Property transaction is invalid if one of the following condition
 * The Batch is finalized.
 * The correct Property Value field is not set.
 
-
 ## Create Proposal
 The Operator must specify the Batch to send, the receiver Company address and a short optional note for issuing the Proposal.
 
@@ -1164,6 +1187,7 @@ message CreateProposalAction {
     string notes = 3;
 }
 ```
+
 A Create Proposal transaction is invalid if one of the following conditions occurs:
 * Timestamp is not set.
 * The signer is not an Operator.
@@ -1177,7 +1201,7 @@ A Create Proposal transaction is invalid if one of the following conditions occu
 The Operator must specify the Batch with an status *issued* for Proposal, the sender Company address, the new Proposal status
 and a short motivation to answer the Proposal.
 The Operator can be a sender or receiver Company Operator: the first one can set only a status *cancelled*, and the second one
-can accept (status *accepted*) or reject (status *rejected)) the Proposal.
+can accept (status *accepted*) or reject (status *rejected*) the Proposal.
 
 ```protobuf
 message AnswerProposalAction {

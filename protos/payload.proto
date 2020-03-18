@@ -3,7 +3,7 @@ syntax = "proto3";
 package sawchain;
 
 import "types.proto";
-import "entities.proto";
+import "company.proto";
 import "event.proto";
 import "batch.proto";
 
