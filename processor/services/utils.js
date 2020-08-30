@@ -1,15 +1,14 @@
-'use strict'
 
-const {InvalidTransaction} = require('sawtooth-sdk/processor/exceptions')
+const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions')
 const {
-    getSystemAdminAddress,
-    getOperatorAddress,
-    getCompanyAdminAddress,
-    getCertificationAuthorityAddress,
-    isValidAddress
+  getSystemAdminAddress,
+  getOperatorAddress,
+  getCompanyAdminAddress,
+  getCertificationAuthorityAddress,
+  isValidAddress,
 } = require('./addressing')
 const {
-    SystemAdmin
+  SystemAdmin,
 } = require('./proto')
 
 /**
@@ -17,7 +16,7 @@ const {
  * @param {String} messages List of error messages to join together.
  */
 const reject = (...messages) => {
-    throw new InvalidTransaction(messages.join(' '))
+  throw new InvalidTransaction(messages.join(' '))
 }
 
 /**
@@ -26,11 +25,10 @@ const reject = (...messages) => {
  * @param {String} actionField The wanted action field name.
  */
 const getActionField = (payload, actionField) => {
-    // Check if the SCPayload object contains the wanted action field name.
-    if (!payload[actionField])
-        reject(`Action payload is missing for ${actionField} action.`)
+  // Check if the SCPayload object contains the wanted action field name.
+  if (!payload[actionField]) { reject(`Action payload is missing for ${actionField} action.`) }
 
-    return payload[actionField]
+  return payload[actionField]
 }
 
 /**
@@ -39,7 +37,7 @@ const getActionField = (payload, actionField) => {
  * @param {String} publicKey The string to evaluate.
  */
 const isValidPublicKey = (publicKey) => {
-    return RegExp(`^[0-9A-Fa-f]{66}$`).test(publicKey)
+  return RegExp('^[0-9A-Fa-f]{66}$').test(publicKey)
 }
 
 /**
@@ -50,17 +48,15 @@ const isValidPublicKey = (publicKey) => {
  * @param {String} object The name of the state object.
  */
 const checkStateAddresses = async (context, addresses, start, object) => {
-    for (const address of addresses) {
-        // Validation: At least one state address is not a valid address.
-        if (!isValidAddress(address) || !address.startsWith(start))
-            reject(`${object} is not a valid 70-char hex string address: ${address}`)
+  for (const address of addresses) {
+    // Validation: At least one state address is not a valid address.
+    if (!isValidAddress(address) || !address.startsWith(start)) { reject(`${object} is not a valid 70-char hex string address: ${address}`) }
 
-        const state = await context.getState([address])
+    const state = await context.getState([address])
 
-        // Validation: At least one specified address is empty.
-        if (state[address].length === 0)
-            reject(`Specified ${object} does not exist: ${address}`)
-    }
+    // Validation: At least one specified address is empty.
+    if (state[address].length === 0) { reject(`Specified ${object} does not exist: ${address}`) }
+  }
 }
 
 /**
@@ -69,32 +65,28 @@ const checkStateAddresses = async (context, addresses, start, object) => {
  * @param {String} publicKey The public key to verify.
  */
 const isPublicKeyUsed = async (context, publicKey) => {
-    const systemAdminAddress = getSystemAdminAddress()
-    const companyAdminAddress = getCompanyAdminAddress(publicKey)
-    const operatorAddress = getOperatorAddress(publicKey)
-    const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
+  const systemAdminAddress = getSystemAdminAddress()
+  const companyAdminAddress = getCompanyAdminAddress(publicKey)
+  const operatorAddress = getOperatorAddress(publicKey)
+  const certificationAuthorityAddress = getCertificationAuthorityAddress(publicKey)
 
-    const state = await context.getState([
-        systemAdminAddress,
-        companyAdminAddress,
-        operatorAddress,
-        certificationAuthorityAddress
-    ])
+  const state = await context.getState([
+    systemAdminAddress,
+    companyAdminAddress,
+    operatorAddress,
+    certificationAuthorityAddress,
+  ])
 
-    const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
+  const systemAdminState = SystemAdmin.decode(state[systemAdminAddress])
 
-    // Validation: The public key belongs to another authorized user.
-    if (systemAdminState.publicKey === publicKey)
-        reject(`The public key belongs to the current System Admin`)
+  // Validation: The public key belongs to another authorized user.
+  if (systemAdminState.publicKey === publicKey) { reject('The public key belongs to the current System Admin') }
 
-    if (state[companyAdminAddress].length > 0)
-        reject(`The public key belongs to a Company Admin`)
+  if (state[companyAdminAddress].length > 0) { reject('The public key belongs to a Company Admin') }
 
-    if (state[operatorAddress].length > 0)
-        reject(`The public key belongs to an Operator`)
+  if (state[operatorAddress].length > 0) { reject('The public key belongs to an Operator') }
 
-    if (state[certificationAuthorityAddress].length > 0)
-        reject(`The public key belongs to a Certification Authority`)
+  if (state[certificationAuthorityAddress].length > 0) { reject('The public key belongs to a Certification Authority') }
 }
 
 /**
@@ -104,16 +96,15 @@ const isPublicKeyUsed = async (context, publicKey) => {
  * @param {String} object The name of the state object.
  */
 const isPresent = async (list, address, object) => {
-    // Validation: Provided address is not in the list.
-    if (list.indexOf(address) === -1)
-        reject(`Provided address ${address} doesn't match ${object}`)
+  // Validation: Provided address is not in the list.
+  if (list.indexOf(address) === -1) { reject(`Provided address ${address} doesn't match ${object}`) }
 }
 
 module.exports = {
-    reject,
-    getActionField,
-    isValidPublicKey,
-    checkStateAddresses,
-    isPublicKeyUsed,
-    isPresent
+  reject,
+  getActionField,
+  isValidPublicKey,
+  checkStateAddresses,
+  isPublicKeyUsed,
+  isPresent,
 }
