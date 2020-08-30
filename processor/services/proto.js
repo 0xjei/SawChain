@@ -1,4 +1,3 @@
-'use strict'
 
 const fs = require('fs')
 const path = require('path')
@@ -8,17 +7,13 @@ const protobuf = require('protobufjs')
 let root = new protobuf.Root()
 
 // Retrieve every protobuf file.
-let files = fs
-    .readdirSync(path.resolve(__dirname, '../../protos'))
-    .map(f => path.resolve(__dirname, '../../protos', f))
-    .filter(f => f.endsWith('.proto'))
+const files = fs
+  .readdirSync(path.resolve(__dirname, '../protos'))
+  .map(f => path.resolve(__dirname, '../protos', f))
+  .filter(f => f.endsWith('.proto'))
 
-try {
-    // Load synchronously each protobuf file.
-    root = root.loadSync(files)
-} catch (error) {
-    throw error
-}
+// Load synchronously each protobuf file.
+root = root.loadSync(files)
 
 // Payload lookup.
 const SCPayload = root.lookup('SCPayload')
@@ -69,41 +64,41 @@ const AnswerProposalAction = root.lookup('AnswerProposalAction')
 const FinalizeBatchAction = root.lookup('FinalizeBatchAction')
 
 module.exports = {
-    root,
-    SCPayload,
-    SCPayloadActions,
-    SCPayloadFields,
-    SystemAdmin,
-    CompanyAdmin,
-    Operator,
-    CertificationAuthority,
-    TaskType,
-    ProductType,
-    EventParameterType,
-    EventType,
-    PropertyType,
-    Company,
-    Field,
-    Event,
-    Batch,
-    Proposal,
-    Certificate,
-    Shared,
-    UpdateSystemAdminAction,
-    CreateTaskTypeAction,
-    CreateProductTypeAction,
-    CreateEventParameterTypeAction,
-    CreateEventTypeAction,
-    CreatePropertyTypeAction,
-    CreateCertificationAuthorityAction,
-    CreateCompanyAction,
-    CreateFieldAction,
-    CreateOperatorAction,
-    CreateDescriptionEventAction,
-    CreateTransformationEventAction,
-    AddBatchCertificateAction,
-    RecordBatchPropertyAction,
-    CreateProposalAction,
-    AnswerProposalAction,
-    FinalizeBatchAction
+  root,
+  SCPayload,
+  SCPayloadActions,
+  SCPayloadFields,
+  SystemAdmin,
+  CompanyAdmin,
+  Operator,
+  CertificationAuthority,
+  TaskType,
+  ProductType,
+  EventParameterType,
+  EventType,
+  PropertyType,
+  Company,
+  Field,
+  Event,
+  Batch,
+  Proposal,
+  Certificate,
+  Shared,
+  UpdateSystemAdminAction,
+  CreateTaskTypeAction,
+  CreateProductTypeAction,
+  CreateEventParameterTypeAction,
+  CreateEventTypeAction,
+  CreatePropertyTypeAction,
+  CreateCertificationAuthorityAction,
+  CreateCompanyAction,
+  CreateFieldAction,
+  CreateOperatorAction,
+  CreateDescriptionEventAction,
+  CreateTransformationEventAction,
+  AddBatchCertificateAction,
+  RecordBatchPropertyAction,
+  CreateProposalAction,
+  AnswerProposalAction,
+  FinalizeBatchAction,
 }
